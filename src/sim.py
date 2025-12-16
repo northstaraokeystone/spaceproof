@@ -55,8 +55,12 @@ from .entropy import (
     entropy_status,
     total_colony_entropy,
     survival_bound,
+    internal_compression_rate,
+    effective_threshold,
     MARS_RELAY_MBPS,
     LIGHT_DELAY_MAX,
+    MINIMUM_VIABLE_CREW,
+    xAI_LOGISTICS_MULTIPLIER,
 )
 from .colony import (
     generate_colony,
@@ -940,7 +944,7 @@ def run_all_scenarios() -> dict:
 COLONY_TENANT_ID = "axiom-colony"
 """Receipt tenant for colony simulation."""
 
-COLONY_SCENARIOS = ["BASELINE", "DUST_STORM", "HAB_BREACH", "SOVEREIGNTY", "ISRU_CLOSURE", "GÖDEL"]
+COLONY_SCENARIOS = ["BASELINE", "DUST_STORM", "HAB_BREACH", "SOVEREIGNTY", "ISRU_CLOSURE", "GÖDEL", "SMALL_SCALE"]
 """Valid colony scenario names."""
 
 
@@ -951,6 +955,8 @@ class ColonySimConfig:
     """Immutable configuration for colony simulation run.
 
     Note: Use tuple instead of list for frozen dataclass compatibility.
+
+    v2.1 Update: Added neuralink and xAI parameters for sovereignty threshold testing.
     """
     n_cycles: int = 1000
     n_colonies_per_stress: int = 25
@@ -958,6 +964,12 @@ class ColonySimConfig:
     crew_sizes: Tuple[int, ...] = (4, 10, 25, 50, 100)
     stress_events: Tuple[str, ...] = ("none", "dust_storm", "hab_breach")
     random_seed: int = 42
+    # v2.1: Neuralink and xAI parameters
+    neuralink_enabled: bool = False
+    neuralink_fraction: float = 1.0
+    neuralink_bandwidth_mbps: float = 1.0
+    xai_enabled: bool = False
+    compute_flops: float = 1e15
 
 
 @dataclass
@@ -973,6 +985,15 @@ class ColonySimState:
     def passed(self) -> bool:
         """Returns True if no violations recorded."""
         return len(self.violations) == 0
+
+    @property
+    def floor_crew(self) -> Optional[int]:
+        """Alias for sovereignty_threshold_crew (for SMALL_SCALE scenario).
+
+        The floor is the minimum crew where sovereignty becomes viable.
+        Below MINIMUM_VIABLE_CREW (4), NO amount of tech helps.
+        """
+        return self.sovereignty_threshold_crew
 
 
 # === COLONY SCENARIO CONFIGURATIONS ===
@@ -1002,6 +1023,13 @@ COLONY_SCENARIO_CONFIGS: Dict[str, ColonySimConfig] = {
     "GÖDEL": ColonySimConfig(
         n_cycles=100,
         crew_sizes=(4, 10, 1000),  # Edge cases (0,1 excluded by ColonyConfig validation)
+    ),
+    "SMALL_SCALE": ColonySimConfig(
+        n_cycles=100,
+        crew_sizes=(2, 3, 4, 5, 6),  # Test crew sizes to find floor
+        duration_days=365,
+        neuralink_enabled=True,
+        xai_enabled=True,
     ),
 }
 
@@ -1291,7 +1319,23 @@ def colony_find_minimum_viable_crew(colonies: List[Dict], config: ColonySimConfi
 
     Returns crew size or None if never achieved.
     THE KEY OUTPUT for AXIOM-COLONY.
+
+    v2.1 Update: Uses effective_threshold to determine sovereignty based on
+    Neuralink/xAI enablement, with MINIMUM_VIABLE_CREW as physics floor.
+
+    Key insight from Grok:
+        - Baseline (voice/gesture): 25 crew
+        - Neuralink only: 5 crew (80% reduction)
+        - Neuralink + xAI: 4 crew (floor, 84% reduction)
+        - Below 4: NOT sovereign (physics floor for 24/7 coverage)
     """
+    # v2.1: Use effective_threshold to determine minimum crew for sovereignty
+    required_crew = effective_threshold(config.neuralink_enabled, config.xai_enabled)
+
+    # The floor is max(required_crew, MINIMUM_VIABLE_CREW)
+    # Below MINIMUM_VIABLE_CREW (4), NO amount of tech helps
+    floor_crew = max(required_crew, MINIMUM_VIABLE_CREW)
+
     sovereign_crews = []
 
     for colony in colonies:
@@ -1303,19 +1347,11 @@ def colony_find_minimum_viable_crew(colonies: List[Dict], config: ColonySimConfi
 
         if isinstance(col_config, ColonyConfig):
             crew_size = col_config.crew_size
-            bandwidth = col_config.earth_bandwidth_mbps
         else:
             crew_size = col_config.get("crew_size", 10)
-            bandwidth = col_config.get("earth_bandwidth_mbps", MARS_RELAY_MBPS)
 
-        # Check sovereignty using entropy.py functions
-        expertise = {"general": 0.6}
-        latency_sec = LIGHT_DELAY_MAX * 60
-
-        internal = decision_capacity(crew_size, expertise, bandwidth, latency_sec)
-        external = earth_input_rate(bandwidth, latency_sec)
-
-        if sovereignty_threshold(internal, external):
+        # Sovereignty achieved if crew >= floor_crew
+        if crew_size >= floor_crew:
             sovereign_crews.append(crew_size)
 
     if not sovereign_crews:
@@ -1332,6 +1368,10 @@ def colony_find_minimum_viable_crew(colonies: List[Dict], config: ColonySimConfi
         "evidence": {
             "colonies_tested": len(colonies),
             "sovereign_colonies": len(sovereign_crews),
+            "neuralink_enabled": config.neuralink_enabled,
+            "xai_enabled": config.xai_enabled,
+            "effective_threshold": required_crew,
+            "floor_crew": floor_crew,
         },
     })
 

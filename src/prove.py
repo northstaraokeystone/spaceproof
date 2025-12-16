@@ -888,3 +888,144 @@ Not mass. Not energy. BITS.
         tweet = tweet[:277] + "..."
 
     return tweet
+
+
+# =============================================================================
+# xAI LOGISTICS FORMATTING FUNCTIONS (v2.1)
+# =============================================================================
+
+def format_threshold_reduction(baseline: int, enhanced: int, enhancement_name: str) -> str:
+    """Format threshold reduction for display.
+
+    Args:
+        baseline: Baseline crew threshold (e.g., 25).
+        enhanced: Enhanced crew threshold (e.g., 5).
+        enhancement_name: Name of enhancement (e.g., "Neuralink").
+
+    Returns:
+        Formatted string like "Neuralink: 25 → 5 crew (80% reduction)"
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    if baseline > 0:
+        reduction_pct = int((1 - enhanced / baseline) * 100)
+    else:
+        reduction_pct = 0
+
+    return f"{enhancement_name}: {baseline} → {enhanced} crew ({reduction_pct}% reduction)"
+
+
+def format_small_scale_analysis(results: dict) -> str:
+    """Format small scale sovereignty analysis table.
+
+    Args:
+        results: Dict with structure:
+            {
+                crew_size: {
+                    "neuralink_only": bool,
+                    "neuralink_xai": bool,
+                    "failure_mode": str or None
+                }
+            }
+
+    Returns:
+        Multi-line formatted table showing crew vs sovereignty.
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    lines = [
+        "SMALL SCALE VIABILITY",
+        "─────────────────────",
+        "Crew    Neuralink    +xAI    Status"
+    ]
+
+    for crew in sorted(results.keys()):
+        data = results[crew]
+        neuralink = "✓" if data.get("neuralink_only", False) else "✗"
+        xai = "✓" if data.get("neuralink_xai", False) else "✗"
+        failure_mode = data.get("failure_mode")
+
+        if failure_mode:
+            status = f"FAILED ({failure_mode})"
+        elif data.get("neuralink_xai") and not data.get("neuralink_only"):
+            status = "MARGINAL (floor)"
+        elif data.get("neuralink_only"):
+            status = "VIABLE"
+        else:
+            status = "FAILED"
+
+        lines.append(f"{crew:4d}        {neuralink}          {xai}      {status}")
+
+    return "\n".join(lines)
+
+
+def format_floor_discovery(floor_crew: int, reason: str) -> str:
+    """Format floor discovery message.
+
+    Args:
+        floor_crew: Minimum viable crew (physics floor).
+        reason: Explanation of the floor (e.g., "24/7 coverage minimum").
+
+    Returns:
+        Formatted string like "Floor: 4 crew (24/7 coverage minimum)"
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    return f"Floor: {floor_crew} crew ({reason})"
+
+
+def format_xai_impact(without_xai: float, with_xai: float) -> str:
+    """Format xAI impact comparison.
+
+    Args:
+        without_xai: Decision rate or threshold without xAI.
+        with_xai: Decision rate or threshold with xAI.
+
+    Returns:
+        Formatted string showing xAI boost percentage.
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    if without_xai > 0:
+        boost_pct = int((with_xai / without_xai - 1) * 100)
+    else:
+        boost_pct = 0
+
+    return f"xAI logistics: +{boost_pct}% decision quality"
+
+
+def format_sovereignty_analysis() -> str:
+    """Generate complete sovereignty threshold analysis.
+
+    Returns:
+        Multi-line formatted analysis showing all thresholds.
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    # Import here to avoid circular imports
+    from .entropy import (
+        BASELINE_SOVEREIGNTY_THRESHOLD,
+        NEURALINK_SOVEREIGNTY_THRESHOLD,
+        NEURALINK_XAI_SOVEREIGNTY_THRESHOLD,
+        MINIMUM_VIABLE_CREW,
+    )
+
+    baseline = BASELINE_SOVEREIGNTY_THRESHOLD
+    neuralink = NEURALINK_SOVEREIGNTY_THRESHOLD
+    neuralink_xai = NEURALINK_XAI_SOVEREIGNTY_THRESHOLD
+    floor = MINIMUM_VIABLE_CREW
+
+    neuralink_reduction = int((1 - neuralink / baseline) * 100)
+    xai_reduction = int((1 - neuralink_xai / baseline) * 100)
+
+    output = f"""SOVEREIGNTY THRESHOLD ANALYSIS
+══════════════════════════════
+
+Baseline (voice/gesture):     {baseline} crew
++ Neuralink (1 Mbps):          {neuralink} crew  (↓{neuralink_reduction}%)
++ xAI logistics:               {neuralink_xai} crew  (↓{xai_reduction}%)
+
+FLOOR: {floor} crew
+Reason: 24/7 coverage requires minimum 2 shifts × 2 people"""
+
+    return output
