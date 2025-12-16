@@ -36,6 +36,26 @@ LIGHT_DELAY_MIN = 3
 LIGHT_DELAY_MAX = 22
 """Maximum light delay Earth-Mars in minutes. Physics, conjunction."""
 
+# === xAI LOGISTICS CONSTANTS (v2.1 - Grok Integration) ===
+
+xAI_LOGISTICS_MULTIPLIER = 1.5
+"""xAI improves decision QUALITY 50% (not quantity). Grok: 'logistics via xAI integration'."""
+
+MINIMUM_VIABLE_CREW = 4
+"""Physics floor: 24/7 coverage requires 4 minimum (2 awake shifts × 2 people)."""
+
+THRESHOLD_REDUCTION_NEURALINK = 0.80
+"""25→5 = 80% reduction. Grok: 'dramatically' quantified."""
+
+BASELINE_SOVEREIGNTY_THRESHOLD = 25
+"""Baseline crew needed for sovereignty without augmentation (voice/gesture only)."""
+
+NEURALINK_SOVEREIGNTY_THRESHOLD = 5
+"""Crew needed with Neuralink (1 Mbps neural bandwidth). 80% reduction from baseline."""
+
+NEURALINK_XAI_SOVEREIGNTY_THRESHOLD = 4
+"""Crew needed with Neuralink + xAI logistics. Floor = MINIMUM_VIABLE_CREW."""
+
 SOLAR_FLUX_MAX = 590
 """Maximum solar flux on Mars W/m². NASA Viking, equator."""
 
@@ -274,6 +294,88 @@ def sovereignty_threshold(internal: float, external: float) -> bool:
         False otherwise (dependent on Earth).
     """
     return internal > external
+
+
+# === xAI LOGISTICS FUNCTIONS (v2.1) ===
+
+def internal_compression_rate(
+    crew: int,
+    compute_flops: float,
+    neuralink_fraction: float,
+    neuralink_bandwidth_mbps: float,
+    xai_enabled: bool = False
+) -> float:
+    """Compute internal entropy compression rate in bits/second.
+
+    This measures how fast the colony can COMPRESS entropy (make decisions,
+    solve problems, reduce uncertainty). Different from decision_capacity
+    which measures raw bit throughput.
+
+    Args:
+        crew: Number of crew members.
+        compute_flops: Available compute in FLOPS.
+        neuralink_fraction: Fraction of crew with Neuralink (0-1).
+        neuralink_bandwidth_mbps: Neural bandwidth per Neuralink user.
+        xai_enabled: Whether xAI logistics is enabled.
+
+    Returns:
+        Compression rate in bits/second.
+
+    Key insight from Grok:
+        Neuralink = bandwidth (how fast you can think) = QUANTITY (100,000x)
+        xAI = logistics (how well you can think) = QUALITY (1.5x)
+    """
+    if crew <= 0:
+        return 0.0
+
+    # Base human decision rate
+    base_rate = crew * DECISION_BITS_PER_PERSON_PER_SEC
+
+    # Neuralink enhancement: 100,000x bandwidth for augmented crew
+    # 1 Mbps Neuralink = 100,000x baseline decision rate (~0.1 bits/sec -> ~10,000 bits/sec)
+    NEURALINK_MULTIPLIER = 100000  # 100,000x from Grok
+    if neuralink_fraction > 0 and neuralink_bandwidth_mbps > 0:
+        augmented_crew = crew * neuralink_fraction
+        # Each Neuralink user gets 100,000x their base rate, scaled by bandwidth
+        neuralink_rate = augmented_crew * DECISION_BITS_PER_PERSON_PER_SEC * NEURALINK_MULTIPLIER * neuralink_bandwidth_mbps
+        base_rate = neuralink_rate  # Neuralink dominates, not additive
+
+    # Compute contribution (AI assistance)
+    if compute_flops > 0:
+        # ~1e15 FLOPS = 1 PFLOP = meaningful AI assist (2x boost)
+        compute_boost = math.log2(1 + compute_flops / 1e15)
+        base_rate *= (1 + compute_boost * 0.1)  # Modest AI assist
+
+    # xAI logistics multiplier: improves decision QUALITY 50%
+    if xai_enabled:
+        base_rate *= xAI_LOGISTICS_MULTIPLIER
+
+    return base_rate
+
+
+def effective_threshold(neuralink_enabled: bool, xai_enabled: bool) -> int:
+    """Compute sovereignty threshold accounting for all enhancements.
+
+    Args:
+        neuralink_enabled: Whether Neuralink augmentation is available.
+        xai_enabled: Whether xAI logistics is enabled.
+
+    Returns:
+        Minimum crew for sovereignty:
+        - Baseline (voice/gesture): 25
+        - Neuralink only: 5 (80% reduction)
+        - Neuralink + xAI: 4 (floor, 84% reduction)
+
+    Note:
+        Below MINIMUM_VIABLE_CREW (4), NO amount of tech helps.
+        This is the physics floor for 24/7 coverage.
+    """
+    if neuralink_enabled and xai_enabled:
+        return NEURALINK_XAI_SOVEREIGNTY_THRESHOLD  # 4 (floor)
+    elif neuralink_enabled:
+        return NEURALINK_SOVEREIGNTY_THRESHOLD  # 5
+    else:
+        return BASELINE_SOVEREIGNTY_THRESHOLD  # 25
 
 
 # === SURVIVAL BOUND FUNCTIONS ===
