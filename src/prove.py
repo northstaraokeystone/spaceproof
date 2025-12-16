@@ -13,15 +13,23 @@ KEY INSIGHT:
 The chain_receipt isn't metadata. It's the signature of truth.
 Every witness leaves a trace. Every trace joins the chain. The chain is the proof.
 
+COLONY EXTENSION (BUILD C6):
+    The merkle root of all sim receipts IS the cryptographic proof of the sovereignty discovery.
+    Anyone can verify by re-running the simulation with the same seed.
+
 Source: CLAUDEME.md (§8)
 """
 
 import json
 import math
 import statistics
-from typing import Tuple
+from typing import Tuple, Any, Optional, TYPE_CHECKING
 
-from .core import dual_hash, emit_receipt, merkle, StopRule
+from .core import dual_hash, emit_receipt, merkle, StopRule, TENANT_ID as CORE_TENANT_ID
+
+# Type hints only - avoid circular import
+if TYPE_CHECKING:
+    from .sim import ColonySimState
 
 
 # === CONSTANTS (Module Top) ===
@@ -37,6 +45,13 @@ COMPRESSION_THRESHOLD = 0.84
 
 SIGNIFICANCE_THRESHOLD = 0.05
 """p-value threshold for statistical claims."""
+
+# Colony-specific constants (BUILD C6)
+COLONY_TENANT_ID = "axiom-colony"
+"""Receipt tenant for colony simulation."""
+
+GITHUB_LINK = "github.com/northstaraokeystone/AXIOM-COLONY"
+"""GitHub repo for attribution in tweets."""
 
 
 # === STOPRULES ===
@@ -435,12 +450,26 @@ def chain_receipts(receipts: list) -> dict:
         The chain_receipt dict
 
     MUST emit receipt (chain_receipt).
-    """
-    # Stoprule: empty chain
-    if not receipts:
-        stoprule_empty_chain()
 
-    # Stoprule: missing payload_hash
+    BUILD C6 UPDATE: Handles empty list gracefully with merkle_root = dual_hash(b"empty")
+    """
+    # Handle empty list gracefully (BUILD C6 requirement)
+    if not receipts:
+        root = dual_hash(b"empty")
+        chain_receipt = emit_receipt("chain", {
+            "tenant_id": TENANT_ID,
+            "n_receipts": 0,
+            "n_witnesses": 0,
+            "merkle_root": root,
+            "summary": {
+                "n_colonies": 0,
+                "n_violations": 0,
+                "sovereignty_threshold": None
+            }
+        })
+        return chain_receipt
+
+    # Stoprule: missing payload_hash (only for non-empty lists)
     for i, receipt in enumerate(receipts):
         if "payload_hash" not in receipt:
             stoprule_missing_payload_hash(i)
@@ -454,13 +483,14 @@ def chain_receipts(receipts: list) -> dict:
     # Build chain_receipt
     chain_receipt = emit_receipt("chain", {
         "tenant_id": TENANT_ID,
+        "n_receipts": len(receipts),
         "n_witnesses": len(receipts),
         "merkle_root": root,
         "summary": {
-            "newton_correct": summary["newton_correct"],
-            "mond_correct": summary["mond_correct"],
-            "nfw_correct": summary["nfw_correct"],
-            "pbh_novel": summary["pbh_novel"]
+            "newton_correct": summary.get("newton_correct", 0.0),
+            "mond_correct": summary.get("mond_correct", 0.0),
+            "nfw_correct": summary.get("nfw_correct", 0.0),
+            "pbh_novel": summary.get("pbh_novel", False)
         }
     })
 
@@ -573,6 +603,288 @@ Proof: {root_short}"""
 
     # Ensure <= 280 chars
     if len(tweet) > 280:
+        tweet = tweet[:277] + "..."
+
+    return tweet
+
+
+# =============================================================================
+# COLONY SIMULATION FUNCTIONS (BUILD C6)
+# =============================================================================
+
+def summarize_colony_batch(sim_state: Any) -> dict:
+    """Aggregate statistics from colony simulation state.
+
+    Args:
+        sim_state: ColonySimState from sim.py
+
+    Returns:
+        dict with colony metrics:
+        - n_colonies: Total colonies tested
+        - n_violations: Number of constraint violations
+        - n_sovereign: Colonies achieving sovereignty
+        - sovereignty_threshold_crew: Minimum crew for sovereignty (may be None)
+        - pass_rates: Dict of {crew_size: pass_rate}
+
+    Note: Does NOT emit receipt (intermediate computation).
+    """
+    # Handle both ColonySimState objects and dict-like objects
+    colonies = getattr(sim_state, 'colonies', []) or []
+    violations = getattr(sim_state, 'violations', []) or []
+    threshold = getattr(sim_state, 'sovereignty_threshold_crew', None)
+
+    n_colonies = len(colonies)
+    n_violations = len(violations)
+
+    # Count sovereign colonies and compute pass rates by crew size
+    sovereign_count = 0
+    by_crew = {}  # {crew_size: {"total": n, "passed": n}}
+
+    # Import entropy functions for sovereignty check
+    try:
+        from .entropy import (
+            decision_capacity,
+            earth_input_rate,
+            sovereignty_threshold as check_sovereignty,
+            MARS_RELAY_MBPS,
+            LIGHT_DELAY_MAX,
+        )
+        has_entropy = True
+    except ImportError:
+        has_entropy = False
+
+    for colony in colonies:
+        # Get crew size from colony config
+        config = colony.get("config")
+        if config is None:
+            continue
+
+        # Handle both ColonyConfig objects and dicts
+        if hasattr(config, 'crew_size'):
+            crew_size = config.crew_size
+            bandwidth = getattr(config, 'earth_bandwidth_mbps', MARS_RELAY_MBPS if has_entropy else 2.0)
+        else:
+            crew_size = config.get("crew_size", 0)
+            bandwidth = config.get("earth_bandwidth_mbps", 2.0)
+
+        # Initialize crew bucket
+        if crew_size not in by_crew:
+            by_crew[crew_size] = {"total": 0, "passed": 0}
+        by_crew[crew_size]["total"] += 1
+
+        # Check sovereignty
+        if has_entropy:
+            expertise = {"general": 0.6}
+            latency_sec = LIGHT_DELAY_MAX * 60
+            internal = decision_capacity(crew_size, expertise, bandwidth, latency_sec)
+            external = earth_input_rate(bandwidth, latency_sec)
+
+            if check_sovereignty(internal, external):
+                sovereign_count += 1
+                by_crew[crew_size]["passed"] += 1
+
+    # Compute pass rates
+    pass_rates = {}
+    for crew_size, data in by_crew.items():
+        if data["total"] > 0:
+            pass_rates[crew_size] = data["passed"] / data["total"]
+
+    return {
+        "n_colonies": n_colonies,
+        "n_violations": n_violations,
+        "n_sovereign": sovereign_count,
+        "sovereignty_threshold_crew": threshold,
+        "pass_rates": pass_rates,
+        "by_crew": by_crew,
+    }
+
+
+def _get_colony_evidence(sim_state: Any) -> list:
+    """Extract supporting evidence for format_discovery.
+
+    Returns list of (crew_size, internal_rate, external_rate, is_sovereign) tuples.
+    """
+    evidence = []
+
+    try:
+        from .entropy import (
+            decision_capacity,
+            earth_input_rate,
+            sovereignty_threshold as check_sovereignty,
+            MARS_RELAY_MBPS,
+            LIGHT_DELAY_MAX,
+        )
+    except ImportError:
+        return evidence
+
+    # Get unique crew sizes from colonies
+    colonies = getattr(sim_state, 'colonies', []) or []
+    seen_crews = set()
+
+    for colony in colonies:
+        config = colony.get("config")
+        if config is None:
+            continue
+
+        if hasattr(config, 'crew_size'):
+            crew_size = config.crew_size
+            bandwidth = getattr(config, 'earth_bandwidth_mbps', MARS_RELAY_MBPS)
+        else:
+            crew_size = config.get("crew_size", 0)
+            bandwidth = config.get("earth_bandwidth_mbps", MARS_RELAY_MBPS)
+
+        if crew_size in seen_crews:
+            continue
+        seen_crews.add(crew_size)
+
+        expertise = {"general": 0.6}
+        latency_sec = LIGHT_DELAY_MAX * 60
+        internal = decision_capacity(crew_size, expertise, bandwidth, latency_sec)
+        external = earth_input_rate(bandwidth, latency_sec)
+        is_sovereign = check_sovereignty(internal, external)
+
+        evidence.append((crew_size, internal, external, is_sovereign))
+
+    # Sort by crew size
+    evidence.sort(key=lambda x: x[0])
+    return evidence
+
+
+def format_discovery(sim_state: Any) -> str:
+    """Generate full human-readable discovery report with unicode box drawing.
+
+    Args:
+        sim_state: ColonySimState from sim.py
+
+    Returns:
+        str: Multi-line formatted discovery report
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    summary = summarize_colony_batch(sim_state)
+    threshold = summary["sovereignty_threshold_crew"]
+
+    # Get crew sizes tested
+    by_crew = summary.get("by_crew", {})
+    crew_sizes = sorted(by_crew.keys())
+
+    # Build header with unicode box drawing
+    header = "AXIOM-COLONY SOVEREIGNTY DISCOVERY"
+    separator = "━" * 33
+
+    # Threshold line
+    if threshold is not None:
+        finding_line = f"FINDING: Computational sovereignty threshold = {threshold} crew"
+        below_line = f"Below {threshold}: External decision rate (Earth) > Internal capacity"
+        above_line = f"Above {threshold}: Internal capacity sufficient for autonomous operation"
+    else:
+        finding_line = "FINDING: Computational sovereignty threshold = NOT FOUND"
+        below_line = "No crew size achieved sovereignty in tested range"
+        above_line = "Consider testing larger crew sizes"
+
+    # Get evidence
+    evidence = _get_colony_evidence(sim_state)
+
+    # Build evidence table - select key points
+    evidence_lines = []
+    key_crews = []
+
+    # Always include smallest and largest
+    if evidence:
+        key_crews.append(evidence[0][0])  # Smallest
+        key_crews.append(evidence[-1][0])  # Largest
+
+    # Include threshold if found
+    if threshold is not None:
+        key_crews.append(threshold)
+
+    # Include a mid-point
+    if len(evidence) > 2:
+        mid_idx = len(evidence) // 2
+        key_crews.append(evidence[mid_idx][0])
+
+    key_crews = sorted(set(key_crews))
+
+    for crew, internal, external, is_sovereign in evidence:
+        if crew in key_crews:
+            sovereign_marker = " (sovereign)" if is_sovereign else ""
+            evidence_lines.append(
+                f"- {crew} crew: {internal:.1f} bits/sec internal vs {external:.1f} bits/sec from Earth{sovereign_marker}"
+            )
+
+    # Get merkle root from chain if available
+    # For now, compute from colonies
+    colonies = getattr(sim_state, 'colonies', []) or []
+    if colonies:
+        # Create simple receipts for merkle
+        colony_receipts = []
+        for i, colony in enumerate(colonies):
+            colony_receipts.append({
+                "index": i,
+                "crew_size": colony.get("crew_size", 0),
+                "payload_hash": dual_hash(str(colony))
+            })
+        merkle_root = merkle(colony_receipts)
+    else:
+        merkle_root = dual_hash(b"empty")
+
+    # Truncate merkle for display
+    root_short = f"{merkle_root[:4]}...{merkle_root[-4:]}" if len(merkle_root) > 8 else merkle_root
+
+    # Assemble output
+    output = f"""{header}
+{separator}
+
+Crew sizes tested: {crew_sizes}
+
+{finding_line}
+
+{below_line}
+{above_line}
+
+Supporting evidence:
+{chr(10).join(evidence_lines)}
+
+The colony survives when it can THINK faster than problems arrive.
+
+Merkle proof: {root_short}"""
+
+    return output
+
+
+def format_tweet(sim_state: Any) -> str:
+    """Generate X-ready format, ≤280 chars, with GitHub link.
+
+    Args:
+        sim_state: ColonySimState from sim.py
+
+    Returns:
+        str: Tweet-length text (<=280 chars)
+
+    Note: Does NOT emit receipt (formatting utility).
+    """
+    threshold = getattr(sim_state, 'sovereignty_threshold_crew', None)
+
+    if threshold is not None:
+        threshold_str = str(threshold)
+    else:
+        threshold_str = "NOT FOUND"
+
+    # Build tweet - carefully crafted to fit 280 chars
+    tweet = f"""AXIOM-COLONY v3 FINDING
+
+Minimum crew for Mars computational sovereignty: {threshold_str}
+
+When internal decision rate > Earth input rate,
+colony survives without ground support.
+
+Not mass. Not energy. BITS.
+
+{GITHUB_LINK}"""
+
+    # Verify length constraint
+    if len(tweet) > 280:
+        # Shouldn't happen with our format, but safety check
         tweet = tweet[:277] + "..."
 
     return tweet

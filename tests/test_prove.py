@@ -11,6 +11,8 @@ from src.prove import (
     REGIMES,
     COMPRESSION_THRESHOLD,
     SIGNIFICANCE_THRESHOLD,
+    COLONY_TENANT_ID,
+    GITHUB_LINK,
     build_merkle_tree,
     chain_receipts,
     prove_witness,
@@ -21,6 +23,10 @@ from src.prove import (
     format_for_tweet,
     stoprule_empty_chain,
     stoprule_missing_payload_hash,
+    # Colony functions (BUILD C6)
+    summarize_colony_batch,
+    format_discovery,
+    format_tweet,
 )
 from src.core import StopRule, dual_hash
 
@@ -375,10 +381,14 @@ def test_format_for_tweet_content():
 
 # === STOPRULE TESTS ===
 
-def test_empty_chain_stoprule():
-    """StopRule raised for empty chain (safety)."""
-    with pytest.raises(StopRule):
-        chain_receipts([])
+def test_empty_chain_handled_gracefully():
+    """Empty chain returns valid receipt instead of raising StopRule (BUILD C6 update)."""
+    # BUILD C6: Changed from StopRule to graceful handling
+    chain = chain_receipts([])
+    assert chain["receipt_type"] == "chain"
+    assert chain["n_receipts"] == 0
+    expected_empty = dual_hash(b"empty")
+    assert chain["merkle_root"] == expected_empty
 
 
 def test_missing_payload_hash_stoprule():
@@ -422,3 +432,288 @@ def test_constants_values():
     assert REGIMES == ["newtonian", "mond", "nfw", "pbh_fog"]
     assert COMPRESSION_THRESHOLD == 0.84
     assert SIGNIFICANCE_THRESHOLD == 0.05
+
+
+# =============================================================================
+# COLONY SIMULATION TESTS (BUILD C6)
+# =============================================================================
+
+class MockColonyConfig:
+    """Mock colony config for testing."""
+    def __init__(self, crew_size: int, earth_bandwidth_mbps: float = 2.0):
+        self.crew_size = crew_size
+        self.earth_bandwidth_mbps = earth_bandwidth_mbps
+
+
+class MockColonySimState:
+    """Mock colony simulation state for testing."""
+    def __init__(
+        self,
+        colonies: list = None,
+        violations: list = None,
+        sovereignty_threshold_crew: int = None
+    ):
+        self.colonies = colonies or []
+        self.violations = violations or []
+        self.sovereignty_threshold_crew = sovereignty_threshold_crew
+
+
+# === CHAIN RECEIPTS COLONY TESTS ===
+
+def test_chain_receipts_empty():
+    """Empty list returns valid receipt with 'empty' hash pattern (BUILD C6)."""
+    chain = chain_receipts([])
+
+    assert chain["receipt_type"] == "chain"
+    assert "merkle_root" in chain
+    # Empty merkle root should be dual_hash(b"empty")
+    expected_empty = dual_hash(b"empty")
+    assert chain["merkle_root"] == expected_empty
+    assert chain["n_receipts"] == 0
+
+
+def test_chain_receipts_single():
+    """Single receipt returns valid merkle root (BUILD C6)."""
+    receipts = [{"type": "test", "id": 1, "payload_hash": "h1"}]
+    chain = chain_receipts(receipts)
+
+    assert chain["receipt_type"] == "chain"
+    assert "merkle_root" in chain
+    assert chain["n_receipts"] == 1
+    assert len(chain["merkle_root"]) > 0
+
+
+def test_chain_receipts_multiple():
+    """Multiple receipts returns deterministic merkle root (BUILD C6)."""
+    receipts = [
+        {"type": "test", "id": 1, "payload_hash": "h1"},
+        {"type": "test", "id": 2, "payload_hash": "h2"},
+        {"type": "test", "id": 3, "payload_hash": "h3"},
+    ]
+    chain = chain_receipts(receipts)
+
+    assert chain["receipt_type"] == "chain"
+    assert chain["n_receipts"] == 3
+    assert len(chain["merkle_root"]) > 0
+
+
+def test_chain_receipts_deterministic():
+    """Same inputs → same merkle root (BUILD C6)."""
+    receipts = [
+        {"type": "test", "id": 1, "payload_hash": "h1"},
+        {"type": "test", "id": 2, "payload_hash": "h2"},
+    ]
+
+    chain1 = chain_receipts(receipts)
+    chain2 = chain_receipts(receipts)
+
+    assert chain1["merkle_root"] == chain2["merkle_root"]
+
+
+def test_chain_receipts_has_fields():
+    """Receipt has n_receipts, merkle_root fields (BUILD C6)."""
+    receipts = [{"type": "test", "payload_hash": "h1"}]
+    chain = chain_receipts(receipts)
+
+    assert "n_receipts" in chain
+    assert "merkle_root" in chain
+    assert "summary" in chain
+
+
+# === SUMMARIZE COLONY BATCH TESTS ===
+
+def test_summarize_colony_batch_counts():
+    """Correct colony and violation counts (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[
+            {"config": MockColonyConfig(crew_size=10)},
+            {"config": MockColonyConfig(crew_size=20)},
+            {"config": MockColonyConfig(crew_size=30)},
+        ],
+        violations=[{"type": "test_violation"}],
+        sovereignty_threshold_crew=25
+    )
+
+    summary = summarize_colony_batch(state)
+
+    assert summary["n_colonies"] == 3
+    assert summary["n_violations"] == 1
+
+
+def test_summarize_colony_batch_threshold():
+    """Extracts sovereignty_threshold_crew (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[],
+        violations=[],
+        sovereignty_threshold_crew=25
+    )
+
+    summary = summarize_colony_batch(state)
+
+    assert summary["sovereignty_threshold_crew"] == 25
+
+
+def test_summarize_colony_batch_none_threshold():
+    """Handles None threshold gracefully (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[],
+        violations=[],
+        sovereignty_threshold_crew=None
+    )
+
+    summary = summarize_colony_batch(state)
+
+    assert summary["sovereignty_threshold_crew"] is None
+    # Should not raise exception
+
+
+# === FORMAT DISCOVERY TESTS ===
+
+def test_format_discovery_has_header():
+    """Output contains 'AXIOM-COLONY SOVEREIGNTY DISCOVERY' (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[{"config": MockColonyConfig(crew_size=25)}],
+        sovereignty_threshold_crew=25
+    )
+
+    output = format_discovery(state)
+
+    assert "AXIOM-COLONY SOVEREIGNTY DISCOVERY" in output
+
+
+def test_format_discovery_has_threshold():
+    """Output contains threshold value or 'NOT FOUND' (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[{"config": MockColonyConfig(crew_size=25)}],
+        sovereignty_threshold_crew=25
+    )
+
+    output = format_discovery(state)
+
+    assert "25" in output or "NOT FOUND" in output
+
+
+def test_format_discovery_has_separator():
+    """Output contains ━ unicode separator (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[{"config": MockColonyConfig(crew_size=25)}],
+        sovereignty_threshold_crew=25
+    )
+
+    output = format_discovery(state)
+
+    assert "━" in output
+
+
+def test_format_discovery_has_merkle():
+    """Output contains 'Merkle proof:' (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[{"config": MockColonyConfig(crew_size=25)}],
+        sovereignty_threshold_crew=25
+    )
+
+    output = format_discovery(state)
+
+    assert "Merkle proof:" in output
+
+
+def test_format_discovery_none_threshold():
+    """Graceful output when threshold is None (BUILD C6)."""
+    state = MockColonySimState(
+        colonies=[{"config": MockColonyConfig(crew_size=10)}],
+        sovereignty_threshold_crew=None
+    )
+
+    output = format_discovery(state)
+
+    assert "NOT FOUND" in output
+    # Should not raise exception
+
+
+# === FORMAT TWEET TESTS ===
+
+def test_format_tweet_length():
+    """len(output) <= 280 (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    assert len(tweet) <= 280
+
+
+def test_format_tweet_has_threshold():
+    """Output contains threshold value (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    assert "25" in tweet
+
+
+def test_format_tweet_has_github():
+    """Output contains 'github.com/northstaraokeystone' (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    assert "github.com/northstaraokeystone" in tweet
+
+
+def test_format_tweet_none_threshold():
+    """Outputs 'NOT FOUND' when threshold is None (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=None
+    )
+
+    tweet = format_tweet(state)
+
+    assert "NOT FOUND" in tweet
+
+
+def test_format_tweet_no_truncation():
+    """Tweet doesn't get cut off with '...' (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    # Should not end with truncation marker
+    assert not tweet.endswith("...")
+    assert len(tweet) <= 280
+
+
+def test_format_tweet_contains_axiom():
+    """Tweet contains AXIOM-COLONY branding (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    assert "AXIOM-COLONY" in tweet
+
+
+def test_format_tweet_contains_bits():
+    """Tweet contains 'BITS' message (BUILD C6)."""
+    state = MockColonySimState(
+        sovereignty_threshold_crew=25
+    )
+
+    tweet = format_tweet(state)
+
+    assert "BITS" in tweet
+
+
+# === COLONY CONSTANTS TESTS ===
+
+def test_colony_constants_values():
+    """Verify colony constants have expected values (BUILD C6)."""
+    assert COLONY_TENANT_ID == "axiom-colony"
+    assert "github.com/northstaraokeystone" in GITHUB_LINK
