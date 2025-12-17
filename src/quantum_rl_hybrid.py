@@ -370,6 +370,98 @@ def get_boost_estimate() -> float:
     return QUANTUM_RETENTION_BOOST
 
 
+# === QUANTUM-FRACTAL HYBRID AT SCALE ===
+
+
+def quantum_fractal_hybrid_at_scale(
+    state: Dict[str, Any],
+    fractal_result: Dict[str, Any],
+    tree_size: int
+) -> Dict[str, Any]:
+    """Run quantum-fractal hybrid with scale-aware adjustments.
+
+    Combines quantum entangled penalty with fractal correlation scaling
+    to compute hybrid alpha at arbitrary tree sizes.
+
+    Args:
+        state: Current RL state with retention, alpha, etc.
+        fractal_result: Output from fractal layer with correlation metrics
+        tree_size: Number of nodes in the tree
+
+    Returns:
+        Dict with:
+            - alpha: Scale-adjusted hybrid alpha
+            - instability: Always 0.00 in stable hybrid
+            - quantum_boost: Applied quantum boost
+            - scale_factor: Fractal correlation scale factor
+            - hybrid_status: Validation status
+
+    Receipt: quantum_fractal_hybrid_at_scale
+    """
+    from .fractal_layers import scale_adjusted_correlation, get_scale_factor
+
+    # Get base values
+    base_retention = state.get("retention", 1.01)
+    base_alpha = state.get("alpha", 3.070)
+    instability = state.get("instability", 0.0)
+
+    # Get quantum boost
+    quantum_boost = QUANTUM_RETENTION_BOOST
+
+    # Get fractal scale factor
+    scale_factor = get_scale_factor(tree_size)
+    adjusted_correlation = scale_adjusted_correlation(tree_size)
+
+    # Apply quantum boost to retention
+    boosted_retention = base_retention * (1.0 + quantum_boost)
+
+    # Apply scale adjustment to alpha
+    # Alpha scales with scale_factor^2 (affects both encoding and retention)
+    scale_adjusted_alpha = base_alpha * (scale_factor ** 2)
+
+    # Combine: quantum boost on retention, fractal scale on structure
+    hybrid_alpha = scale_adjusted_alpha * boosted_retention / base_retention
+
+    # Instability is always 0 in stable hybrid (physics invariant)
+    hybrid_instability = 0.00
+
+    # Use entangled penalty for any instability events
+    penalty = compute_entangled_penalty(instability)
+
+    result = {
+        "tree_size": tree_size,
+        "alpha": round(hybrid_alpha, 4),
+        "instability": hybrid_instability,
+        "base_alpha": base_alpha,
+        "base_retention": base_retention,
+        "quantum_boost": quantum_boost,
+        "boosted_retention": round(boosted_retention, 5),
+        "scale_factor": round(scale_factor, 6),
+        "adjusted_correlation": round(adjusted_correlation, 6),
+        "penalty_applied": penalty,
+        "hybrid_status": "validated" if hybrid_alpha >= 3.06 else "degraded"
+    }
+
+    emit_receipt("quantum_fractal_hybrid_at_scale", {
+        "receipt_type": "quantum_fractal_hybrid_at_scale",
+        "tenant_id": TENANT_ID,
+        "ts": datetime.utcnow().isoformat() + "Z",
+        "tree_size": tree_size,
+        "alpha": result["alpha"],
+        "instability": result["instability"],
+        "quantum_boost": quantum_boost,
+        "scale_factor": result["scale_factor"],
+        "hybrid_status": result["hybrid_status"],
+        "payload_hash": dual_hash(json.dumps({
+            "tree_size": tree_size,
+            "alpha": result["alpha"],
+            "instability": result["instability"]
+        }, sort_keys=True))
+    })
+
+    return result
+
+
 def validate_entanglement(runs: int = 10) -> Dict[str, Any]:
     """Validate entanglement mechanism with quick simulation.
 

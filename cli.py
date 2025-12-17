@@ -119,6 +119,11 @@ from cli import (
     cmd_full_pipeline,
     cmd_pilot_info,
     cmd_pipeline_info,
+    # Scale
+    cmd_multi_scale_sweep,
+    cmd_scalability_gate_test,
+    cmd_scale_info,
+    cmd_fractal_info,
 )
 
 
@@ -230,6 +235,16 @@ def main():
     parser.add_argument('--quantum_runs', type=int, default=10, help='Quantum runs (default: 10)')
     parser.add_argument('--sweep_runs', type=int, default=500, help='Sweep runs (default: 500)')
 
+    # Scale flags
+    parser.add_argument('--multi_scale_sweep', type=str, default=None, metavar='TYPE',
+                        help='Run multi-scale sweep ("all" or "1e9")')
+    parser.add_argument('--scalability_gate_test', action='store_true',
+                        help='Test scalability gate status')
+    parser.add_argument('--scale_info', action='store_true',
+                        help='Show scale validation configuration')
+    parser.add_argument('--fractal_info', action='store_true',
+                        help='Show fractal layer configuration')
+
     args = parser.parse_args()
     reroute_enabled = args.reroute or args.reroute_enabled
 
@@ -256,6 +271,10 @@ def main():
         return cmd_quantum_rl_hybrid_info()
     if args.pipeline_info:
         return cmd_pipeline_info()
+    if args.scale_info:
+        return cmd_scale_info()
+    if args.fractal_info:
+        return cmd_fractal_info()
     if args.algo_info:
         return cmd_algo_info()
     if args.gnn_stub:
@@ -268,6 +287,12 @@ def main():
         return cmd_formula_check()
     if args.retention_curve:
         return cmd_retention_curve()
+
+    # Scale commands
+    if args.scalability_gate_test:
+        return cmd_scalability_gate_test()
+    if args.multi_scale_sweep is not None:
+        return cmd_multi_scale_sweep(args.multi_scale_sweep, args.simulate)
 
     # RL commands
     if args.rl_tune and args.blackout is not None:
