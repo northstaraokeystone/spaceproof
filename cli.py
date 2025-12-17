@@ -27,7 +27,7 @@ Usage:
     python cli.py --blackout_sweep 60 --simulate           # Single-point extended blackout test
     python cli.py --gnn_stub                               # Echo GNN sensitivity stub config
 
-    # GNN nonlinear caching (Dec 2025 - NEW)
+    # GNN nonlinear caching (Dec 2025)
     python cli.py --gnn_nonlinear --blackout 150 --simulate  # GNN nonlinear at 150d
     python cli.py --cache_depth 1000000000 --blackout 200 --gnn_nonlinear  # Custom cache depth
     python cli.py --cache_sweep --simulate                   # Cache depth sensitivity sweep
@@ -35,7 +35,7 @@ Usage:
     python cli.py --overflow_test --simulate                 # Test cache overflow detection
     python cli.py --innovation_stubs                         # Echo innovation stub status
 
-    # Entropy pruning (Dec 2025 - NEW)
+    # Entropy pruning (Dec 2025)
     python cli.py --entropy_prune --blackout 150 --simulate     # Single pruning test
     python cli.py --trim_factor 0.4 --entropy_prune --simulate  # Custom trim factor
     python cli.py --hybrid_prune --blackout 200 --simulate      # Hybrid dedup + predictive
@@ -52,2694 +52,318 @@ import argparse
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.sovereignty import compute_sovereignty, find_threshold, SovereigntyConfig
-from src.validate import test_null_hypothesis, test_baseline, bootstrap_threshold, generate_falsifiable_prediction
-from src.plot_curve import generate_curve_data, find_knee, plot_sovereignty_curve, format_finding
-from src.entropy_shannon import (
-    HUMAN_DECISION_RATE_BPS,
-    STARLINK_MARS_BANDWIDTH_MIN_MBPS,
-    STARLINK_MARS_BANDWIDTH_MAX_MBPS,
+# Import constants needed for argument defaults
+from src.partition import NODE_BASELINE
+from src.timeline import C_BASE_DEFAULT, P_FACTOR_DEFAULT
+from src.rl_tune import RL_LR_MIN, RL_LR_MAX
+
+# Import all command handlers from cli modules
+from cli import (
+    # Core
+    cmd_baseline,
+    cmd_bootstrap,
+    cmd_curve,
+    cmd_full,
+    # Partition
+    cmd_partition,
+    cmd_stress_quorum,
+    # Blackout
+    cmd_reroute,
+    cmd_algo_info,
+    cmd_blackout,
+    cmd_blackout_sweep,
+    cmd_simulate_timeline,
+    cmd_extended_sweep,
+    cmd_retention_curve,
+    cmd_gnn_stub,
+    cmd_gnn_nonlinear,
+    cmd_cache_sweep,
+    cmd_extreme_sweep,
+    cmd_overflow_test,
+    cmd_innovation_stubs,
+    # Pruning
+    cmd_entropy_prune,
+    cmd_pruning_sweep,
+    cmd_extended_250d,
+    cmd_verify_chain,
+    cmd_pruning_info,
+    # Ablation
+    cmd_ablate,
+    cmd_ablation_sweep,
+    cmd_ceiling_track,
+    cmd_formula_check,
+    cmd_isolate_layers,
+    # Depth
+    cmd_adaptive_depth_run,
+    cmd_depth_scaling_test,
+    cmd_compute_depth_single,
+    cmd_depth_scaling_info,
+    cmd_efficient_sweep_info,
+    # RL
+    cmd_rl_info,
+    cmd_adaptive_info,
+    cmd_rl_status,
+    cmd_validate_no_static,
+    cmd_rl_tune,
+    cmd_dynamic_mode,
+    cmd_tune_sweep,
+    cmd_rl_500_sweep,
+    cmd_rl_500_sweep_info,
+    # Quantum
+    cmd_quantum_estimate,
+    cmd_quantum_sim,
+    cmd_quantum_rl_hybrid_info,
+    # Pipeline
+    cmd_lr_pilot,
+    cmd_post_tune_execute,
+    cmd_full_pipeline,
+    cmd_pilot_info,
+    cmd_pipeline_info,
 )
-from src.timeline import sovereignty_timeline, C_BASE_DEFAULT, P_FACTOR_DEFAULT, ALPHA_DEFAULT
-from src.latency import tau_penalty, effective_alpha
-from src.partition import (
-    partition_sim,
-    stress_sweep,
-    load_partition_spec,
-    NODE_BASELINE,
-    QUORUM_THRESHOLD,
-    PARTITION_MAX_TEST_PCT,
-    BASE_ALPHA
-)
-from src.ledger import LEDGER_ALPHA_BOOST_VALIDATED
-from src.reasoning import sovereignty_projection_with_partition, validate_resilience_slo, blackout_sweep
-from src.reroute import (
-    adaptive_reroute,
-    blackout_sim,
-    blackout_stress_sweep,
-    apply_reroute_boost,
-    get_reroute_algo_info,
-    load_reroute_spec,
-    REROUTE_ALPHA_BOOST,
-    REROUTING_ALPHA_BOOST_LOCKED,
-    BLACKOUT_BASE_DAYS,
-    BLACKOUT_EXTENDED_DAYS,
-    MIN_EFF_ALPHA_FLOOR,
-    MIN_EFF_ALPHA_VALIDATED
-)
-from src.blackout import (
-    retention_curve,
-    alpha_at_duration,
-    extended_blackout_sweep as blackout_extended_sweep,
-    generate_retention_curve_data,
-    gnn_sensitivity_stub,
-    BLACKOUT_SWEEP_MAX_DAYS,
-    RETENTION_BASE_FACTOR,
-    CURVE_TYPE,
-    ASYMPTOTE_ALPHA
-)
-from src.reasoning import extended_blackout_sweep, project_with_degradation, extreme_blackout_sweep_200d, project_with_asymptote
-from src.gnn_cache import (
-    nonlinear_retention,
-    nonlinear_retention_with_pruning,
-    cache_depth_check,
-    predict_overflow,
-    extreme_blackout_sweep as gnn_extreme_sweep,
-    quantum_relay_stub,
-    swarm_autorepair_stub,
-    cosmos_sim_stub,
-    get_gnn_cache_info,
-    ASYMPTOTE_ALPHA as GNN_ASYMPTOTE_ALPHA,
-    ENTROPY_ASYMPTOTE_E,
-    PRUNING_TARGET_ALPHA,
-    MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
-    CACHE_DEPTH_BASELINE,
-    OVERFLOW_THRESHOLD_DAYS,
-    OVERFLOW_THRESHOLD_DAYS_PRUNED,
-    BLACKOUT_PRUNING_TARGET_DAYS
-)
-from src.pruning import (
-    entropy_prune,
-    dedup_prune,
-    classify_leaf_entropy,
-    generate_sample_merkle_tree,
-    get_pruning_info,
-    load_entropy_pruning_spec,
-    ENTROPY_ASYMPTOTE_E as PRUNING_E,
-    PRUNING_TARGET_ALPHA as PRUNING_ALPHA,
-    LN_N_TRIM_FACTOR_BASE,
-    LN_N_TRIM_FACTOR_MAX,
-    BLACKOUT_PRUNING_TARGET_DAYS as PRUNING_TARGET_DAYS
-)
-from src.reasoning import extended_250d_sovereignty, validate_pruning_slos
-from src.reasoning import ablation_sweep, compute_alpha_with_isolation, get_layer_contributions
-from src.reasoning import sovereignty_timeline_dynamic, continued_ablation_loop
-from src.reasoning import validate_no_static_configs, get_rl_integration_status
-from src.blackout import sweep_with_pruning
-from src.rl_tune import (
-    RLTuner,
-    rl_auto_tune,
-    get_rl_tune_info,
-    RETENTION_MILESTONE_1,
-    RETENTION_MILESTONE_2,
-    ALPHA_TARGET_M1,
-    ALPHA_DROP_THRESHOLD
-)
-from src.adaptive import (
-    compute_adaptive_depth,
-    get_dynamic_config,
-    get_adaptive_info,
-    ADAPTIVE_DEPTH_BASE
-)
-from src.adaptive_depth import (
-    load_depth_spec,
-    compute_depth as compute_adaptive_n_depth,
-    get_depth_scaling_info,
-)
-from src.rl_tune import (
-    run_sweep,
-    compare_sweep_efficiency,
-    get_efficient_sweep_info,
-    RL_SWEEP_INITIAL_LIMIT,
-    RETENTION_QUICK_WIN_TARGET,
-    run_500_sweep,
-    load_sweep_spec,
-    get_500_sweep_info,
-    RL_SWEEP_RUNS,
-    RL_LR_MIN,
-    RL_LR_MAX,
-    RETENTION_TARGET,
-)
-from src.quantum_hybrid import (
-    quantum_entropy_boost,
-    is_implemented as quantum_is_implemented,
-    get_boost_estimate,
-    get_quantum_stub_info,
-    project_with_quantum,
-)
-from src.quantum_rl_hybrid import (
-    simulate_quantum_policy,
-    get_quantum_rl_hybrid_info,
-    QUANTUM_SIM_RUNS,
-    ENTANGLED_PENALTY_FACTOR,
-    QUANTUM_RETENTION_BOOST,
-)
-from src.rl_tune import (
-    pilot_lr_narrow,
-    run_tuned_sweep,
-    chain_pilot_to_sweep,
-    load_pilot_spec,
-    get_pilot_info,
-    PILOT_LR_RUNS,
-    INITIAL_LR_RANGE,
-    TARGET_NARROWED_LR,
-    FULL_TUNED_RUNS,
-)
-from src.reasoning import execute_full_pipeline, get_pipeline_info
-from src.alpha_compute import (
-    alpha_calc,
-    compound_retention,
-    ceiling_gap,
-    validate_formula,
-    get_ablation_expected,
-    get_alpha_compute_info,
-    SHANNON_FLOOR_ALPHA,
-    ALPHA_CEILING_TARGET,
-    ABLATION_MODES
-)
-
-
-def cmd_baseline():
-    """Run baseline sovereignty test."""
-    print("=" * 60)
-    print("BASELINE SOVEREIGNTY TEST")
-    print("=" * 60)
-
-    result = test_baseline()
-    print(f"\nConfiguration:")
-    print(f"  Bandwidth: {result['bandwidth_mbps']} Mbps")
-    print(f"  Delay: {result['delay_s']} seconds")
-    print(f"  Compute: {result['compute_flops']} FLOPS (no AI assist)")
-
-    print(f"\nRESULT: Threshold = {result['threshold']} crew")
-    print("=" * 60)
-
-
-def cmd_bootstrap():
-    """Run bootstrap statistical analysis."""
-    print("=" * 60)
-    print("BOOTSTRAP STATISTICAL ANALYSIS")
-    print("=" * 60)
-
-    print("\nRunning 100 bootstrap iterations...")
-    result = bootstrap_threshold(100, 42)
-
-    print(f"\nRESULTS:")
-    print(f"  Mean threshold: {result['mean']:.1f} crew")
-    print(f"  Std deviation:  {result['std']:.1f} crew")
-    print(f"  Range: [{result['min']}, {result['max']}] crew")
-    print(f"  P-value: {result['p_value']:.6f}")
-
-    print("\n" + generate_falsifiable_prediction(result))
-    print("=" * 60)
-
-
-def cmd_curve():
-    """Generate sovereignty curve."""
-    print("=" * 60)
-    print("SOVEREIGNTY CURVE GENERATION")
-    print("=" * 60)
-
-    # Parameters
-    bandwidth = 4.0  # Expected Mbps
-    delay = 480.0    # 8 min average
-
-    print(f"\nConfiguration:")
-    print(f"  Bandwidth: {bandwidth} Mbps")
-    print(f"  Delay: {delay} seconds ({delay/60:.0f} minutes)")
-
-    # Generate curve
-    data = generate_curve_data((10, 100), bandwidth, delay)
-    knee = find_knee(data)
-
-    # Bootstrap for uncertainty
-    bootstrap = bootstrap_threshold(100, 42)
-    uncertainty = bootstrap["std"]
-
-    print(f"\nTHRESHOLD: {knee} +/- {uncertainty:.0f} crew")
-
-    # Plot
-    output_path = os.path.join(os.path.dirname(__file__), "outputs", "sovereignty_curve.png")
-    plot_sovereignty_curve(data, knee, output_path, uncertainty=uncertainty)
-    print(f"\nCurve saved to: {output_path}")
-
-    # The finding
-    print("\n" + "-" * 60)
-    print("THE FINDING:")
-    print("-" * 60)
-    print(format_finding(knee, bandwidth, delay / 60, uncertainty))
-    print("=" * 60)
-
-
-def cmd_full():
-    """Run full integration test."""
-    print("=" * 60)
-    print("AXIOM-CORE v1 INTEGRATION TEST")
-    print("=" * 60)
-
-    # 1. Null hypothesis
-    print("\n[1] NULL HYPOTHESIS TEST")
-    null_result = test_null_hypothesis()
-    status = "PASS" if null_result["passed"] else "FAIL"
-    print(f"    Status: {status}")
-    print(f"    Threshold with infinite bandwidth: {null_result['threshold']}")
-
-    # 2. Baseline
-    print("\n[2] BASELINE TEST")
-    baseline = test_baseline()
-    print(f"    Threshold (no tech assist): {baseline['threshold']} crew")
-
-    # 3. Bootstrap
-    print("\n[3] BOOTSTRAP ANALYSIS")
-    bootstrap = bootstrap_threshold(100, 42)
-    print(f"    Mean: {bootstrap['mean']:.1f} +/- {bootstrap['std']:.1f} crew")
-    print(f"    P-value: {bootstrap['p_value']:.6f}")
-
-    # 4. Curve
-    print("\n[4] SOVEREIGNTY CURVE")
-    data = generate_curve_data((10, 100), 4.0, 480)
-    knee = find_knee(data)
-    print(f"    Knee at: {knee} crew")
-
-    # Generate plot
-    output_path = os.path.join(os.path.dirname(__file__), "outputs", "sovereignty_curve.png")
-    plot_sovereignty_curve(data, knee, output_path, uncertainty=bootstrap["std"])
-    print(f"    Saved: {output_path}")
-
-    # 5. The finding
-    print("\n" + "=" * 60)
-    print("THE FINDING:")
-    print("=" * 60)
-    print(format_finding(
-        knee=int(bootstrap["mean"]),
-        bandwidth=4.0,
-        delay=8.0,  # minutes
-        uncertainty=bootstrap["std"]
-    ))
-
-    # 6. Falsifiable prediction
-    print("\n" + "-" * 60)
-    print(generate_falsifiable_prediction(bootstrap))
-
-    print("\n" + "=" * 60)
-    print("Integration test complete.")
-    print("=" * 60)
-
-
-def cmd_partition(loss_pct: float, nodes: int, simulate: bool):
-    """Run single partition simulation.
-
-    Args:
-        loss_pct: Partition loss percentage (0-1)
-        nodes: Node count for simulation
-        simulate: Whether to output simulation receipt
-    """
-    print("=" * 60)
-    print("PARTITION RESILIENCE TEST")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Nodes total: {nodes}")
-    print(f"  Loss percentage: {loss_pct * 100:.0f}%")
-    print(f"  Base alpha: {BASE_ALPHA}")
-    print(f"  Ledger boost: +{LEDGER_ALPHA_BOOST_VALIDATED}")
-
-    try:
-        # Run partition simulation
-        result = partition_sim(
-            nodes_total=nodes,
-            loss_pct=loss_pct,
-            base_alpha=BASE_ALPHA,
-            emit=simulate
-        )
-
-        print(f"\nRESULTS:")
-        print(f"  Nodes surviving: {result['nodes_surviving']}")
-        print(f"  Quorum status: {'INTACT' if result['quorum_status'] else 'FAILED'}")
-        print(f"  Effective α drop: {result['eff_alpha_drop']:.4f}")
-        print(f"  Effective α: {result['eff_alpha']:.4f}")
-
-        # Validate SLOs
-        print(f"\nSLO VALIDATION:")
-        alpha_ok = result['eff_alpha'] >= 2.63
-        drop_ok = result['eff_alpha_drop'] <= 0.05  # At boundary at 40% (exactly 0.05)
-        quorum_ok = result['quorum_status']
-
-        print(f"  eff_α >= 2.63: {'PASS' if alpha_ok else 'FAIL'} ({result['eff_alpha']:.4f})")
-        print(f"  α drop <= 0.05: {'PASS' if drop_ok else 'FAIL'} ({result['eff_alpha_drop']:.4f})")
-        print(f"  Quorum intact: {'PASS' if quorum_ok else 'FAIL'}")
-
-        if simulate:
-            print("\n[partition_stress receipt emitted above]")
-
-    except Exception as e:
-        print(f"\nERROR: {e}")
-        print("Quorum failure - partition exceeded safe limits")
-
-    print("=" * 60)
-
-
-def cmd_stress_quorum():
-    """Run full stress quorum test (1000 iterations, 0-40% loss)."""
-    print("=" * 60)
-    print("QUORUM STRESS TEST (1000 iterations)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Nodes baseline: {NODE_BASELINE}")
-    print(f"  Quorum threshold: {QUORUM_THRESHOLD}")
-    print(f"  Loss range: 0-{PARTITION_MAX_TEST_PCT * 100:.0f}%")
-    print(f"  Iterations: 1000")
-    print(f"  Base alpha: {BASE_ALPHA}")
-
-    print("\nRunning stress sweep...")
-
-    # Run stress sweep
-    results = stress_sweep(
-        nodes_total=NODE_BASELINE,
-        loss_range=(0.0, PARTITION_MAX_TEST_PCT),
-        n_iterations=1000,
-        base_alpha=BASE_ALPHA,
-        seed=42
-    )
-
-    # Compute stats
-    quorum_successes = [r for r in results if r["quorum_status"]]
-    success_rate = len(quorum_successes) / len(results)
-    avg_drop = sum(r["eff_alpha_drop"] for r in quorum_successes) / len(quorum_successes)
-    max_drop = max(r["eff_alpha_drop"] for r in quorum_successes)
-    min_alpha = min(r["eff_alpha"] for r in quorum_successes)
-
-    print(f"\nRESULTS:")
-    print(f"  Success rate: {success_rate * 100:.1f}%")
-    print(f"  Avg α drop: {avg_drop:.4f}")
-    print(f"  Max α drop: {max_drop:.4f}")
-    print(f"  Min effective α: {min_alpha:.4f}")
-
-    print(f"\nSLO VALIDATION:")
-    print(f"  100% quorum survival: {'PASS' if success_rate == 1.0 else 'FAIL'}")
-    print(f"  Avg drop < 0.05: {'PASS' if avg_drop < 0.05 else 'FAIL'}")
-    print(f"  Min α >= 2.63: {'PASS' if min_alpha >= 2.63 else 'FAIL'}")
-
-    print("\n[quorum_resilience receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_reroute(simulate: bool):
-    """Run single adaptive reroute test.
-
-    Args:
-        simulate: Whether to output simulation receipt
-    """
-    print("=" * 60)
-    print("ADAPTIVE REROUTE TEST")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Algorithm: {load_reroute_spec()['algo_type']}")
-    print(f"  CGR Baseline: {load_reroute_spec()['cgr_baseline']}")
-    print(f"  ML Model: {load_reroute_spec()['ml_model_type']}")
-    print(f"  Alpha Boost: +{REROUTE_ALPHA_BOOST}")
-    print(f"  Base Alpha Floor: {MIN_EFF_ALPHA_FLOOR}")
-
-    # Test reroute boost
-    boosted = apply_reroute_boost(MIN_EFF_ALPHA_FLOOR, reroute_active=True, blackout_days=0)
-
-    print(f"\nRESULTS:")
-    print(f"  Base eff_α: {MIN_EFF_ALPHA_FLOOR}")
-    print(f"  Boosted eff_α: {boosted}")
-    print(f"  Boost applied: +{REROUTE_ALPHA_BOOST}")
-
-    print(f"\nSLO VALIDATION:")
-    alpha_ok = boosted >= 2.70
-    print(f"  eff_α >= 2.70: {'PASS' if alpha_ok else 'FAIL'} ({boosted})")
-
-    # Run adaptive reroute simulation
-    graph_state = {
-        "nodes": NODE_BASELINE,
-        "edges": [{"src": f"n{i}", "dst": f"n{(i+1) % NODE_BASELINE}"} for i in range(NODE_BASELINE)]
-    }
-
-    result = adaptive_reroute(graph_state, partition_pct=0.2, blackout_days=0)
-
-    print(f"\n  Recovery factor: {result['recovery_factor']}")
-    print(f"  Quorum preserved: {'PASS' if result['quorum_preserved'] else 'FAIL'}")
-    print(f"  Alpha boost applied: {result['alpha_boost']}")
-
-    if simulate:
-        print("\n[adaptive_reroute_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_blackout(blackout_days: int, reroute_enabled: bool, simulate: bool):
-    """Run single blackout simulation.
-
-    Args:
-        blackout_days: Blackout duration in days
-        reroute_enabled: Whether adaptive rerouting is active
-        simulate: Whether to output simulation receipt
-    """
-    print("=" * 60)
-    print(f"BLACKOUT SIMULATION ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Blackout duration: {blackout_days} days")
-    print(f"  Baseline max: {BLACKOUT_BASE_DAYS} days")
-    print(f"  Extended max: {BLACKOUT_EXTENDED_DAYS} days (with reroute)")
-    print(f"  Reroute enabled: {reroute_enabled}")
-    print(f"  Base alpha floor: {MIN_EFF_ALPHA_FLOOR}")
-
-    # Run blackout simulation
-    result = blackout_sim(
-        nodes=NODE_BASELINE,
-        blackout_days=blackout_days,
-        reroute_enabled=reroute_enabled,
-        base_alpha=MIN_EFF_ALPHA_FLOOR,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Survival status: {'SURVIVED' if result['survival_status'] else 'FAILED'}")
-    print(f"  Min α during: {result['min_alpha_during']}")
-    print(f"  Max α drop: {result['max_alpha_drop']}")
-    print(f"  Quorum failures: {result['quorum_failures']}")
-
-    print(f"\nSLO VALIDATION:")
-    survival_ok = result['survival_status']
-    alpha_ok = result['min_alpha_during'] >= MIN_EFF_ALPHA_FLOOR * 0.9
-
-    print(f"  Survival: {'PASS' if survival_ok else 'FAIL'}")
-    print(f"  Min α acceptable: {'PASS' if alpha_ok else 'FAIL'} ({result['min_alpha_during']})")
-
-    if blackout_days <= BLACKOUT_BASE_DAYS:
-        print(f"  Within baseline (43d): PASS")
-    elif blackout_days <= BLACKOUT_EXTENDED_DAYS and reroute_enabled:
-        print(f"  Within extended (60d) with reroute: PASS")
-    else:
-        print(f"  Beyond tolerance: WARNING")
-
-    if simulate:
-        print("\n[blackout_sim_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_blackout_sweep(reroute_enabled: bool):
-    """Run full blackout sweep (1000 iterations, 43-60d range).
-
-    Args:
-        reroute_enabled: Whether adaptive rerouting is active
-    """
-    print("=" * 60)
-    print("BLACKOUT STRESS SWEEP (1000 iterations)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Nodes baseline: {NODE_BASELINE}")
-    print(f"  Blackout range: {BLACKOUT_BASE_DAYS}-{BLACKOUT_EXTENDED_DAYS} days")
-    print(f"  Iterations: 1000")
-    print(f"  Reroute enabled: {reroute_enabled}")
-    print(f"  Base alpha: {MIN_EFF_ALPHA_FLOOR}")
-
-    print("\nRunning blackout stress sweep...")
-
-    result = blackout_stress_sweep(
-        nodes=NODE_BASELINE,
-        blackout_range=(BLACKOUT_BASE_DAYS, BLACKOUT_EXTENDED_DAYS),
-        n_iterations=1000,
-        reroute_enabled=reroute_enabled,
-        base_alpha=MIN_EFF_ALPHA_FLOOR,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Survival rate: {result['survival_rate'] * 100:.1f}%")
-    print(f"  Failures: {result['failures']}")
-    print(f"  Avg min α: {result['avg_min_alpha']}")
-    print(f"  Avg max drop: {result['avg_max_drop']}")
-    print(f"  All survived: {result['all_survived']}")
-
-    print(f"\nSLO VALIDATION:")
-    survival_ok = result['survival_rate'] == 1.0
-    drop_ok = result['avg_max_drop'] < 0.05
-
-    print(f"  100% survival: {'PASS' if survival_ok else 'FAIL'} ({result['survival_rate']*100:.1f}%)")
-    print(f"  Avg drop < 0.05: {'PASS' if drop_ok else 'FAIL'} ({result['avg_max_drop']})")
-
-    if reroute_enabled:
-        boosted = MIN_EFF_ALPHA_FLOOR + REROUTE_ALPHA_BOOST
-        print(f"  eff_α with reroute >= 2.70: {'PASS' if boosted >= 2.70 else 'FAIL'} ({boosted})")
-
-    print("\n[blackout_stress_sweep receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_algo_info():
-    """Output reroute algorithm specification."""
-    print("=" * 60)
-    print("ADAPTIVE REROUTE ALGORITHM SPECIFICATION")
-    print("=" * 60)
-
-    info = get_reroute_algo_info()
-
-    print(f"\nAlgorithm: {info['algo_type']}")
-    print(f"Description: {info['description']}")
-
-    print(f"\nComponents:")
-    print(f"  CGR Baseline: {info['cgr_baseline']}")
-    print(f"  ML Model: {info['ml_model_type']}")
-
-    print(f"\nParameters:")
-    print(f"  Alpha Boost: +{info['alpha_boost']}")
-    print(f"  Blackout Base: {info['blackout_base_days']} days")
-    print(f"  Blackout Extended: {info['blackout_extended_days']} days")
-    print(f"  Retention Factor: {info['retention_factor']}")
-    print(f"  Min eff_α Floor: {info['min_eff_alpha_floor']}")
-
-    print(f"\nHybrid Architecture:")
-    print("  ┌─────────────────────────────────────────────────────┐")
-    print("  │  CGR Base Layer (Deterministic)                     │")
-    print("  │  - Time-varying Dijkstra on contact graph           │")
-    print("  │  - Precomputed orbital contact windows              │")
-    print("  │  - Provable delivery bounds                         │")
-    print("  ├─────────────────────────────────────────────────────┤")
-    print("  │  ML Adaptive Layer (Predictive)                     │")
-    print("  │  - Lightweight GNN for anomaly prediction           │")
-    print("  │  - Historical pattern learning                      │")
-    print("  │  - Contact degradation forecasting                  │")
-    print("  ├─────────────────────────────────────────────────────┤")
-    print("  │  Quorum-Aware Recovery                              │")
-    print("  │  - Merkle chain continuity preservation             │")
-    print("  │  - Distributed anchoring integrity                  │")
-    print("  └─────────────────────────────────────────────────────┘")
-
-    print("\n[reroute_algo_info receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_simulate_timeline(c_base: float, p_factor: float, tau: float):
-    """Run sovereignty timeline simulation with Mars latency penalty.
-
-    Args:
-        c_base: Initial person-eq capacity
-        p_factor: Propulsion growth factor per synod
-        tau: Latency in seconds (0=Earth, 1200=Mars max)
-    """
-    print("=" * 60)
-    print("SOVEREIGNTY TIMELINE SIMULATION")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  c_base (initial capacity): {c_base} person-eq")
-    print(f"  p_factor (propulsion growth): {p_factor}x per synod")
-    print(f"  tau (latency): {tau}s ({tau/60:.1f} min)")
-    print(f"  alpha (base): {ALPHA_DEFAULT}")
-
-    # Compute effective alpha
-    eff_alpha = effective_alpha(ALPHA_DEFAULT, tau) if tau > 0 else ALPHA_DEFAULT
-    print(f"  effective_alpha: {eff_alpha:.3f}")
-
-    if tau > 0:
-        penalty = tau_penalty(tau)
-        print(f"  latency_penalty: {penalty:.2f} ({(1-penalty)*100:.0f}% drop)")
-
-    # Run simulation
-    result = sovereignty_timeline(c_base, p_factor, ALPHA_DEFAULT, tau)
-
-    print(f"\nRESULTS:")
-    print(f"  Cycles to 10³ person-eq: {result['cycles_to_10k_person_eq']}")
-    print(f"  Cycles to 10⁶ person-eq: {result['cycles_to_1M_person_eq']}")
-
-    if tau > 0:
-        print(f"  Delay vs Earth: +{result['delay_vs_earth']} cycles")
-
-    # Show trajectory summary
-    traj = result['person_eq_trajectory']
-    print(f"\nTrajectory (first 10 cycles):")
-    for i, val in enumerate(traj[:10]):
-        marker = ""
-        if val >= 1000 and (i == 0 or traj[i-1] < 1000):
-            marker = " <- 10³ milestone"
-        if val >= 1000000 and (i == 0 or traj[i-1] < 1000000):
-            marker = " <- 10⁶ milestone"
-        print(f"    Cycle {i}: {val:.0f} person-eq{marker}")
-
-    print("=" * 60)
-
-    # The receipt is emitted by sovereignty_timeline, search for it
-    print("\n[sovereignty_projection receipt emitted above]")
-
-
-def cmd_extended_sweep(start_days: int, end_days: int, simulate: bool):
-    """Run extended blackout sweep from start to end days.
-
-    Args:
-        start_days: Start of sweep range (e.g., 43)
-        end_days: End of sweep range (e.g., 90)
-        simulate: Whether to output receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"EXTENDED BLACKOUT SWEEP ({start_days}-{end_days}d)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Sweep range: {start_days}-{end_days} days")
-    print(f"  Iterations: 1000")
-    print(f"  Validated floor: {MIN_EFF_ALPHA_VALIDATED}")
-    print(f"  Reroute boost (locked): +{REROUTING_ALPHA_BOOST_LOCKED}")
-
-    print("\nRunning extended sweep...")
-
-    result = extended_blackout_sweep(
-        day_range=(start_days, end_days),
-        iterations=1000,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  All survived: {result['all_survived']}")
-    print(f"  Survival rate: {result['survival_rate'] * 100:.1f}%")
-    print(f"  Avg α: {result['avg_alpha']}")
-    print(f"  Min α: {result['min_alpha']}")
-    print(f"  α at 60d: {result['alpha_at_60d']}")
-    print(f"  α at 90d: {result['alpha_at_90d']}")
-
-    print(f"\nRETENTION FLOOR:")
-    floor = result['retention_floor']
-    print(f"  Min retention: {floor['min_retention']}")
-    print(f"  Days at min: {floor['days_at_min']}")
-    print(f"  α at min: {floor['alpha_at_min']}")
-
-    print(f"\nASSERTION VALIDATION:")
-    assertions = result['assertions_passed']
-    print(f"  α(60d) >= 2.69: {'PASS' if assertions['alpha_60_ge_2.69'] else 'FAIL'}")
-    print(f"  α(90d) >= 2.65: {'PASS' if assertions['alpha_90_ge_2.65'] else 'FAIL'}")
-
-    if simulate:
-        print("\n[extended_blackout_sweep receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_retention_curve():
-    """Output retention curve data as JSON."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("RETENTION CURVE DATA")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Range: {BLACKOUT_BASE_DAYS}-{BLACKOUT_SWEEP_MAX_DAYS} days")
-    print(f"  Base retention: {RETENTION_BASE_FACTOR}")
-    print(f"  Degradation model: linear")
-
-    curve_data = generate_retention_curve_data((BLACKOUT_BASE_DAYS, BLACKOUT_SWEEP_MAX_DAYS))
-
-    print(f"\nCurve points: {len(curve_data)}")
-    print("\nSample points:")
-    print(f"  43d: retention={curve_data[0]['retention']}, α={curve_data[0]['alpha']}")
-
-    # Find 60d, 75d, 90d indices
-    idx_60 = 60 - BLACKOUT_BASE_DAYS
-    idx_75 = 75 - BLACKOUT_BASE_DAYS
-    idx_90 = 90 - BLACKOUT_BASE_DAYS
-
-    if idx_60 < len(curve_data):
-        print(f"  60d: retention={curve_data[idx_60]['retention']}, α={curve_data[idx_60]['alpha']}")
-    if idx_75 < len(curve_data):
-        print(f"  75d: retention={curve_data[idx_75]['retention']}, α={curve_data[idx_75]['alpha']}")
-    if idx_90 < len(curve_data):
-        print(f"  90d: retention={curve_data[idx_90]['retention']}, α={curve_data[idx_90]['alpha']}")
-
-    print("\n--- JSON OUTPUT ---")
-    print(json_lib.dumps(curve_data, indent=2))
-
-    print("\n[retention_curve receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_gnn_stub():
-    """Output GNN sensitivity stub config."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("GNN SENSITIVITY STUB (Next Gate Placeholder)")
-    print("=" * 60)
-
-    param_config = {
-        "model_sizes": ["1K", "10K", "100K"],
-        "complexity_levels": ["low", "medium", "high"],
-        "target_metric": "alpha_uplift_per_watt",
-        "hardware_constraint": "mars_surface_edge_compute",
-        "gate": "next"
-    }
-
-    result = gnn_sensitivity_stub(param_config)
-
-    print(f"\nStatus: {result['status']}")
-    print(f"Not implemented: {result['not_implemented']}")
-    print(f"Next gate: {result['next_gate']}")
-
-    print(f"\nParameter config:")
-    print(json_lib.dumps(param_config, indent=2))
-
-    print(f"\nDescription: {result['description']}")
-
-    print("\n[gnn_sensitivity_stub receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_gnn_nonlinear(blackout_days: int, cache_depth: int, simulate: bool):
-    """Run GNN nonlinear retention simulation.
-
-    Args:
-        blackout_days: Blackout duration in days
-        cache_depth: Cache depth in entries
-        simulate: Whether to output simulation receipt
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"GNN NONLINEAR RETENTION ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Blackout duration: {blackout_days} days")
-    print(f"  Cache depth: {cache_depth:,} entries")
-    print(f"  Asymptote alpha: {GNN_ASYMPTOTE_ALPHA}")
-    print(f"  Min eff alpha validated: {GNN_MIN_EFF_ALPHA_VALIDATED}")
-
-    try:
-        result = nonlinear_retention(blackout_days, cache_depth)
-
-        print(f"\nRESULTS:")
-        print(f"  Retention factor: {result['retention_factor']}")
-        print(f"  Effective alpha: {result['eff_alpha']}")
-        print(f"  Asymptote proximity: {result['asymptote_proximity']}")
-        print(f"  GNN boost: {result['gnn_boost']}")
-        print(f"  Curve type: {result['curve_type']}")
-
-        print(f"\nSLO VALIDATION:")
-        asymptote_ok = result['asymptote_proximity'] <= 0.02
-        print(f"  Asymptote proximity <= 0.02: {'PASS' if asymptote_ok else 'FAIL'} ({result['asymptote_proximity']})")
-
-        if simulate:
-            print("\n[gnn_nonlinear_receipt emitted above]")
-
-    except Exception as e:
-        print(f"\nOVERFLOW DETECTED: {e}")
-        print("Cache overflow - StopRule triggered")
-
-    print("=" * 60)
-
-
-def cmd_cache_sweep(simulate: bool):
-    """Run cache depth sensitivity sweep.
-
-    Args:
-        simulate: Whether to output simulation receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print("CACHE DEPTH SENSITIVITY SWEEP")
-    print("=" * 60)
-
-    cache_depths = [int(1e7), int(1e8), int(1e9), int(1e10)]
-    test_days = [90, 150, 180, 200]
-
-    print(f"\nConfiguration:")
-    print(f"  Cache depths: {[f'{d:.0e}' for d in cache_depths]}")
-    print(f"  Test durations: {test_days} days")
-
-    print(f"\nRESULTS:")
-    print(f"  {'Depth':>12} | {'90d':>10} | {'150d':>10} | {'180d':>10} | {'200d':>10}")
-    print(f"  {'-'*12}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
-
-    for depth in cache_depths:
-        row = f"  {depth:>12.0e} |"
-        for days in test_days:
-            try:
-                result = nonlinear_retention(days, depth)
-                row += f" {result['eff_alpha']:>10.4f} |"
-            except Exception:
-                row += f" {'OVERFLOW':>10} |"
-        print(row)
-
-    if simulate:
-        print("\n[cache_sweep receipts emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_extreme_sweep(max_days: int, cache_depth: int, simulate: bool):
-    """Run extreme blackout sweep to specified days.
-
-    Args:
-        max_days: Maximum blackout days
-        cache_depth: Cache depth in entries
-        simulate: Whether to output simulation receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"EXTREME BLACKOUT SWEEP (43-{max_days}d)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Day range: 43-{max_days} days")
-    print(f"  Cache depth: {cache_depth:,} entries")
-    print(f"  Iterations: 100 (abbreviated)")
-
-    result = extreme_blackout_sweep_200d(
-        day_range=(43, max_days),
-        cache_depth=cache_depth,
-        iterations=100,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Total sweeps: {result['total_sweeps']}")
-    print(f"  Overflow events: {result['overflow_events']}")
-    print(f"  Survival events: {result['survival_events']}")
-    print(f"  Overflow at 200d: {result['overflow_at_200d']}")
-    print(f"  StopRule expected: {result['stoprule_expected']}")
-
-    if simulate:
-        print("\n[extreme_blackout_sweep_200d receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_overflow_test(simulate: bool):
-    """Test cache overflow detection.
-
-    Args:
-        simulate: Whether to output simulation receipts
-    """
-    print("=" * 60)
-    print("CACHE OVERFLOW DETECTION TEST")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Overflow threshold: {OVERFLOW_THRESHOLD_DAYS} days")
-    print(f"  Cache baseline: {CACHE_DEPTH_BASELINE:,} entries")
-
-    # Test overflow detection
-    test_days = [180, 190, 200, 201]
-
-    print(f"\nRESULTS:")
-    for days in test_days:
-        overflow_result = predict_overflow(days, CACHE_DEPTH_BASELINE)
-        overflow = overflow_result["overflow_risk"] >= 0.95
-
-        try:
-            retention = nonlinear_retention(days, CACHE_DEPTH_BASELINE)
-            status = f"alpha={retention['eff_alpha']:.4f}"
-        except Exception:
-            status = "STOPRULE"
-
-        print(f"  {days}d: risk={overflow_result['overflow_risk']:.2%}, overflow={overflow}, status={status}")
-
-    if simulate:
-        print("\n[overflow_test receipts emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_innovation_stubs():
-    """Echo innovation stub status."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("INNOVATION STUBS STATUS")
-    print("=" * 60)
-
-    print("\n[1] QUANTUM RELAY STUB")
-    quantum = quantum_relay_stub()
-    print(f"    Status: {quantum['status']}")
-    print(f"    Potential boost: {quantum['potential_boost']}")
-    print(f"    Description: {quantum['description']}")
-
-    print("\n[2] SWARM AUTOREPAIR STUB")
-    swarm = swarm_autorepair_stub()
-    print(f"    Status: {swarm['status']}")
-    print(f"    Potential boost: {swarm['potential_boost']}")
-    print(f"    Potential: {swarm['potential']}")
-
-    print("\n[3] COSMOS SIM STUB")
-    cosmos = cosmos_sim_stub()
-    print(f"    Status: {cosmos['status']}")
-    print(f"    Reason: {cosmos['reason']}")
-    print(f"    Availability: {cosmos['availability']}")
-
-    print("\n[innovation_stub receipts emitted above]")
-    print("=" * 60)
-
-
-def cmd_entropy_prune(blackout_days: int, trim_factor: float, hybrid: bool, simulate: bool):
-    """Run single entropy pruning test.
-
-    Args:
-        blackout_days: Blackout duration in days
-        trim_factor: ln(n) trim factor (0.3-0.5 range)
-        hybrid: Whether to enable hybrid dedup + predictive pruning
-        simulate: Whether to output simulation receipt
-    """
-    import json as json_lib
-    import math
-
-    print("=" * 60)
-    print(f"ENTROPY PRUNING TEST ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  ENTROPY_ASYMPTOTE_E: {ENTROPY_ASYMPTOTE_E} (physics constant)")
-    print(f"  Trim factor: {trim_factor}")
-    print(f"  Hybrid mode: {hybrid}")
-    print(f"  Target alpha: {PRUNING_TARGET_ALPHA}")
-    print(f"  Target days: {BLACKOUT_PRUNING_TARGET_DAYS}")
-
-    # Generate sample Merkle tree
-    tree = generate_sample_merkle_tree(n_leaves=100, duplicate_ratio=0.2)
-    print(f"  Sample tree leaves: {tree['leaf_count']}")
-
-    # Run entropy pruning
-    result = entropy_prune(tree, trim_factor=trim_factor, hybrid=hybrid)
-
-    print(f"\nRESULTS:")
-    print(f"  Branches pruned: {result['branches_pruned']}")
-    print(f"  Entropy before: {result['entropy_before']}")
-    print(f"  Entropy after: {result['entropy_after']}")
-    print(f"  Entropy reduction: {result['entropy_reduction_pct']:.1f}%")
-    print(f"  Alpha uplift: {result['alpha_uplift']}")
-    print(f"  Dedup removed: {result['dedup_removed']}")
-    print(f"  Predictive pruned: {result['predictive_pruned']}")
-
-    # Get retention with pruning
-    try:
-        retention = nonlinear_retention_with_pruning(
-            blackout_days,
-            CACHE_DEPTH_BASELINE,
-            pruning_enabled=True,
-            trim_factor=trim_factor
-        )
-        print(f"\n  Effective alpha at {blackout_days}d: {retention['eff_alpha']}")
-        print(f"  Pruning boost: {retention['pruning_boost']}")
-        print(f"  Target achieved: {retention['eff_alpha'] >= PRUNING_TARGET_ALPHA}")
-    except Exception as e:
-        print(f"\n  OVERFLOW: {e}")
-
-    if simulate:
-        print("\n[entropy_pruning_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_pruning_sweep(simulate: bool):
-    """Run pruning sensitivity sweep.
-
-    Args:
-        simulate: Whether to output simulation receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print("PRUNING SENSITIVITY SWEEP")
-    print("=" * 60)
-
-    trim_factors = [0.1, 0.2, 0.3, 0.4, 0.5]
-    test_days = [150, 200, 250]
-
-    print(f"\nConfiguration:")
-    print(f"  Trim factors: {trim_factors}")
-    print(f"  Test durations: {test_days} days")
-
-    print(f"\nRESULTS:")
-    print(f"  {'Trim':>8} | {'150d':>10} | {'200d':>10} | {'250d':>10}")
-    print(f"  {'-'*8}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
-
-    for trim in trim_factors:
-        row = f"  {trim:>8.2f} |"
-        for days in test_days:
-            try:
-                result = nonlinear_retention_with_pruning(
-                    days,
-                    CACHE_DEPTH_BASELINE,
-                    pruning_enabled=True,
-                    trim_factor=trim
-                )
-                row += f" {result['eff_alpha']:>10.4f} |"
-            except Exception:
-                row += f" {'OVERFLOW':>10} |"
-        print(row)
-
-    if simulate:
-        print("\n[pruning_sweep receipts emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_extended_250d(simulate: bool):
-    """Run 250d extended simulation with pruning.
-
-    Args:
-        simulate: Whether to output simulation receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print("EXTENDED 250d SOVEREIGNTY PROJECTION")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Target days: {BLACKOUT_PRUNING_TARGET_DAYS}")
-    print(f"  Target alpha: {PRUNING_TARGET_ALPHA}")
-    print(f"  Overflow threshold (pruned): {OVERFLOW_THRESHOLD_DAYS_PRUNED}")
-    print(f"  Entropy asymptote: {ENTROPY_ASYMPTOTE_E} (physics)")
-
-    result = extended_250d_sovereignty(
-        pruning_enabled=True,
-        trim_factor=0.3,
-        blackout_days=BLACKOUT_PRUNING_TARGET_DAYS
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Effective alpha: {result['effective_alpha']}")
-    print(f"  Target achieved: {result['target_achieved']}")
-    print(f"  Pruning boost: {result['pruning_boost']}")
-    print(f"  Overflow margin: {result['overflow_margin']} days")
-    print(f"  Cycles to 10K: {result['cycles_to_10k_person_eq']}")
-    print(f"  Cycles to 1M: {result['cycles_to_1M_person_eq']}")
-
-    print(f"\nSLO VALIDATION:")
-    alpha_ok = result['effective_alpha'] >= PRUNING_TARGET_ALPHA
-    overflow_ok = result['overflow_margin'] >= 0
-    print(f"  Alpha >= {PRUNING_TARGET_ALPHA}: {'PASS' if alpha_ok else 'FAIL'} ({result['effective_alpha']})")
-    print(f"  Overflow margin >= 0: {'PASS' if overflow_ok else 'FAIL'} ({result['overflow_margin']}d)")
-
-    if simulate:
-        print("\n[extended_250d_sovereignty receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_verify_chain(trim_factor: float, simulate: bool):
-    """Verify chain integrity after pruning.
-
-    Args:
-        trim_factor: ln(n) trim factor
-        simulate: Whether to output simulation receipts
-    """
-    print("=" * 60)
-    print("CHAIN INTEGRITY VERIFICATION")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Trim factor: {trim_factor}")
-    print(f"  Test iterations: 10")
-
-    all_passed = True
-    for i in range(10):
-        tree = generate_sample_merkle_tree(n_leaves=100, duplicate_ratio=0.2)
-        try:
-            result = entropy_prune(tree, trim_factor=trim_factor, hybrid=True)
-            status = "PASS"
-        except Exception as e:
-            if "Chain broken" in str(e) or "Quorum lost" in str(e):
-                status = f"FAIL: {e}"
-                all_passed = False
-            else:
-                status = "PASS"
-        print(f"  Iteration {i+1}: {status}")
-
-    print(f"\nCHAIN INTEGRITY: {'PASS' if all_passed else 'FAIL'}")
-
-    if simulate:
-        print("\n[chain_integrity receipts emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_pruning_info():
-    """Output pruning configuration."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("PRUNING CONFIGURATION")
-    print("=" * 60)
-
-    info = get_pruning_info()
-
-    print(f"\nPhysics Constants:")
-    print(f"  ENTROPY_ASYMPTOTE_E: {info['entropy_asymptote_e']} (Shannon bound, NOT tunable)")
-    print(f"  PRUNING_TARGET_ALPHA: {info['pruning_target_alpha']}")
-
-    print(f"\nTrim Factor Range:")
-    print(f"  Base: {info['ln_n_trim_factor_base']} (conservative)")
-    print(f"  Max: {info['ln_n_trim_factor_max']} (aggressive)")
-
-    print(f"\nThresholds:")
-    print(f"  Entropy prune threshold: {info['entropy_prune_threshold']}")
-    print(f"  Min confidence: {info['min_confidence_threshold']}")
-    print(f"  Min quorum fraction: {info['min_quorum_fraction']:.2%}")
-
-    print(f"\nTargets:")
-    print(f"  Blackout target days: {info['blackout_pruning_target_days']}")
-    print(f"  Overflow threshold (pruned): {info['overflow_threshold_pruned_days']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[pruning_info receipt emitted above]")
-    print("=" * 60)
-
-
-# === ABLATION TESTING CLI COMMANDS (Dec 2025) ===
-
-
-def cmd_ablate(mode: str, blackout_days: int, simulate: bool):
-    """Run simulation in specified ablation mode.
-
-    Args:
-        mode: Ablation mode (full/no_cache/no_prune/baseline)
-        blackout_days: Blackout duration in days
-        simulate: Whether to output simulation receipt
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"ABLATION TEST: {mode.upper()} ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Ablation mode: {mode}")
-    print(f"  Blackout duration: {blackout_days} days")
-    print(f"  Shannon floor: {SHANNON_FLOOR_ALPHA}")
-    print(f"  Ceiling target: {ALPHA_CEILING_TARGET}")
-
-    expected = get_ablation_expected(mode)
-    print(f"\nExpected results ({mode}):")
-    print(f"  Alpha range: {expected['alpha_range']}")
-    print(f"  Retention: {expected['retention']}")
-    print(f"  Description: {expected['description']}")
-
-    try:
-        result = nonlinear_retention_with_pruning(
-            blackout_days,
-            CACHE_DEPTH_BASELINE,
-            pruning_enabled=(mode != "no_prune" and mode != "baseline"),
-            trim_factor=0.3,
-            ablation_mode=mode
-        )
-
-        print(f"\nRESULTS:")
-        print(f"  Effective alpha: {result['eff_alpha']}")
-        print(f"  Retention factor: {result['retention_factor']}")
-        print(f"  GNN boost: {result['gnn_boost']}")
-        print(f"  Pruning boost: {result['pruning_boost']}")
-        print(f"  Model: {result['model']}")
-
-        # Validate against expected
-        alpha_min, alpha_max = expected['alpha_range']
-        alpha_ok = alpha_min <= result['eff_alpha'] <= alpha_max
-
-        print(f"\nVALIDATION:")
-        print(f"  Alpha in expected range: {'PASS' if alpha_ok else 'FAIL'} ({result['eff_alpha']} in {expected['alpha_range']})")
-
-        if simulate:
-            print("\n[ablation_test receipt emitted above]")
-
-    except Exception as e:
-        print(f"\nERROR: {e}")
-        if "overflow" in str(e).lower():
-            print("Cache overflow - StopRule triggered")
-
-    print("=" * 60)
-
-
-def cmd_ablation_sweep(blackout_days: int, simulate: bool):
-    """Run all 4 ablation modes and compare.
-
-    Args:
-        blackout_days: Blackout duration in days
-        simulate: Whether to output simulation receipt
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"ABLATION SWEEP ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Ablation modes: {ABLATION_MODES}")
-    print(f"  Blackout duration: {blackout_days} days")
-    print(f"  Iterations per mode: 100")
-    print(f"  Shannon floor: {SHANNON_FLOOR_ALPHA}")
-    print(f"  Ceiling target: {ALPHA_CEILING_TARGET}")
-
-    print("\nRunning ablation sweep...")
-
-    result = ablation_sweep(
-        modes=ABLATION_MODES,
-        blackout_days=blackout_days,
-        iterations=100,
-        seed=42
-    )
-
-    print(f"\nRESULTS BY MODE:")
-    print(f"  {'Mode':<12} | {'Avg Alpha':>10} | {'Min':>8} | {'Max':>8} | {'Success':>8}")
-    print(f"  {'-'*12}-+-{'-'*10}-+-{'-'*8}-+-{'-'*8}-+-{'-'*8}")
-
-    for mode in ["baseline", "no_prune", "no_cache", "full"]:
-        if mode in result["results_by_mode"]:
-            m = result["results_by_mode"][mode]
-            print(f"  {mode:<12} | {m['avg_alpha']:>10.4f} | {m['min_alpha']:>8.4f} | {m['max_alpha']:>8.4f} | {m['successful']:>8}")
-
-    print(f"\nORDERING VALIDATION:")
-    print(f"  Expected: baseline < no_prune < no_cache < full")
-    print(f"  Ordering valid: {'PASS' if result['ordering_valid'] else 'FAIL'}")
-
-    print(f"\nLAYER CONTRIBUTIONS:")
-    lc = result["layer_contributions"]
-    print(f"  GNN contribution: {lc['gnn_contribution']:.4f}")
-    print(f"  Prune contribution: {lc['prune_contribution']:.4f}")
-    print(f"  Total uplift: {lc['total_uplift']}")
-
-    print(f"\nCEILING ANALYSIS:")
-    gap = result["gap_to_ceiling"]
-    print(f"  Current alpha: {gap['current_alpha']}")
-    print(f"  Ceiling target: {gap['ceiling_target']}")
-    print(f"  Gap: {gap['gap_pct']:.1f}%")
-    print(f"  Path: {gap['path_to_ceiling']}")
-
-    if simulate:
-        print("\n[ablation_sweep receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_ceiling_track(current_alpha: float):
-    """Output ceiling gap analysis.
-
-    Args:
-        current_alpha: Current alpha value to analyze
-    """
-    print("=" * 60)
-    print("CEILING GAP ANALYSIS")
-    print("=" * 60)
-
-    result = ceiling_gap(current_alpha, ALPHA_CEILING_TARGET)
-
-    print(f"\nCurrent Status:")
-    print(f"  Current alpha: {result['current_alpha']}")
-    print(f"  Ceiling target: {result['ceiling_target']}")
-    print(f"  Shannon floor: {SHANNON_FLOOR_ALPHA}")
-
-    print(f"\nGap Analysis:")
-    print(f"  Gap absolute: {result['gap_absolute']}")
-    print(f"  Gap percentage: {result['gap_pct']:.1f}%")
-
-    print(f"\nRetention Analysis:")
-    print(f"  Current retention factor: {result['retention_factor_current']}")
-    print(f"  Retention needed: {result['retention_factor_needed']}")
-    print(f"  Retention delta: {result['retention_factor_delta']}")
-
-    print(f"\nPath to Ceiling:")
-    print(f"  {result['path_to_ceiling']}")
-
-    print("\n[ceiling_track receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_formula_check():
-    """Validate alpha formula with example values."""
-    import math
-
-    print("=" * 60)
-    print("ALPHA FORMULA VALIDATION")
-    print("=" * 60)
-
-    print(f"\nFormula: alpha = (min_eff / baseline) * retention_factor")
-    print(f"Shannon floor (e): {SHANNON_FLOOR_ALPHA}")
-    print(f"Ceiling target: {ALPHA_CEILING_TARGET}")
-
-    test_cases = [
-        (math.e, 1.0, 1.0, math.e, "Identity at baseline"),
-        (2.7185, 1.0, 1.01, 2.745, "Standard case"),
-        (math.e, 1.0, 1.10, ALPHA_CEILING_TARGET, "Ceiling case"),
-    ]
-
-    print(f"\nTest Cases:")
-    print(f"  {'min_eff':>10} | {'baseline':>10} | {'retention':>10} | {'expected':>10} | {'computed':>10} | {'status':>8}")
-    print(f"  {'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*8}")
-
-    all_pass = True
-    for min_eff, baseline, retention, expected, description in test_cases:
-        try:
-            result = alpha_calc(min_eff, baseline, retention, validate=False)
-            computed = result["computed_alpha"]
-            passed = abs(computed - expected) < 0.01
-            all_pass = all_pass and passed
-            print(f"  {min_eff:>10.4f} | {baseline:>10.4f} | {retention:>10.4f} | {expected:>10.4f} | {computed:>10.4f} | {'PASS' if passed else 'FAIL':>8}")
-        except Exception as e:
-            print(f"  {min_eff:>10.4f} | {baseline:>10.4f} | {retention:>10.4f} | {expected:>10.4f} | {'ERROR':>10} | {'FAIL':>8}")
-            all_pass = False
-
-    print(f"\nOVERALL: {'ALL TESTS PASS' if all_pass else 'SOME TESTS FAILED'}")
-
-    print("\n[formula_check complete]")
-    print("=" * 60)
-
-
-def cmd_isolate_layers(blackout_days: int, simulate: bool):
-    """Output isolated contribution from each layer.
-
-    Args:
-        blackout_days: Blackout duration in days
-        simulate: Whether to output simulation receipt
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"LAYER ISOLATION ANALYSIS ({blackout_days} days)")
-    print("=" * 60)
-
-    result = get_layer_contributions(blackout_days, 0.3)
-
-    print(f"\nGNN Layer:")
-    gnn = result["gnn_layer"]
-    print(f"  Retention factor: {gnn['retention_factor']}")
-    print(f"  Contribution: {gnn['contribution_pct']}%")
-    print(f"  Alpha with GNN only: {gnn['alpha_with_gnn_only']}")
-    print(f"  Expected range: {gnn['range_expected']}")
-
-    print(f"\nPruning Layer:")
-    prune = result["prune_layer"]
-    print(f"  Retention factor: {prune['retention_factor']}")
-    print(f"  Contribution: {prune['contribution_pct']}%")
-    print(f"  Alpha with prune only: {prune['alpha_with_prune_only']}")
-    print(f"  Expected range: {prune['range_expected']}")
-
-    print(f"\nCompound:")
-    compound = result["compound"]
-    print(f"  Compound retention: {compound['compound_retention']}")
-    print(f"  Full alpha: {compound['full_alpha']}")
-    print(f"  Total uplift from floor: {compound['total_uplift_from_floor']}")
-
-    print(f"\nCeiling Analysis:")
-    ceiling = result["ceiling_analysis"]
-    print(f"  Gap to ceiling: {ceiling['gap_pct']:.1f}%")
-    print(f"  Path: {ceiling['path_to_ceiling']}")
-
-    if simulate:
-        print("\n[layer_contributions receipt emitted above]")
-
-    print("=" * 60)
-
-
-# === RL AUTO-TUNING CLI COMMANDS (Dec 2025) ===
-
-
-def cmd_rl_info():
-    """Output RL tuning configuration."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("RL AUTO-TUNING CONFIGURATION")
-    print("=" * 60)
-
-    info = get_rl_tune_info()
-
-    print(f"\nTargets:")
-    print(f"  Retention milestone 1: {info['retention_milestone_1']} (α = {info['alpha_target_m1']})")
-    print(f"  Retention milestone 2: {info['retention_milestone_2']} (α = {info['alpha_target_m2']})")
-    print(f"  Retention ceiling: {info['retention_ceiling']} (α = {info['alpha_ceiling']})")
-
-    print(f"\nSafety Bounds:")
-    print(f"  Alpha drop threshold: {info['alpha_drop_threshold']}")
-    print(f"  Exploration bound: {info['exploration_bound']} (±15%)")
-    print(f"  Max episodes without improvement: {info['max_episodes_without_improvement']}")
-
-    print(f"\nAction Space:")
-    print(f"  GNN layers range: {info['gnn_layers_range']}")
-    print(f"  LR decay range: {info['lr_decay_range']}")
-    print(f"  Prune aggressiveness range: {info['prune_aggressiveness_range']}")
-
-    print(f"\nPer-layer contribution (validated):")
-    print(f"  Range: {info['layer_retention_range']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[rl_tune_info receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_adaptive_info():
-    """Output adaptive module configuration."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("ADAPTIVE MODULE CONFIGURATION")
-    print("=" * 60)
-
-    info = get_adaptive_info()
-
-    print(f"\nDepth Scaling:")
-    print(f"  Base depth: {info['adaptive_depth_base']}")
-    print(f"  Min depth: {info['adaptive_depth_min']}")
-    print(f"  Max depth: {info['adaptive_depth_max']}")
-    print(f"  Formula: {info['formulas']['depth']}")
-
-    print(f"\nLearning Rate Scaling:")
-    print(f"  Base LR: {info['lr_base']}")
-    print(f"  Min LR: {info['lr_min']}")
-    print(f"  Max LR: {info['lr_max']}")
-    print(f"  Formula: {info['formulas']['lr']}")
-
-    print(f"\nPrune Factor Scaling:")
-    print(f"  Min prune factor: {info['prune_factor_min']}")
-    print(f"  Max prune factor: {info['prune_factor_max']}")
-    print(f"  Formula: {info['formulas']['prune']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[adaptive_info receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_rl_status():
-    """Output RL integration status."""
-    import json as json_lib
-
-    print("=" * 60)
-    print("RL INTEGRATION STATUS")
-    print("=" * 60)
-
-    status = get_rl_integration_status()
-
-    print(f"\nModule Readiness:")
-    print(f"  RL tune ready: {'PASS' if status['rl_tune_ready'] else 'FAIL'}")
-    print(f"  Adaptive ready: {'PASS' if status['adaptive_ready'] else 'FAIL'}")
-    print(f"  GNN dynamic ready: {'PASS' if status['gnn_dynamic_ready'] else 'FAIL'}")
-    print(f"  Pruning dynamic ready: {'PASS' if status['pruning_dynamic_ready'] else 'FAIL'}")
-
-    print(f"\nOverall Status:")
-    all_ready = status['all_modules_ready']
-    print(f"  All modules ready: {'PASS' if all_ready else 'FAIL'}")
-
-    print(f"\nTargets:")
-    targets = status['targets']
-    print(f"  Retention milestone 1: {targets['retention_milestone_1']}")
-    print(f"  Retention milestone 2: {targets['retention_milestone_2']}")
-
-    print("\n[rl_integration_status receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_validate_no_static():
-    """Verify no static configs remain."""
-    print("=" * 60)
-    print("STATIC CONFIG VALIDATION")
-    print("=" * 60)
-
-    validations = validate_no_static_configs()
-
-    print(f"\nValidations:")
-    for key, value in validations.items():
-        if key != "all_pass":
-            print(f"  {key}: {'PASS' if value else 'FAIL'}")
-
-    print(f"\nOverall: {'ALL PASS' if validations.get('all_pass', False) else 'SOME FAILED'}")
-
-    print("\n[no_static_configs_validation receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_rl_tune(blackout_days: int, episodes: int, rl_enabled: bool, adaptive_enabled: bool, simulate: bool):
-    """Run RL auto-tuning simulation.
-
-    Args:
-        blackout_days: Blackout duration in days
-        episodes: Number of RL episodes
-        rl_enabled: Whether RL is enabled
-        adaptive_enabled: Whether adaptive scaling is enabled
-        simulate: Whether to output receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print(f"RL AUTO-TUNING ({blackout_days} days, {episodes} episodes)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Blackout duration: {blackout_days} days")
-    print(f"  RL episodes: {episodes}")
-    print(f"  RL enabled: {rl_enabled}")
-    print(f"  Adaptive enabled: {adaptive_enabled}")
-    print(f"  Target retention: {RETENTION_MILESTONE_1} (α = {ALPHA_TARGET_M1})")
-
-    print("\nRunning RL auto-tuning...")
-
-    result = sovereignty_timeline_dynamic(
-        blackout_days=blackout_days,
-        rl_enabled=rl_enabled,
-        rl_episodes=episodes,
-        adaptive_enabled=adaptive_enabled
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Base alpha: {result['base_alpha']}")
-    print(f"  Effective alpha: {result['effective_alpha']}")
-    if result['rl_best_retention']:
-        print(f"  Best retention: {result['rl_best_retention']}")
-    print(f"  Target achieved: {'PASS' if result['rl_target_achieved'] else 'PENDING'}")
-    if result['adaptive_depth']:
-        print(f"  Adaptive depth: {result['adaptive_depth']}")
-
-    print(f"\nSOVEREIGNTY TIMELINE:")
-    print(f"  Cycles to 10K: {result['cycles_to_10k_person_eq']}")
-    print(f"  Cycles to 1M: {result['cycles_to_1M_person_eq']}")
-    print(f"  Dynamic mode: {result['dynamic_mode']}")
-
-    print(f"\nSLO VALIDATION:")
-    if result['rl_best_retention']:
-        ret_ok = result['rl_best_retention'] >= RETENTION_MILESTONE_1
-        print(f"  Retention >= {RETENTION_MILESTONE_1}: {'PASS' if ret_ok else 'FAIL'} ({result['rl_best_retention']})")
-
-    if simulate:
-        print("\n[sovereignty_timeline_dynamic receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_dynamic_mode(blackout_days: int, episodes: int, simulate: bool):
-    """Run full dynamic mode (RL + adaptive).
-
-    Args:
-        blackout_days: Blackout duration in days
-        episodes: Number of RL episodes
-        simulate: Whether to output receipts
-    """
-    print("=" * 60)
-    print(f"FULL DYNAMIC MODE ({blackout_days} days)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  RL enabled: True")
-    print(f"  Adaptive enabled: True")
-    print(f"  Episodes: {episodes}")
-
-    result = sovereignty_timeline_dynamic(
-        blackout_days=blackout_days,
-        rl_enabled=True,
-        rl_episodes=episodes,
-        adaptive_enabled=True
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Effective alpha: {result['effective_alpha']}")
-    print(f"  Best retention: {result['rl_best_retention']}")
-    print(f"  Adaptive depth: {result['adaptive_depth']}")
-    print(f"  Target achieved: {result['rl_target_achieved']}")
-
-    if simulate:
-        print("\n[sovereignty_timeline_dynamic receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_tune_sweep(simulate: bool):
-    """Run retention sweep from 1.01 to target.
-
-    Args:
-        simulate: Whether to output receipts
-    """
-    import json as json_lib
-
-    print("=" * 60)
-    print("RETENTION TUNING SWEEP")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Start retention: 1.01")
-    print(f"  Target retention: {RETENTION_MILESTONE_1}")
-    print(f"  Episodes per step: 50")
-
-    print("\nRunning sweep...")
-
-    episodes_list = [10, 50, 100, 200, 500]
-    results = []
-
-    for eps in episodes_list:
-        result = rl_auto_tune(
-            current_retention=1.01,
-            blackout_days=150,
-            episodes=eps,
-            seed=42
-        )
-        results.append({
-            "episodes": eps,
-            "best_retention": result["best_retention"],
-            "best_alpha": result["best_alpha"],
-            "target_achieved": result["target_achieved"]
-        })
-
-    print(f"\nRESULTS:")
-    print(f"  {'Episodes':>10} | {'Retention':>10} | {'Alpha':>8} | {'Target':>8}")
-    print(f"  {'-'*10}-+-{'-'*10}-+-{'-'*8}-+-{'-'*8}")
-
-    for r in results:
-        target_str = "PASS" if r["target_achieved"] else "PENDING"
-        print(f"  {r['episodes']:>10} | {r['best_retention']:>10.4f} | {r['best_alpha']:>8.4f} | {target_str:>8}")
-
-    # Check if target achieved at any episode count
-    any_target = any(r["target_achieved"] for r in results)
-    print(f"\nTarget {RETENTION_MILESTONE_1} achieved: {'YES' if any_target else 'NOT YET'}")
-
-    if simulate:
-        print("\n[rl_tune_receipt emitted per episode]")
-
-    print("=" * 60)
-
-
-# === ADAPTIVE DEPTH CLI COMMANDS (Dec 2025) ===
-
-
-def cmd_adaptive_depth_run(rl_sweep_runs: int, tree_size: int, simulate: bool):
-    """Run with adaptive depth enabled.
-
-    Args:
-        rl_sweep_runs: Number of informed RL runs
-        tree_size: Merkle tree size for depth calculation
-        simulate: Whether to output simulation receipt
-    """
-    print("=" * 60)
-    print(f"ADAPTIVE DEPTH RUN ({rl_sweep_runs} runs)")
-    print("=" * 60)
-
-    # Load and display spec
-    spec = load_depth_spec()
-    print(f"\nSpec loaded:")
-    print(f"  base_layers: {spec['base_layers']}")
-    print(f"  scale_factor: {spec['scale_factor']}")
-    print(f"  baseline_n: {spec['baseline_n']}")
-    print(f"  max_layers: {spec['max_layers']}")
-    print(f"  sweep_limit: {spec['sweep_limit']}")
-
-    # Compute depth for given tree size
-    depth = compute_adaptive_n_depth(tree_size, 0.5)
-    print(f"\nComputed depth for n={tree_size:.2e}:")
-    print(f"  layers: {depth}")
-
-    print(f"\nRunning {rl_sweep_runs}-run informed sweep...")
-
-    result = run_sweep(
-        runs=rl_sweep_runs,
-        tree_size=tree_size,
-        adaptive_depth=True,
-        early_stopping=True,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Runs completed: {result['runs_completed']}/{result['runs_limit']}")
-    print(f"  Best retention: {result['best_retention']:.5f}")
-    print(f"  Best alpha: {result['best_alpha']:.5f}")
-    print(f"  Depth used: {result['depth_used']}")
-    print(f"  Target achieved: {'PASS' if result['target_achieved'] else 'PENDING'}")
-    print(f"  Early stopped: {result['early_stopped']}")
-
-    if result['convergence_run']:
-        print(f"  Convergence run: {result['convergence_run']}")
-
-    print(f"\nSLO VALIDATION:")
-    ret_ok = result['best_retention'] >= RETENTION_QUICK_WIN_TARGET
-    print(f"  Retention >= {RETENTION_QUICK_WIN_TARGET}: {'PASS' if ret_ok else 'FAIL'} ({result['best_retention']:.5f})")
-
-    if simulate:
-        print("\n[efficient_rl_sweep receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_depth_scaling_test():
-    """Run depth scaling efficiency comparison."""
-    print("=" * 60)
-    print("DEPTH SCALING EFFICIENCY TEST")
-    print("=" * 60)
-
-    print("\nComparing 500 informed vs 300 blind runs...")
-
-    result = compare_sweep_efficiency(
-        informed_runs=500,
-        blind_runs=300,
-        tree_size=int(1e8),
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Informed (500 runs): {result['informed_retention']:.5f}")
-    print(f"  Blind (300 runs): {result['blind_retention']:.5f}")
-    print(f"  Efficiency gain: {result['efficiency_gain']:.5f}")
-    print(f"  Informed better: {'YES' if result['informed_better'] else 'NO'}")
-
-    print(f"\nCONCLUSION: {result['conclusion']}")
-
-    print("\n[sweep_efficiency_comparison receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_compute_depth_single(tree_size: int):
-    """Show computed depth for given tree size.
-
-    Args:
-        tree_size: Tree size to compute depth for
-    """
-    print("=" * 60)
-    print(f"COMPUTE DEPTH (n={tree_size:.2e})")
-    print("=" * 60)
-
-    # Load spec
-    spec = load_depth_spec()
-    print(f"\nSpec:")
-    print(f"  base_layers: {spec['base_layers']}")
-    print(f"  scale_factor: {spec['scale_factor']}")
-    print(f"  baseline_n: {spec['baseline_n']}")
-    print(f"  max_layers: {spec['max_layers']}")
-
-    # Compute depth
-    depth = compute_adaptive_n_depth(tree_size, 0.5)
-
-    print(f"\nFormula: layers = base + scale * log(n / baseline)")
-    print(f"  base_layers: {spec['base_layers']}")
-    print(f"  scale_factor * log({tree_size} / {spec['baseline_n']})")
-
-    import math
-    if tree_size > 0:
-        raw = spec['base_layers'] + spec['scale_factor'] * math.log(tree_size / spec['baseline_n'])
-        print(f"  Raw value: {raw:.4f}")
-
-    print(f"\nRESULT: {depth} layers")
-
-    # Show expected examples
-    info = get_depth_scaling_info()
-    print(f"\nExpected depths table:")
-    for key, val in info['example_depths'].items():
-        print(f"  {key}: {val} layers")
-
-    print("\n[adaptive_depth receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_depth_scaling_info():
-    """Output adaptive depth module configuration."""
-    print("=" * 60)
-    print("ADAPTIVE DEPTH SCALING CONFIGURATION")
-    print("=" * 60)
-
-    info = get_depth_scaling_info()
-
-    print(f"\nScaling Parameters:")
-    print(f"  base_layers: {info['base_layers']}")
-    print(f"  scale_factor: {info['scale_factor']}")
-    print(f"  baseline_n: {info['baseline_n']}")
-    print(f"  max_layers: {info['max_layers']}")
-    print(f"  min_layers: {info['min_layers']}")
-
-    print(f"\nSweep Configuration:")
-    print(f"  sweep_limit: {info['sweep_limit']}")
-    print(f"  quick_target: {info['quick_target']}")
-
-    print(f"\nFormula: {info['formula']}")
-
-    print(f"\nExample Depths:")
-    for key, val in info['example_depths'].items():
-        print(f"  {key}: {val} layers")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[depth_scaling_info receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_efficient_sweep_info():
-    """Output efficient sweep configuration."""
-    print("=" * 60)
-    print("EFFICIENT SWEEP CONFIGURATION")
-    print("=" * 60)
-
-    info = get_efficient_sweep_info()
-
-    print(f"\nConfiguration:")
-    print(f"  sweep_limit: {info['sweep_limit']}")
-    print(f"  quick_win_target: {info['quick_win_target']}")
-    print(f"  convergence_check_interval: {info['convergence_check_interval']}")
-    print(f"  early_stopping_threshold: {info['early_stopping_threshold']}")
-
-    print(f"\nExpected Behavior:")
-    print(f"  Expected convergence: {info['expected_convergence']}")
-    print(f"  vs blind: {info['vs_blind']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[efficient_sweep_info receipt emitted above]")
-    print("=" * 60)
-
-
-# === 500-RUN RL SWEEP CLI COMMANDS (Dec 17 2025) ===
-
-
-def cmd_rl_500_sweep(tree_size: int, lr_range: tuple, retention_target: float, simulate: bool):
-    """Run 500-run RL sweep for 1.05 retention.
-
-    Args:
-        tree_size: Merkle tree size for depth calculation
-        lr_range: Optional LR range override (min, max)
-        retention_target: Override retention target
-        simulate: Whether to output simulation receipt
-    """
-    print("=" * 60)
-    print("500-RUN RL SWEEP FOR 1.05 RETENTION")
-    print("=" * 60)
-
-    # Load and display spec
-    try:
-        spec = load_sweep_spec()
-        print(f"\nSpec loaded:")
-        print(f"  sweep_runs: {spec['sweep_runs']}")
-        print(f"  lr_min: {spec['lr_min']}")
-        print(f"  lr_max: {spec['lr_max']}")
-        print(f"  retention_target: {spec['retention_target']}")
-        print(f"  seed: {spec['seed']}")
-    except FileNotFoundError:
-        print("\nSpec file not found, using defaults")
-
-    # Compute depth for given tree size
-    depth = compute_adaptive_n_depth(tree_size, 0.5)
-    print(f"\nComputed depth for n={tree_size:.2e}:")
-    print(f"  layers: {depth}")
-
-    print(f"\nRunning 500-run informed sweep...")
-
-    result = run_500_sweep(
-        runs=RL_SWEEP_RUNS,
-        tree_size=tree_size,
-        adaptive_depth=True,
-        early_stopping=True,
-        seed=42
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Final retention: {result['final_retention']}")
-    print(f"  Best retention: {result['best_retention']}")
-    print(f"  Target achieved: {'PASS' if result['target_achieved'] else 'PENDING'}")
-    print(f"  Convergence run: {result['convergence_run']}")
-    print(f"  Runs completed: {result['runs_completed']}/{result['runs_limit']}")
-    print(f"  Depth used: {result['depth_used']}")
-    print(f"  LR range: {result['lr_range']}")
-
-    if result['best_action']:
-        print(f"\nBest Action:")
-        print(f"  layers_delta: {result['best_action']['layers_delta']}")
-        print(f"  lr: {result['best_action']['lr']}")
-        print(f"  prune_factor: {result['best_action']['prune_factor']}")
-
-    print(f"\nSLO VALIDATION:")
-    ret_ok = result['best_retention'] >= RETENTION_TARGET
-    print(f"  Retention >= {RETENTION_TARGET}: {'PASS' if ret_ok else 'FAIL'} ({result['best_retention']:.5f})")
-
-    if simulate:
-        print("\n[rl_500_sweep_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_rl_500_sweep_info():
-    """Output 500-run sweep configuration."""
-    print("=" * 60)
-    print("500-RUN RL SWEEP CONFIGURATION")
-    print("=" * 60)
-
-    info = get_500_sweep_info()
-
-    print(f"\nConfiguration:")
-    print(f"  sweep_runs: {info['sweep_runs']}")
-    print(f"  lr_min: {info['lr_min']}")
-    print(f"  lr_max: {info['lr_max']}")
-    print(f"  retention_target: {info['retention_target']}")
-    print(f"  seed: {info['seed']}")
-    print(f"  divergence_threshold: {info['divergence_threshold']}")
-
-    print(f"\nState Components:")
-    for comp in info['state_components']:
-        print(f"  - {comp}")
-
-    print(f"\nAction Components:")
-    for comp in info['action_components']:
-        print(f"  - {comp}")
-
-    print(f"\nExpected Behavior:")
-    print(f"  Expected convergence: {info['expected_convergence']}")
-    print(f"  vs blind: {info['vs_blind']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[rl_500_sweep_info receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_quantum_estimate(current_retention: float = 1.05):
-    """Show quantum stub estimate.
-
-    Args:
-        current_retention: Current retention to estimate boost for
-    """
-    print("=" * 60)
-    print("QUANTUM ENTROPY BOOST ESTIMATE (STUB)")
-    print("=" * 60)
-
-    info = get_quantum_stub_info()
-
-    print(f"\nStub Status:")
-    print(f"  Implemented: {'YES' if quantum_is_implemented() else 'NO (stub only)'}")
-    print(f"  Boost estimate: {get_boost_estimate() * 100:.1f}%")
-
-    print(f"\nProjection for retention={current_retention}:")
-    projection = project_with_quantum(current_retention)
-    print(f"  Base retention: {projection['base_retention']}")
-    print(f"  Quantum boost: {projection['quantum_boost'] * 100:.1f}%")
-    print(f"  Projected retention: {projection['projected_retention']}")
-    print(f"  Note: {projection['note']}")
-
-    print(f"\nSequencing:")
-    for step, desc in info['sequencing'].items():
-        print(f"  {step}: {desc}")
-
-    print(f"\nWhy stub now:")
-    for reason in info['why_stub_now']:
-        print(f"  - {reason}")
-
-    print("\n[quantum_stub_receipt emitted above]")
-    print("=" * 60)
-
-
-# === LR PILOT + QUANTUM SIM + POST-TUNE EXECUTION (Dec 17 2025 - NEW) ===
-
-
-def cmd_lr_pilot(runs: int, tree_size: int, simulate: bool, show_bounds: bool):
-    """Run LR pilot narrowing.
-
-    Args:
-        runs: Number of pilot iterations
-        tree_size: Merkle tree size for depth calculation
-        simulate: Whether to output receipts
-        show_bounds: Whether to show narrowed bounds
-    """
-    print("=" * 60)
-    print(f"LR PILOT NARROWING ({runs} runs)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Pilot runs: {runs}")
-    print(f"  Initial LR range: {INITIAL_LR_RANGE}")
-    print(f"  Target narrowed range: {TARGET_NARROWED_LR}")
-    print(f"  Tree size: {tree_size:,}")
-
-    result = pilot_lr_narrow(runs=runs, tree_size=tree_size, seed=42)
-
-    print(f"\nRESULTS:")
-    print(f"  Narrowed range: {result['narrowed_range']}")
-    print(f"  Optimal LR found: {result['optimal_lr_found']}")
-    print(f"  Reward improvement: {result['reward_improvement_pct']:.1f}%")
-    print(f"  Best retention: {result['best_retention']:.5f}")
-    print(f"  Depth used: {result['depth_used']}")
-
-    if show_bounds:
-        print(f"\nBOUNDS COMPARISON:")
-        print(f"  Initial: [{INITIAL_LR_RANGE[0]}, {INITIAL_LR_RANGE[1]}]")
-        print(f"  Narrowed: [{result['narrowed_range'][0]}, {result['narrowed_range'][1]}]")
-        reduction = 1 - (result['narrowed_range'][1] - result['narrowed_range'][0]) / (INITIAL_LR_RANGE[1] - INITIAL_LR_RANGE[0])
-        print(f"  Range reduction: {reduction * 100:.1f}%")
-
-    if simulate:
-        print("\n[lr_pilot_narrow_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_quantum_sim(runs: int, simulate: bool):
-    """Run quantum hybrid simulation.
-
-    Args:
-        runs: Number of quantum simulation iterations
-        simulate: Whether to output receipts
-    """
-    print("=" * 60)
-    print(f"QUANTUM HYBRID SIMULATION ({runs} runs)")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Quantum sim runs: {runs}")
-    print(f"  Entangled penalty factor: {ENTANGLED_PENALTY_FACTOR}")
-    print(f"  Expected retention boost: {QUANTUM_RETENTION_BOOST}")
-
-    result = simulate_quantum_policy(runs=runs, seed=42)
-
-    print(f"\nRESULTS:")
-    print(f"  Runs completed: {result['runs_completed']}")
-    print(f"  Instability reduction: {result['instability_reduction_pct']:.1f}%")
-    print(f"  Effective retention boost: {result['effective_retention_boost']:.4f}")
-    print(f"  Instability events: {result['instability_events']}")
-    print(f"  Variance reduction: {result['variance_reduction_pct']:.1f}%")
-    print(f"  Paradigm: {result['paradigm']}")
-
-    print(f"\nPENALTY ANALYSIS:")
-    print(f"  Standard penalty: -1.0 (if alpha_drop > 0.05)")
-    print(f"  Entangled penalty: {-1.0 * (1 - ENTANGLED_PENALTY_FACTOR):.2f} (reduced severity)")
-    print(f"  Penalty saved per event: {1.0 - abs(-1.0 * (1 - ENTANGLED_PENALTY_FACTOR)):.2f}")
-
-    if simulate:
-        print("\n[quantum_10run_sim_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_post_tune_execute(tree_size: int, simulate: bool):
-    """Execute post-tune 500-run sweep.
-
-    Args:
-        tree_size: Merkle tree size for depth calculation
-        simulate: Whether to output receipts
-    """
-    print("=" * 60)
-    print("POST-TUNE SWEEP EXECUTION (500 runs)")
-    print("=" * 60)
-
-    # First run pilot to get narrowed LR
-    print("\nPhase 1: Running pilot to narrow LR...")
-    pilot_result = pilot_lr_narrow(runs=PILOT_LR_RUNS, tree_size=tree_size, seed=42)
-    narrowed_lr = tuple(pilot_result["narrowed_range"])
-    print(f"  Narrowed LR: {narrowed_lr}")
-
-    # Get quantum boost
-    print("\nPhase 2: Running quantum simulation...")
-    quantum_result = simulate_quantum_policy(runs=QUANTUM_SIM_RUNS, seed=42)
-    quantum_boost = quantum_result["effective_retention_boost"]
-    print(f"  Quantum boost: {quantum_boost:.4f}")
-
-    # Run tuned sweep
-    print("\nPhase 3: Running tuned sweep with narrowed LR and quantum boost...")
-    result = run_tuned_sweep(
-        lr_range=narrowed_lr,
-        runs=FULL_TUNED_RUNS,
-        tree_size=tree_size,
-        quantum_boost=quantum_boost,
-        seed=43
-    )
-
-    print(f"\nRESULTS:")
-    print(f"  Final retention: {result['final_retention']:.5f}")
-    print(f"  Best retention: {result['best_retention']:.5f}")
-    print(f"  Effective alpha: {result['eff_alpha']:.2f}")
-    print(f"  Target achieved: {'YES' if result['target_achieved'] else 'NO'}")
-    print(f"  Convergence run: {result['convergence_run']}")
-    print(f"  Instability events: {result['instability_events']}")
-    print(f"  Quantum integrated: {result['quantum_integrated']}")
-
-    print(f"\nCONFIGURATION USED:")
-    print(f"  LR range: {result['lr_range_used']}")
-    print(f"  Quantum boost: {result['quantum_boost']:.4f}")
-    print(f"  Depth: {result['depth_used']}")
-
-    if simulate:
-        print("\n[post_tune_sweep_receipt emitted above]")
-
-    print("=" * 60)
-
-
-def cmd_full_pipeline(pilot_runs: int, quantum_runs: int, sweep_runs: int, tree_size: int, simulate: bool):
-    """Run complete pilot -> quantum -> sweep pipeline.
-
-    Args:
-        pilot_runs: Number of pilot iterations
-        quantum_runs: Number of quantum simulation runs
-        sweep_runs: Number of tuned sweep runs
-        tree_size: Merkle tree size
-        simulate: Whether to output receipts
-    """
-    print("=" * 60)
-    print("FULL PIPELINE: PILOT -> QUANTUM -> TUNED SWEEP")
-    print("=" * 60)
-
-    print(f"\nConfiguration:")
-    print(f"  Pilot runs: {pilot_runs}")
-    print(f"  Quantum runs: {quantum_runs}")
-    print(f"  Sweep runs: {sweep_runs}")
-    print(f"  Tree size: {tree_size:,}")
-
-    print("\nExecuting pipeline...")
-    result = execute_full_pipeline(
-        pilot_runs=pilot_runs,
-        quantum_runs=quantum_runs,
-        sweep_runs=sweep_runs,
-        tree_size=tree_size,
-        seed=42
-    )
-
-    print(f"\nSTAGE 1 - PILOT RESULTS:")
-    print(f"  Narrowed LR: {result['narrowed_lr']}")
-    print(f"  Optimal LR: {result['pilot_result']['optimal_lr']}")
-    print(f"  Improvement: {result['pilot_result']['improvement_pct']:.1f}%")
-
-    print(f"\nSTAGE 2 - QUANTUM RESULTS:")
-    print(f"  Instability reduction: {result['instability_reduction']:.1f}%")
-    print(f"  Retention boost: {result['quantum_boost']:.4f}")
-
-    print(f"\nSTAGE 3 - SWEEP RESULTS:")
-    print(f"  Final retention: {result['final_retention']:.5f}")
-    print(f"  Effective alpha: {result['eff_alpha']:.2f}")
-    print(f"  Target achieved: {'YES' if result['target_achieved'] else 'NO'}")
-    print(f"  Convergence run: {result['sweep_result']['convergence_run']}")
-    print(f"  Instability events: {result['sweep_result']['instability_events']}")
-
-    print(f"\nPIPELINE SUMMARY:")
-    print(f"  Total runs: {result['total_runs']}")
-    print(f"  Target retention: {result['target_retention']}")
-    print(f"  Expected retention: {result['expected_retention']}")
-    print(f"  Achieved: {result['final_retention']:.5f}")
-
-    print(f"\nTHE COMPOUND EFFECT:")
-    print(f"  Narrowed LR boost:     +0.01 retention (better convergence)")
-    print(f"  Entangled penalty:     +{result['quantum_boost']:.2f} retention (reduced instability cost)")
-    print(f"  Combined:              1.062 retention target exceeded")
-
-    if simulate:
-        print("\nReceipts emitted:")
-        for receipt in result['receipts_emitted']:
-            print(f"  - {receipt}")
-
-    print("\n[full_pipeline_receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_pilot_info():
-    """Output LR pilot narrowing configuration."""
-    print("=" * 60)
-    print("LR PILOT NARROWING CONFIGURATION")
-    print("=" * 60)
-
-    info = get_pilot_info()
-
-    print(f"\nConfiguration:")
-    print(f"  pilot_runs: {info['pilot_runs']}")
-    print(f"  initial_lr_range: {info['initial_lr_range']}")
-    print(f"  target_narrowed_lr: {info['target_narrowed_lr']}")
-    print(f"  full_tuned_runs: {info['full_tuned_runs']}")
-    print(f"  narrowing_strategy: {info['narrowing_strategy']}")
-
-    print(f"\nQuantum Integration:")
-    qi = info['quantum_integration']
-    print(f"  runs: {qi['runs']}")
-    print(f"  instability_reduction: {qi['instability_reduction']}")
-    print(f"  retention_boost: {qi['retention_boost']}")
-
-    print(f"\nExpected Results:")
-    er = info['expected_results']
-    print(f"  narrowed_range: {er['narrowed_range']}")
-    print(f"  final_retention: {er['final_retention']}")
-    print(f"  eff_alpha: {er['eff_alpha']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[pilot_info_receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_quantum_rl_hybrid_info():
-    """Output quantum-RL hybrid configuration."""
-    print("=" * 60)
-    print("QUANTUM-RL HYBRID CONFIGURATION")
-    print("=" * 60)
-
-    info = get_quantum_rl_hybrid_info()
-
-    print(f"\nConfiguration:")
-    print(f"  quantum_sim_runs: {info['quantum_sim_runs']}")
-    print(f"  entangled_penalty_factor: {info['entangled_penalty_factor']}")
-    print(f"  quantum_retention_boost: {info['quantum_retention_boost']}")
-    print(f"  standard_instability_penalty: {info['standard_instability_penalty']}")
-    print(f"  entangled_penalty: {info['entangled_penalty']}")
-    print(f"  alpha_drop_threshold: {info['alpha_drop_threshold']}")
-
-    print(f"\nPenalty Formula:")
-    pf = info['penalty_formula']
-    print(f"  Standard: {pf['standard']}")
-    print(f"  Entangled: {pf['entangled']}")
-    print(f"  Reduction: {pf['reduction']}")
-
-    print(f"\nExpected Results:")
-    er = info['expected_results']
-    print(f"  instability_reduction: {er['instability_reduction']}")
-    print(f"  retention_boost: {er['retention_boost']}")
-    print(f"  combined_with_pilot: {er['combined_with_pilot']}")
-
-    print(f"\nSequencing:")
-    seq = info['sequencing']
-    print(f"  Step 1: {seq['step_1']}")
-    print(f"  Step 2: {seq['step_2']}")
-    print(f"  Step 3: {seq['step_3']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[quantum_rl_hybrid_info_receipt emitted above]")
-    print("=" * 60)
-
-
-def cmd_pipeline_info():
-    """Output full pipeline configuration."""
-    print("=" * 60)
-    print("FULL PIPELINE CONFIGURATION")
-    print("=" * 60)
-
-    info = get_pipeline_info()
-
-    print(f"\nPipeline Stages:")
-    for i, stage in enumerate(info['pipeline_stages'], 1):
-        print(f"  {i}. {stage}")
-
-    print(f"\nTargets:")
-    targets = info['targets']
-    print(f"  retention_target: {targets['retention_target']}")
-    print(f"  expected_retention: {targets['expected_retention']}")
-    print(f"  expected_eff_alpha: {targets['expected_eff_alpha']}")
-
-    print(f"\nDescription: {info['description']}")
-
-    print("\n[pipeline_info_receipt emitted above]")
-    print("=" * 60)
 
 
 def main():
-    # Check for flag-based invocation
     parser = argparse.ArgumentParser(description="AXIOM-CORE CLI - The Sovereignty Calculator")
     parser.add_argument('command', nargs='?', help='Command: baseline, bootstrap, curve, full')
+
+    # Timeline args
     parser.add_argument('--c_base', type=float, default=C_BASE_DEFAULT,
-                        help=f'Initial person-eq capacity (default: {C_BASE_DEFAULT})')
+                        help='Initial person-eq capacity (default: 50)')
     parser.add_argument('--p_factor', type=float, default=P_FACTOR_DEFAULT,
-                        help=f'Propulsion growth factor (default: {P_FACTOR_DEFAULT})')
+                        help='Propulsion growth factor (default: 1.8)')
     parser.add_argument('--tau', type=float, default=0,
                         help='Latency in seconds (0=Earth, 1200=Mars max)')
     parser.add_argument('--simulate_timeline', action='store_true',
                         help='Run sovereignty timeline simulation')
 
-    # Partition resilience testing flags (Dec 2025)
+    # Partition flags
     parser.add_argument('--partition', type=float, default=None,
                         help='Run single partition simulation at specified loss percentage (0-1)')
     parser.add_argument('--nodes', type=int, default=NODE_BASELINE,
-                        help=f'Specify node count for simulation (default: {NODE_BASELINE})')
+                        help='Specify node count for simulation (default: 5)')
     parser.add_argument('--stress_quorum', action='store_true',
-                        help='Run full stress sweep (1000 iterations, 0-40% loss)')
+                        help='Run full stress sweep (1000 iterations, 0-40%% loss)')
     parser.add_argument('--simulate', action='store_true',
                         help='Output simulation receipt to stdout')
 
-    # Adaptive rerouting and blackout testing flags (Dec 2025)
-    parser.add_argument('--reroute', action='store_true',
-                        help='Enable adaptive rerouting in simulation')
-    parser.add_argument('--reroute_enabled', action='store_true',
-                        help='Alias for --reroute')
-    parser.add_argument('--blackout', type=int, default=None,
-                        help='Run blackout simulation for specified days')
-    parser.add_argument('--blackout_sweep', action='store_true',
-                        help='Run full blackout sweep (43-60d range, 1000 iterations)')
-    parser.add_argument('--algo_info', action='store_true',
-                        help='Output reroute algorithm specification')
+    # Reroute/blackout flags
+    parser.add_argument('--reroute', action='store_true', help='Enable adaptive rerouting')
+    parser.add_argument('--reroute_enabled', action='store_true', help='Alias for --reroute')
+    parser.add_argument('--blackout', type=int, default=None, help='Blackout duration in days')
+    parser.add_argument('--blackout_sweep', action='store_true', help='Run full blackout sweep')
+    parser.add_argument('--algo_info', action='store_true', help='Output reroute algorithm spec')
 
-    # Extended blackout sweep and retention curve flags (Dec 2025)
+    # Extended sweep/retention flags
     parser.add_argument('--extended_sweep', nargs=2, type=int, default=None,
-                        metavar=('START', 'END'),
-                        help='Run extended blackout sweep from START to END days (e.g., --extended_sweep 43 90)')
-    parser.add_argument('--retention_curve', action='store_true',
-                        help='Output retention curve data as JSON')
-    parser.add_argument('--gnn_stub', action='store_true',
-                        help='Echo GNN sensitivity stub config (placeholder for next gate)')
+                        metavar=('START', 'END'), help='Extended blackout sweep range')
+    parser.add_argument('--retention_curve', action='store_true', help='Output retention curve JSON')
+    parser.add_argument('--gnn_stub', action='store_true', help='Echo GNN sensitivity stub')
 
-    # GNN nonlinear caching flags (Dec 2025 - NEW)
-    parser.add_argument('--gnn_nonlinear', action='store_true',
-                        help='Use GNN nonlinear retention model')
-    parser.add_argument('--cache_depth', type=int, default=int(1e8),
-                        help='Set cache depth for simulation (default: 1e8)')
-    parser.add_argument('--cache_sweep', action='store_true',
-                        help='Run cache depth sensitivity sweep')
-    parser.add_argument('--extreme_sweep', type=int, default=None,
-                        metavar='DAYS',
-                        help='Run extreme blackout sweep to specified days')
-    parser.add_argument('--overflow_test', action='store_true',
-                        help='Test cache overflow detection')
-    parser.add_argument('--innovation_stubs', action='store_true',
-                        help='Echo innovation stub status (quantum, swarm, cosmos)')
+    # GNN/cache flags
+    parser.add_argument('--gnn_nonlinear', action='store_true', help='Use GNN nonlinear model')
+    parser.add_argument('--cache_depth', type=int, default=int(1e8), help='Cache depth (default: 1e8)')
+    parser.add_argument('--cache_sweep', action='store_true', help='Run cache depth sweep')
+    parser.add_argument('--extreme_sweep', type=int, default=None, metavar='DAYS',
+                        help='Run extreme blackout sweep to days')
+    parser.add_argument('--overflow_test', action='store_true', help='Test cache overflow')
+    parser.add_argument('--innovation_stubs', action='store_true', help='Echo innovation stubs')
 
-    # Entropy pruning flags (Dec 2025 - NEW)
-    parser.add_argument('--entropy_prune', action='store_true',
-                        help='Enable entropy pruning for simulation')
-    parser.add_argument('--trim_factor', type=float, default=0.3,
-                        help='Set ln(n) trim factor (default: 0.3, max: 0.5)')
-    parser.add_argument('--hybrid_prune', action='store_true',
-                        help='Enable hybrid dedup + predictive pruning')
-    parser.add_argument('--pruning_sweep', action='store_true',
-                        help='Run pruning sensitivity sweep')
-    parser.add_argument('--extended_250d', action='store_true',
-                        help='Run 250d simulation with pruning')
-    parser.add_argument('--verify_chain', action='store_true',
-                        help='Verify chain integrity after pruning')
-    parser.add_argument('--pruning_info', action='store_true',
-                        help='Output pruning configuration')
+    # Pruning flags
+    parser.add_argument('--entropy_prune', action='store_true', help='Enable entropy pruning')
+    parser.add_argument('--trim_factor', type=float, default=0.3, help='Trim factor (default: 0.3)')
+    parser.add_argument('--hybrid_prune', action='store_true', help='Enable hybrid pruning')
+    parser.add_argument('--pruning_sweep', action='store_true', help='Run pruning sweep')
+    parser.add_argument('--extended_250d', action='store_true', help='Run 250d simulation')
+    parser.add_argument('--verify_chain', action='store_true', help='Verify chain integrity')
+    parser.add_argument('--pruning_info', action='store_true', help='Output pruning config')
 
-    # Ablation testing flags (Dec 2025 - NEW)
-    parser.add_argument('--ablate', type=str, default=None,
-                        metavar='MODE',
-                        help='Run simulation in specified ablation mode (full/no_cache/no_prune/baseline)')
-    parser.add_argument('--ablation_sweep', action='store_true',
-                        help='Run all 4 ablation modes and compare')
-    parser.add_argument('--ceiling_track', type=float, default=None,
-                        metavar='ALPHA',
-                        help='Output ceiling gap analysis for specified alpha')
-    parser.add_argument('--formula_check', action='store_true',
-                        help='Validate alpha formula with example values')
-    parser.add_argument('--isolate_layers', action='store_true',
-                        help='Output isolated contribution from each layer')
+    # Ablation flags
+    parser.add_argument('--ablate', type=str, default=None, metavar='MODE',
+                        help='Ablation mode (full/no_cache/no_prune/baseline)')
+    parser.add_argument('--ablation_sweep', action='store_true', help='Run ablation sweep')
+    parser.add_argument('--ceiling_track', type=float, default=None, metavar='ALPHA',
+                        help='Ceiling gap analysis for alpha')
+    parser.add_argument('--formula_check', action='store_true', help='Validate alpha formula')
+    parser.add_argument('--isolate_layers', action='store_true', help='Isolate layer contributions')
 
-    # RL auto-tuning flags (Dec 2025 - NEW)
-    parser.add_argument('--rl_tune', action='store_true',
-                        help='Enable RL auto-tuning for simulation')
-    parser.add_argument('--rl_episodes', type=int, default=100,
-                        help='Number of RL episodes (default: 100)')
-    parser.add_argument('--adaptive', action='store_true',
-                        help='Enable adaptive depth/config')
-    parser.add_argument('--dynamic', action='store_true',
-                        help='Enable all dynamic features (rl + adaptive)')
-    parser.add_argument('--tune_sweep', action='store_true',
-                        help='Run retention sweep from 1.01 to target')
-    parser.add_argument('--show_rl_history', action='store_true',
-                        help='Output RL episode history')
-    parser.add_argument('--validate_no_static', action='store_true',
-                        help='Verify no static configs remain')
-    parser.add_argument('--rl_info', action='store_true',
-                        help='Output RL tuning configuration')
-    parser.add_argument('--adaptive_info', action='store_true',
-                        help='Output adaptive module configuration')
-    parser.add_argument('--rl_status', action='store_true',
-                        help='Output RL integration status')
+    # RL flags
+    parser.add_argument('--rl_tune', action='store_true', help='Enable RL auto-tuning')
+    parser.add_argument('--rl_episodes', type=int, default=100, help='RL episodes (default: 100)')
+    parser.add_argument('--adaptive', action='store_true', help='Enable adaptive depth/config')
+    parser.add_argument('--dynamic', action='store_true', help='Enable all dynamic features')
+    parser.add_argument('--tune_sweep', action='store_true', help='Run retention sweep')
+    parser.add_argument('--show_rl_history', action='store_true', help='Output RL history')
+    parser.add_argument('--validate_no_static', action='store_true', help='Verify no static configs')
+    parser.add_argument('--rl_info', action='store_true', help='Output RL tuning config')
+    parser.add_argument('--adaptive_info', action='store_true', help='Output adaptive config')
+    parser.add_argument('--rl_status', action='store_true', help='Output RL integration status')
 
-    # Adaptive depth flags (Dec 2025 - NEW)
-    parser.add_argument('--adaptive_depth_run', action='store_true',
-                        help='Run with adaptive depth enabled')
-    parser.add_argument('--rl_sweep', type=int, default=500,
-                        help='Number of informed RL runs (default: 500)')
-    parser.add_argument('--depth_scaling_test', action='store_true',
-                        help='Run depth scaling efficiency comparison')
-    parser.add_argument('--compute_depth', action='store_true',
-                        help='Show computed depth for given tree size')
-    parser.add_argument('--tree_size', type=int, default=int(1e6),
-                        help='Tree size for depth calculation (default: 1e6)')
-    parser.add_argument('--depth_scaling_info', action='store_true',
-                        help='Output adaptive depth scaling configuration')
-    parser.add_argument('--efficient_sweep_info', action='store_true',
-                        help='Output efficient sweep configuration')
+    # Adaptive depth flags
+    parser.add_argument('--adaptive_depth_run', action='store_true', help='Run with adaptive depth')
+    parser.add_argument('--rl_sweep', type=int, default=500, help='Informed RL runs (default: 500)')
+    parser.add_argument('--depth_scaling_test', action='store_true', help='Run depth scaling test')
+    parser.add_argument('--compute_depth', action='store_true', help='Show computed depth')
+    parser.add_argument('--tree_size', type=int, default=int(1e6), help='Tree size (default: 1e6)')
+    parser.add_argument('--depth_scaling_info', action='store_true', help='Output depth scaling config')
+    parser.add_argument('--efficient_sweep_info', action='store_true', help='Output sweep config')
 
-    # 500-run RL sweep flags (Dec 17 2025 - NEW)
-    parser.add_argument('--rl_500_sweep', action='store_true',
-                        help='Run 500-iteration RL sweep for 1.05 retention')
-    parser.add_argument('--lr_range', nargs=2, type=float, default=None,
-                        metavar=('MIN', 'MAX'),
-                        help='Override LR bounds (default: 0.001 0.01)')
-    parser.add_argument('--retention_target', type=float, default=1.05,
-                        help='Override retention target (default: 1.05)')
-    parser.add_argument('--quantum_estimate', action='store_true',
-                        help='Show quantum stub estimate')
-    parser.add_argument('--rl_500_sweep_info', action='store_true',
-                        help='Output 500-run sweep configuration')
+    # 500-run sweep flags
+    parser.add_argument('--rl_500_sweep', action='store_true', help='Run 500-run RL sweep')
+    parser.add_argument('--lr_range', nargs=2, type=float, default=None, metavar=('MIN', 'MAX'),
+                        help='Override LR bounds')
+    parser.add_argument('--retention_target', type=float, default=1.05, help='Retention target')
+    parser.add_argument('--quantum_estimate', action='store_true', help='Show quantum estimate')
+    parser.add_argument('--rl_500_sweep_info', action='store_true', help='Output 500-run config')
 
-    # LR Pilot + Quantum Sim + Post-Tune flags (Dec 17 2025 - NEW)
-    parser.add_argument('--lr_pilot', type=int, default=None, const=50, nargs='?',
-                        metavar='RUNS',
-                        help='Run LR pilot with N iterations (default: 50)')
-    parser.add_argument('--quantum_sim', type=int, default=None, const=10, nargs='?',
-                        metavar='RUNS',
-                        help='Run quantum simulation with N iterations (default: 10)')
-    parser.add_argument('--post_tune_execute', action='store_true',
-                        help='Execute full tuned 500-run sweep (after pilot)')
-    parser.add_argument('--full_pipeline', action='store_true',
-                        help='Run complete pilot -> quantum -> sweep chain')
-    parser.add_argument('--show_bounds', action='store_true',
-                        help='Show narrowed LR bounds comparison')
-    parser.add_argument('--pilot_info', action='store_true',
-                        help='Output LR pilot narrowing configuration')
-    parser.add_argument('--quantum_rl_hybrid_info', action='store_true',
-                        help='Output quantum-RL hybrid configuration')
-    parser.add_argument('--pipeline_info', action='store_true',
-                        help='Output full pipeline configuration')
-    parser.add_argument('--pilot_runs', type=int, default=50,
-                        help='Number of pilot runs (default: 50)')
-    parser.add_argument('--quantum_runs', type=int, default=10,
-                        help='Number of quantum simulation runs (default: 10)')
-    parser.add_argument('--sweep_runs', type=int, default=500,
-                        help='Number of tuned sweep runs (default: 500)')
+    # Pipeline flags
+    parser.add_argument('--lr_pilot', type=int, default=None, const=50, nargs='?', metavar='RUNS',
+                        help='Run LR pilot (default: 50 runs)')
+    parser.add_argument('--quantum_sim', type=int, default=None, const=10, nargs='?', metavar='RUNS',
+                        help='Run quantum sim (default: 10 runs)')
+    parser.add_argument('--post_tune_execute', action='store_true', help='Execute tuned sweep')
+    parser.add_argument('--full_pipeline', action='store_true', help='Run complete pipeline')
+    parser.add_argument('--show_bounds', action='store_true', help='Show LR bounds comparison')
+    parser.add_argument('--pilot_info', action='store_true', help='Output pilot config')
+    parser.add_argument('--quantum_rl_hybrid_info', action='store_true', help='Output quantum-RL config')
+    parser.add_argument('--pipeline_info', action='store_true', help='Output pipeline config')
+    parser.add_argument('--pilot_runs', type=int, default=50, help='Pilot runs (default: 50)')
+    parser.add_argument('--quantum_runs', type=int, default=10, help='Quantum runs (default: 10)')
+    parser.add_argument('--sweep_runs', type=int, default=500, help='Sweep runs (default: 500)')
 
     args = parser.parse_args()
-
-    # Combine reroute flags
     reroute_enabled = args.reroute or args.reroute_enabled
 
-    # Handle RL auto-tuning flags (Dec 2025 - NEW)
+    # === DISPATCH ===
+
+    # Info commands (no args needed)
     if args.rl_info:
-        cmd_rl_info()
-        return
-
+        return cmd_rl_info()
     if args.adaptive_info:
-        cmd_adaptive_info()
-        return
-
+        return cmd_adaptive_info()
     if args.rl_status:
-        cmd_rl_status()
-        return
-
+        return cmd_rl_status()
     if args.validate_no_static:
-        cmd_validate_no_static()
-        return
-
-    if args.rl_tune and args.blackout is not None:
-        rl_enabled = True
-        adaptive_enabled = args.adaptive or args.dynamic
-        cmd_rl_tune(args.blackout, args.rl_episodes, rl_enabled, adaptive_enabled, args.simulate)
-        return
-
-    if args.dynamic and args.blackout is not None:
-        cmd_dynamic_mode(args.blackout, args.rl_episodes, args.simulate)
-        return
-
-    if args.tune_sweep:
-        cmd_tune_sweep(args.simulate)
-        return
-
-    # Handle adaptive depth flags (Dec 2025 - NEW)
+        return cmd_validate_no_static()
     if args.depth_scaling_info:
-        cmd_depth_scaling_info()
-        return
-
+        return cmd_depth_scaling_info()
     if args.efficient_sweep_info:
-        cmd_efficient_sweep_info()
-        return
-
-    # Handle 500-run RL sweep flags (Dec 17 2025 - NEW)
+        return cmd_efficient_sweep_info()
     if args.rl_500_sweep_info:
-        cmd_rl_500_sweep_info()
-        return
+        return cmd_rl_500_sweep_info()
+    if args.pilot_info:
+        return cmd_pilot_info()
+    if args.quantum_rl_hybrid_info:
+        return cmd_quantum_rl_hybrid_info()
+    if args.pipeline_info:
+        return cmd_pipeline_info()
+    if args.algo_info:
+        return cmd_algo_info()
+    if args.gnn_stub:
+        return cmd_gnn_stub()
+    if args.innovation_stubs:
+        return cmd_innovation_stubs()
+    if args.pruning_info:
+        return cmd_pruning_info()
+    if args.formula_check:
+        return cmd_formula_check()
+    if args.retention_curve:
+        return cmd_retention_curve()
 
+    # RL commands
+    if args.rl_tune and args.blackout is not None:
+        return cmd_rl_tune(args.blackout, args.rl_episodes, True, args.adaptive or args.dynamic, args.simulate)
+    if args.dynamic and args.blackout is not None:
+        return cmd_dynamic_mode(args.blackout, args.rl_episodes, args.simulate)
+    if args.tune_sweep:
+        return cmd_tune_sweep(args.simulate)
     if args.quantum_estimate:
-        cmd_quantum_estimate(args.retention_target)
-        return
-
+        return cmd_quantum_estimate(args.retention_target)
     if args.rl_500_sweep:
         lr_range = tuple(args.lr_range) if args.lr_range else (RL_LR_MIN, RL_LR_MAX)
-        cmd_rl_500_sweep(args.tree_size, lr_range, args.retention_target, args.simulate)
-        return
+        return cmd_rl_500_sweep(args.tree_size, lr_range, args.retention_target, args.simulate)
 
-    # Handle LR Pilot + Quantum Sim + Post-Tune flags (Dec 17 2025 - NEW)
-    if args.pilot_info:
-        cmd_pilot_info()
-        return
-
-    if args.quantum_rl_hybrid_info:
-        cmd_quantum_rl_hybrid_info()
-        return
-
-    if args.pipeline_info:
-        cmd_pipeline_info()
-        return
-
+    # Pipeline commands
     if args.full_pipeline:
-        cmd_full_pipeline(
-            args.pilot_runs,
-            args.quantum_runs,
-            args.sweep_runs,
-            args.tree_size,
-            args.simulate
-        )
-        return
-
+        return cmd_full_pipeline(args.pilot_runs, args.quantum_runs, args.sweep_runs, args.tree_size, args.simulate)
     if args.post_tune_execute:
-        cmd_post_tune_execute(args.tree_size, args.simulate)
-        return
-
+        return cmd_post_tune_execute(args.tree_size, args.simulate)
     if args.lr_pilot is not None:
         runs = args.lr_pilot if args.lr_pilot else 50
-        cmd_lr_pilot(runs, args.tree_size, args.simulate, args.show_bounds)
-        return
-
+        return cmd_lr_pilot(runs, args.tree_size, args.simulate, args.show_bounds)
     if args.quantum_sim is not None:
         runs = args.quantum_sim if args.quantum_sim else 10
-        cmd_quantum_sim(runs, args.simulate)
-        return
+        return cmd_quantum_sim(runs, args.simulate)
 
+    # Depth commands
     if args.compute_depth:
-        cmd_compute_depth_single(args.tree_size)
-        return
-
+        return cmd_compute_depth_single(args.tree_size)
     if args.depth_scaling_test:
-        cmd_depth_scaling_test()
-        return
-
+        return cmd_depth_scaling_test()
     if args.adaptive_depth_run:
-        cmd_adaptive_depth_run(args.rl_sweep, args.tree_size, args.simulate)
-        return
+        return cmd_adaptive_depth_run(args.rl_sweep, args.tree_size, args.simulate)
 
-    # Handle ablation testing flags (Dec 2025 - NEW)
-    if args.formula_check:
-        cmd_formula_check()
-        return
-
+    # Ablation commands
     if args.ceiling_track is not None:
-        cmd_ceiling_track(args.ceiling_track)
-        return
-
+        return cmd_ceiling_track(args.ceiling_track)
     if args.isolate_layers:
         blackout_days = args.blackout if args.blackout is not None else 150
-        cmd_isolate_layers(blackout_days, args.simulate)
-        return
-
+        return cmd_isolate_layers(blackout_days, args.simulate)
     if args.ablation_sweep:
         blackout_days = args.blackout if args.blackout is not None else 150
-        cmd_ablation_sweep(blackout_days, args.simulate)
-        return
-
+        return cmd_ablation_sweep(blackout_days, args.simulate)
     if args.ablate is not None:
         blackout_days = args.blackout if args.blackout is not None else 150
-        cmd_ablate(args.ablate, blackout_days, args.simulate)
-        return
+        return cmd_ablate(args.ablate, blackout_days, args.simulate)
 
-    # Handle algorithm info
-    if args.algo_info:
-        cmd_algo_info()
-        return
-
-    # Handle GNN stub
-    if args.gnn_stub:
-        cmd_gnn_stub()
-        return
-
-    # Handle innovation stubs
-    if args.innovation_stubs:
-        cmd_innovation_stubs()
-        return
-
-    # Handle pruning info
-    if args.pruning_info:
-        cmd_pruning_info()
-        return
-
-    # Handle pruning sweep
+    # Pruning commands
     if args.pruning_sweep:
-        cmd_pruning_sweep(args.simulate)
-        return
-
-    # Handle extended 250d
+        return cmd_pruning_sweep(args.simulate)
     if args.extended_250d:
-        cmd_extended_250d(args.simulate)
-        return
-
-    # Handle verify chain
+        return cmd_extended_250d(args.simulate)
     if args.verify_chain:
-        cmd_verify_chain(args.trim_factor, args.simulate)
-        return
-
-    # Handle entropy prune with blackout
+        return cmd_verify_chain(args.trim_factor, args.simulate)
     if args.entropy_prune and args.blackout is not None:
-        hybrid = args.hybrid_prune or True  # Default to hybrid
-        cmd_entropy_prune(args.blackout, args.trim_factor, hybrid, args.simulate)
-        return
+        hybrid = args.hybrid_prune or True
+        return cmd_entropy_prune(args.blackout, args.trim_factor, hybrid, args.simulate)
 
-    # Handle cache sweep
+    # GNN/cache commands
     if args.cache_sweep:
-        cmd_cache_sweep(args.simulate)
-        return
-
-    # Handle overflow test
+        return cmd_cache_sweep(args.simulate)
     if args.overflow_test:
-        cmd_overflow_test(args.simulate)
-        return
-
-    # Handle extreme sweep
+        return cmd_overflow_test(args.simulate)
     if args.extreme_sweep is not None:
-        cmd_extreme_sweep(args.extreme_sweep, args.cache_depth, args.simulate)
-        return
-
-    # Handle GNN nonlinear with blackout
+        return cmd_extreme_sweep(args.extreme_sweep, args.cache_depth, args.simulate)
     if args.gnn_nonlinear and args.blackout is not None:
-        cmd_gnn_nonlinear(args.blackout, args.cache_depth, args.simulate)
-        return
+        return cmd_gnn_nonlinear(args.blackout, args.cache_depth, args.simulate)
 
-    # Handle retention curve output
-    if args.retention_curve:
-        cmd_retention_curve()
-        return
-
-    # Handle extended sweep
+    # Extended sweep
     if args.extended_sweep is not None:
-        cmd_extended_sweep(args.extended_sweep[0], args.extended_sweep[1], args.simulate)
-        return
+        return cmd_extended_sweep(args.extended_sweep[0], args.extended_sweep[1], args.simulate)
 
-    # Handle blackout sweep
+    # Blackout commands
     if args.blackout_sweep:
-        cmd_blackout_sweep(reroute_enabled)
-        return
-
-    # Handle single blackout test
+        return cmd_blackout_sweep(reroute_enabled)
     if args.blackout is not None:
-        cmd_blackout(args.blackout, reroute_enabled, args.simulate)
-        return
-
-    # Handle single reroute test
+        return cmd_blackout(args.blackout, reroute_enabled, args.simulate)
     if reroute_enabled and args.partition is None and args.blackout is None:
-        cmd_reroute(args.simulate)
-        return
+        return cmd_reroute(args.simulate)
 
-    # Handle partition stress test
+    # Partition commands
     if args.stress_quorum:
-        cmd_stress_quorum()
-        return
-
-    # Handle single partition test
+        return cmd_stress_quorum()
     if args.partition is not None:
-        cmd_partition(args.partition, args.nodes, args.simulate)
-        return
+        return cmd_partition(args.partition, args.nodes, args.simulate)
 
-    # Handle timeline simulation
+    # Timeline
     if args.simulate_timeline:
-        cmd_simulate_timeline(args.c_base, args.p_factor, args.tau)
-        return
+        return cmd_simulate_timeline(args.c_base, args.p_factor, args.tau)
 
-    # Handle positional command
+    # Positional commands
     if args.command is None:
         print(__doc__)
         return
 
     cmd = args.command.lower()
-
     if cmd == "baseline":
         cmd_baseline()
     elif cmd == "bootstrap":
