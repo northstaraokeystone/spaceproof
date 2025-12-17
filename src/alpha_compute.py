@@ -16,65 +16,40 @@ KEY FORMULA:
     - retention_factor: product of all layer contributions (GNN, pruning, etc.)
     - retention_factor > 1.0 means engineering adds resilience above Shannon floor
 
-EXAMPLE:
-    min_eff = 2.7185, baseline = 1.0, retention = 1.01
-    α = (2.7185 / 1.0) * 1.01 = 2.745 ✓
-
-CONSTANTS:
-    SHANNON_FLOOR_ALPHA = 2.71828 (Baseline α without engineering = e)
-    ALPHA_CEILING_TARGET = 3.0 (e * max_factor where max_factor ≈ 1.1)
-    RETENTION_FACTOR_MAX = 1.10 (Ceiling / floor = 3.0 / 2.718 ≈ 1.10)
-
 Source: Grok - "α and H measure different things... retention_factor >1 from GNN boosts"
 """
 
 import json
-import math
 import os
 from functools import reduce
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List
 
-from .core import emit_receipt, dual_hash, StopRule
+from .core import emit_receipt, dual_hash
 
+# Import all constants from centralized location
+from .constants import (
+    SHANNON_FLOOR_ALPHA,
+    ALPHA_CEILING_TARGET,
+    RETENTION_FACTOR_MAX,
+    RETENTION_FACTOR_MIN,
+    RETENTION_FACTOR_STOPRULE_MAX,
+    RETENTION_FACTOR_GNN_RANGE,
+    RETENTION_FACTOR_PRUNE_RANGE,
+    ABLATION_MODES,
+    ALPHA_FORMULA_VERSION,
+    ALPHA_FORMULA_SPEC_PATH,
+)
 
-# === PHYSICS CONSTANTS ===
-
-SHANNON_FLOOR_ALPHA = 2.71828
-"""physics: Baseline α without engineering = e (Shannon bound on resilience). NOT tunable."""
-
-ALPHA_CEILING_TARGET = 3.0
-"""physics: e * max_factor where max_factor ≈ 1.1 with full ML optimization."""
-
-RETENTION_FACTOR_MAX = 1.10
-"""physics: Ceiling / floor = 3.0 / 2.718 ≈ 1.10. Theoretical max compounding."""
-
-RETENTION_FACTOR_MIN = 0.95
-"""physics: Minimum valid retention factor. Below this indicates bug."""
-
-RETENTION_FACTOR_STOPRULE_MAX = 1.15
-"""physics: StopRule if retention exceeds this. Unphysical value indicates bug."""
-
-RETENTION_FACTOR_GNN_RANGE = (1.008, 1.015)
-"""physics: Isolated GNN contribution per Grok ablation."""
-
-RETENTION_FACTOR_PRUNE_RANGE = (1.008, 1.015)
-"""physics: Isolated pruning contribution per Grok ablation."""
-
-ABLATION_MODES = ["full", "no_cache", "no_prune", "baseline"]
-"""physics: Four-mode isolation testing."""
-
-ALPHA_FORMULA_VERSION = "v1.0"
-"""Track formula evolution."""
-
-ALPHA_FORMULA_SPEC_PATH = "data/alpha_formula_spec.json"
-"""Path to alpha formula specification file."""
+# Import stoprules from centralized location
+from .stoprules import (
+    stoprule_invalid_retention,
+    stoprule_alpha_below_floor,
+    stoprule_alpha_above_ceiling,
+)
 
 
 def load_alpha_formula_spec(path: str = None) -> Dict[str, Any]:
     """Load and verify alpha formula specification file.
-
-    Loads data/alpha_formula_spec.json and emits ingest receipt
-    with dual_hash per CLAUDEME S4.1.
 
     Args:
         path: Optional path override (default: ALPHA_FORMULA_SPEC_PATH)
@@ -107,77 +82,6 @@ def load_alpha_formula_spec(path: str = None) -> Dict[str, Any]:
     return data
 
 
-def stoprule_invalid_retention(factor: float) -> None:
-    """StopRule if retention factor is unphysical.
-
-    Args:
-        factor: Retention factor to validate
-
-    Raises:
-        StopRule: If factor < 0.95 or > 1.15
-    """
-    if factor < RETENTION_FACTOR_MIN or factor > RETENTION_FACTOR_STOPRULE_MAX:
-        emit_receipt("anomaly", {
-            "tenant_id": "axiom-alpha-compute",
-            "metric": "retention_factor",
-            "baseline": 1.0,
-            "delta": factor - 1.0,
-            "classification": "violation",
-            "action": "halt"
-        })
-        raise StopRule(
-            f"Invalid retention factor {factor:.4f}: "
-            f"must be in range [{RETENTION_FACTOR_MIN}, {RETENTION_FACTOR_STOPRULE_MAX}]"
-        )
-
-
-def stoprule_alpha_below_floor(alpha: float) -> None:
-    """StopRule if alpha drops below Shannon floor.
-
-    Args:
-        alpha: Computed alpha to validate
-
-    Raises:
-        StopRule: If alpha < 2.70
-    """
-    if alpha < 2.70:
-        emit_receipt("anomaly", {
-            "tenant_id": "axiom-alpha-compute",
-            "metric": "computed_alpha",
-            "baseline": SHANNON_FLOOR_ALPHA,
-            "delta": alpha - SHANNON_FLOOR_ALPHA,
-            "classification": "deviation",
-            "action": "investigate"
-        })
-        raise StopRule(
-            f"Alpha {alpha:.4f} below Shannon floor {SHANNON_FLOOR_ALPHA:.4f}"
-        )
-
-
-def stoprule_alpha_above_ceiling(alpha: float) -> None:
-    """StopRule if alpha exceeds theoretical ceiling.
-
-    Args:
-        alpha: Computed alpha to validate
-
-    Raises:
-        StopRule: If alpha > 3.1
-    """
-    ceiling_plus_margin = ALPHA_CEILING_TARGET + 0.1
-    if alpha > ceiling_plus_margin:
-        emit_receipt("anomaly", {
-            "tenant_id": "axiom-alpha-compute",
-            "metric": "computed_alpha",
-            "baseline": ALPHA_CEILING_TARGET,
-            "delta": alpha - ALPHA_CEILING_TARGET,
-            "classification": "deviation",
-            "action": "investigate"
-        })
-        raise StopRule(
-            f"Alpha {alpha:.4f} exceeds ceiling {ALPHA_CEILING_TARGET:.1f} + margin"
-        )
-
-
 def alpha_calc(
     min_eff: float,
     baseline: float,
@@ -188,8 +92,6 @@ def alpha_calc(
 
     THE FORMULA: α = (min_eff / baseline) * retention_factor
 
-    This is the single source of truth for α calculation.
-
     Args:
         min_eff: Minimum effective redundancy (from GNN asymptote, typically ~2.718)
         baseline: Normalized baseline (typically 1.0)
@@ -197,33 +99,24 @@ def alpha_calc(
         validate: Whether to apply stoprules (default: True)
 
     Returns:
-        Dict with:
-            - computed_alpha: The calculated α value
-            - formula_used: String representation of formula
-            - components: Dict with min_eff, baseline, retention_factor
-            - floor_reference: Shannon floor (e)
-            - ceiling_reference: Ceiling target (3.0)
-            - gap_to_ceiling_pct: Percentage gap to ceiling
+        Dict with computed_alpha, formula_used, components, references, gap_to_ceiling
 
     Raises:
         StopRule: If retention_factor is invalid or alpha is out of bounds
 
     Receipt: alpha_formula
     """
-    # Validate retention factor
     if validate:
-        stoprule_invalid_retention(retention_factor)
+        stoprule_invalid_retention(retention_factor, "axiom-alpha-compute")
 
     # THE FORMULA
     computed_alpha = (min_eff / baseline) * retention_factor
     computed_alpha = round(computed_alpha, 5)
 
-    # Validate computed alpha
     if validate:
-        stoprule_alpha_below_floor(computed_alpha)
-        stoprule_alpha_above_ceiling(computed_alpha)
+        stoprule_alpha_below_floor(computed_alpha, "axiom-alpha-compute")
+        stoprule_alpha_above_ceiling(computed_alpha, "axiom-alpha-compute")
 
-    # Compute gap to ceiling
     gap_absolute = ALPHA_CEILING_TARGET - computed_alpha
     gap_pct = (gap_absolute / ALPHA_CEILING_TARGET) * 100
 
@@ -272,7 +165,6 @@ def compound_retention(factors: List[float]) -> float:
     """
     if not factors:
         return 1.0
-
     compound = reduce(lambda x, y: x * y, factors, 1.0)
     return round(compound, 5)
 
@@ -296,7 +188,6 @@ def isolate_layer_contribution(
     """
     if full_alpha <= floor:
         return 0.0
-
     contribution = (full_alpha - ablated_alpha) / (full_alpha - floor)
     return round(max(0.0, min(1.0, contribution)), 4)
 
@@ -312,28 +203,16 @@ def ceiling_gap(
         ceiling_target: Target ceiling (default: 3.0)
 
     Returns:
-        Dict with:
-            - gap_absolute: Absolute gap to ceiling
-            - gap_pct: Percentage gap
-            - retention_factor_current: Current effective retention
-            - retention_factor_needed: Retention needed to reach ceiling
-            - path_to_ceiling: Description of path
+        Dict with gap metrics and path description
 
     Receipt: ceiling_track
     """
     gap_absolute = ceiling_target - current_alpha
     gap_pct = (gap_absolute / ceiling_target) * 100
-
-    # Compute current retention factor (relative to floor)
     retention_current = current_alpha / SHANNON_FLOOR_ALPHA
-
-    # Compute retention needed to reach ceiling
     retention_needed = ceiling_target / SHANNON_FLOOR_ALPHA
-
-    # Retention delta
     retention_delta = retention_needed - retention_current
 
-    # Path description
     if gap_pct <= 0:
         path = "Ceiling reached"
     elif gap_pct <= 5:
@@ -370,31 +249,14 @@ def validate_formula(
     expected: float,
     tolerance: float = 0.01
 ) -> bool:
-    """Validate formula correctness within tolerance.
-
-    Args:
-        min_eff: Minimum effective redundancy
-        retention: Retention factor
-        expected: Expected alpha value
-        tolerance: Acceptable deviation (default: 0.01)
-
-    Returns:
-        True if computed alpha matches expected within tolerance
-    """
+    """Validate formula correctness within tolerance."""
     result = alpha_calc(min_eff, 1.0, retention, validate=False)
     computed = result["computed_alpha"]
     return abs(computed - expected) <= tolerance
 
 
 def get_ablation_expected(mode: str) -> Dict[str, Any]:
-    """Get expected results for an ablation mode.
-
-    Args:
-        mode: One of "full", "no_cache", "no_prune", "baseline"
-
-    Returns:
-        Dict with alpha_range, retention, description
-    """
+    """Get expected results for an ablation mode."""
     if mode not in ABLATION_MODES:
         raise ValueError(f"Unknown ablation mode: {mode}. Valid: {ABLATION_MODES}")
 
@@ -443,7 +305,6 @@ def compute_alpha_from_layers(
 
     Receipt: alpha_from_layers
     """
-    # Apply ablation mode
     if ablation_mode == "baseline":
         gnn_active = 1.0
         prune_active = 1.0
@@ -457,10 +318,7 @@ def compute_alpha_from_layers(
         gnn_active = gnn_retention
         prune_active = prune_retention
 
-    # Compound retention
     compound = compound_retention([gnn_active, prune_active])
-
-    # Compute alpha
     alpha_result = alpha_calc(base_min_eff, 1.0, compound)
 
     result = {
@@ -490,9 +348,6 @@ def compute_alpha_from_layers(
 def get_alpha_compute_info() -> Dict[str, Any]:
     """Get alpha compute module configuration info.
 
-    Returns:
-        Dict with all alpha compute constants and configuration
-
     Receipt: alpha_compute_info
     """
     info = {
@@ -512,7 +367,7 @@ def get_alpha_compute_info() -> Dict[str, Any]:
             "floor_is_e": "e is the FLOOR (baseline), not ceiling",
             "ceiling_is_3": "Ceiling is ~3.0 with ML optimization"
         },
-        "description": "Explicit α formula computation module. Single source of truth for α calculation."
+        "description": "Explicit α formula computation module."
     }
 
     emit_receipt("alpha_compute_info", {

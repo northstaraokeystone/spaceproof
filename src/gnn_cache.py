@@ -4,28 +4,6 @@ THE PHYSICS (from Grok analysis):
     - GNN adds nonlinear boosts via anticipatory buffering
     - α asymptotes ~e (2.71828) - Shannon entropy bound, NOT tunable
     - Merkle batch entropy bounds as ~e*ln(n) - physics, not coincidence
-    - Holds to 150d before dipping, <2.5 at 180d+, breaks at 200d+ on cache overflow
-    - Nonlinear retention prevents decay cliff observed in linear model
-    - With pruning: extends to 250d at α>2.8, overflow pushed to 300d+
-
-KEY DISCOVERY:
-    - GNN predictive caching provides nonlinear boost
-    - e is physics (Shannon entropy bound), not parameter tuning
-    - GNN doesn't create the bound - it surfaces it by removing noise
-    - Pruning compresses ln(n) factor while e remains invariant
-    - Hidden constraint: Cache depth, not algorithm, is the limiting factor
-
-CONSTANTS:
-    ENTROPY_ASYMPTOTE_E = 2.71828 (Shannon bound, physics - NOT tunable)
-    ASYMPTOTE_ALPHA = 2.72 (e-like stability ceiling, references ENTROPY_ASYMPTOTE_E)
-    MIN_EFF_ALPHA_VALIDATED = 2.7185 (from 1000-run sweep at 90d)
-    CACHE_DEPTH_BASELINE = 1e8 (~150d buffer at 50k entries/sol)
-    OVERFLOW_THRESHOLD_DAYS = 200 (stoprule trigger without pruning)
-    OVERFLOW_THRESHOLD_DAYS_PRUNED = 300 (with pruning - ~50% extension)
-    OVERFLOW_CAPACITY_PCT = 0.95 (halt at 95% saturation)
-    QUORUM_FAIL_DAYS = 180 (quorum degradation onset)
-    CACHE_BREAK_DAYS = 200 (cache overflow failure without pruning)
-    ENTRIES_PER_SOL = 50000 (Merkle batch scaling factor)
 
 Source: Grok - "Not coincidence - Merkle batch entropy bounds as ~e*ln(n)"
 """
@@ -38,81 +16,32 @@ from typing import Dict, Any, List, Tuple, Optional
 
 from .core import emit_receipt, dual_hash, StopRule
 
-
-# === CONSTANTS (Dec 2025 GNN Nonlinear Caching + Entropy Pruning) ===
-
-ENTROPY_ASYMPTOTE_E = 2.71828
-"""physics: Shannon entropy bound ~e*ln(n). This is a PHYSICS CONSTANT, NOT tunable.
-The value ~e appears because Merkle batch entropy bounds as ~e*ln(n).
-GNN doesn't create this bound - it surfaces it by removing noise."""
-
-ASYMPTOTE_ALPHA = 2.72
-"""physics: e-like stability ceiling from GNN saturation. References ENTROPY_ASYMPTOTE_E."""
-
-PRUNING_TARGET_ALPHA = 2.80
-"""physics: Target effective alpha with ln(n) compression via pruning."""
-
-MIN_EFF_ALPHA_VALIDATED = 2.7185
-"""physics: Validated minimum effective alpha from 1000-run sweep at 90d."""
-
-CACHE_DEPTH_BASELINE = int(1e8)
-"""physics: ~150d buffer at 50k entries/sol (10^8 entries)."""
-
-CACHE_DEPTH_MIN = int(1e7)
-"""physics: ~90d minimal coverage (10^7 entries)."""
-
-CACHE_DEPTH_MAX = int(1e10)
-"""physics: ~300d theoretical max (10^10 entries)."""
-
-OVERFLOW_THRESHOLD_DAYS = 200
-"""physics: Cache overflow stoprule trigger (without pruning)."""
-
-OVERFLOW_THRESHOLD_DAYS_PRUNED = 300
-"""physics: Cache overflow threshold with pruning enabled (~50% extension)."""
-
-BLACKOUT_PRUNING_TARGET_DAYS = 250
-"""physics: Extended survival target with entropy pruning (250d at α>2.8)."""
-
-OVERFLOW_CAPACITY_PCT = 0.95
-"""physics: Halt at 95% saturation."""
-
-QUORUM_FAIL_DAYS = 180
-"""physics: Quorum degradation onset before cache overflow."""
-
-CACHE_BREAK_DAYS = 200
-"""physics: Cache overflow failure point."""
-
-ENTRIES_PER_SOL = 50000
-"""physics: Merkle batch scaling factor."""
-
-BLACKOUT_BASE_DAYS = 43
-"""physics: Mars solar conjunction maximum duration in days."""
-
-NONLINEAR_RETENTION_FLOOR = 1.25
-"""physics: Asymptotic retention floor (better than linear at 90d)."""
-
-RETENTION_BASE_FACTOR = 1.4
-"""physics: Baseline retention factor at 43d blackout."""
-
-CURVE_TYPE = "gnn_nonlinear"
-"""physics: Model identifier - replaces linear."""
-
-DECAY_LAMBDA = 0.003
-"""physics: Calibrated decay constant for nonlinear retention."""
-
-SATURATION_KAPPA = 0.05
-"""physics: Saturation rate for asymptotic alpha."""
-
-GNN_CACHE_SPEC_PATH = "data/gnn_cache_spec.json"
-"""Path to GNN cache specification file."""
-
-# === ABLATION SUPPORT CONSTANTS (Dec 2025) ===
-
-RETENTION_FACTOR_GNN_RANGE = (1.008, 1.015)
-"""physics: Isolated GNN contribution from Grok ablation analysis."""
-
-ABLATION_MODES = ["full", "no_cache", "no_prune", "baseline"]
-"""physics: Four-mode isolation testing for ablation analysis."""
+# Import all constants from centralized location
+from .constants import (
+    ENTROPY_ASYMPTOTE_E,
+    ASYMPTOTE_ALPHA,
+    PRUNING_TARGET_ALPHA,
+    MIN_EFF_ALPHA_VALIDATED,
+    CACHE_DEPTH_BASELINE,
+    CACHE_DEPTH_MIN,
+    CACHE_DEPTH_MAX,
+    OVERFLOW_THRESHOLD_DAYS,
+    OVERFLOW_THRESHOLD_DAYS_PRUNED,
+    BLACKOUT_PRUNING_TARGET_DAYS,
+    OVERFLOW_CAPACITY_PCT,
+    QUORUM_FAIL_DAYS,
+    CACHE_BREAK_DAYS,
+    ENTRIES_PER_SOL,
+    BLACKOUT_BASE_DAYS,
+    NONLINEAR_RETENTION_FLOOR,
+    RETENTION_BASE_FACTOR,
+    CURVE_TYPE,
+    DECAY_LAMBDA,
+    SATURATION_KAPPA,
+    GNN_CACHE_SPEC_PATH,
+    RETENTION_FACTOR_GNN_RANGE,
+    ABLATION_MODES,
+)
 
 
 def load_gnn_cache_spec(path: str = None) -> Dict[str, Any]:

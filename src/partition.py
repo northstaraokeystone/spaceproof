@@ -2,29 +2,7 @@
 
 THE PHYSICS:
     At 40% partition with 5 nodes, quorum survives (3 nodes remaining).
-    eff_α drop formula: base_alpha * (1 - (loss_pct * DROP_FACTOR))
-    Where DROP_FACTOR ≈ 0.125 (yields ~0.05 drop at 40% loss)
-
-QUORUM THRESHOLD:
-    Byzantine fault tolerant at 2/3 of baseline.
-    5 nodes → quorum threshold of 3 → survives 2 simultaneous failures.
-
-DYNAMIC RECOVERY (Dec 2025 adaptive rerouting - DEFAULT):
-    All partition stress now flows through adaptive reroute.
-    Static partition logic has been KILLED per Grok directive.
-    Reroute boost: +0.07 to eff_α (locked, validated).
-    Extended blackout survival: 43d → 90d with retention curve.
-
-CONSTANTS (from Grok validation):
-    NODE_BASELINE = 5 (3 uncrewed habs + 2 rovers)
-    QUORUM_THRESHOLD = 3 (survives 2-node failure)
-    PARTITION_MAX_TEST_PCT = 0.40 (stress test upper bound)
-    ALPHA_DROP_FACTOR = 0.125 (calibrated: 0.4 * 0.125 ≈ 0.05 drop)
-    REROUTING_ALPHA_BOOST_LOCKED = 0.07 (validated, immutable)
-
-KILLED (per Grok directive "Kill: static partition (now dynamic)"):
-    - Static partition simulation without reroute
-    - Non-dynamic recovery paths
+    All partition stress flows through adaptive reroute (dynamic recovery).
 
 Source: Grok - "quorum intact for 5-node eg.", "Kill: static partition (now dynamic)"
 """
@@ -38,15 +16,16 @@ from typing import List, Dict, Any, Tuple, Optional
 
 from .core import emit_receipt, dual_hash, StopRule
 
+# Import constants from centralized location
+from .constants import (
+    NODE_BASELINE,
+    QUORUM_THRESHOLD,
+    BASE_ALPHA,
+    REROUTING_ALPHA_BOOST_LOCKED,
+    NODE_PARTITION_SPEC_PATH,
+)
 
-# === CONSTANTS (Dec 2025 distributed anchoring) ===
-
-NODE_BASELINE = 5
-"""Quorum-resilient minimum node count (3 uncrewed habs + 2 rovers)."""
-
-QUORUM_THRESHOLD = 3
-"""Byzantine fault tolerant threshold. Survives 2-node failure in 5-node baseline."""
-
+# Module-level constants (not in constants.py - partition-specific)
 PARTITION_MAX_TEST_PCT = 0.40
 """Stress test upper bound. Test up to 40% node loss."""
 
@@ -56,17 +35,9 @@ ALPHA_DROP_FACTOR = 0.125
 GREENS_CURRENT = 81
 """Fleet cadence marker (81 tests passing, Dec 2025)."""
 
-REROUTING_ALPHA_BOOST_LOCKED = 0.07
-"""LOCKED: Validated reroute boost (was REROUTING_POTENTIAL_BOOST, now locked)."""
-
-# Backward compatibility alias (deprecated)
+# Backward compatibility alias
 REROUTING_POTENTIAL_BOOST = REROUTING_ALPHA_BOOST_LOCKED
-
-BASE_ALPHA = 2.68
-"""Baseline effective alpha with distributed anchoring (+0.12 boost from 2.56)."""
-
-PARTITION_SPEC_PATH = "data/node_partition_spec.json"
-"""Path to partition specification file."""
+PARTITION_SPEC_PATH = NODE_PARTITION_SPEC_PATH
 
 
 @dataclass
