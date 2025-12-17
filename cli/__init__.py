@@ -91,6 +91,14 @@ from cli.pipeline import (
     cmd_pipeline_info,
 )
 
+# Scale commands
+from cli.scale import (
+    cmd_multi_scale_sweep,
+    cmd_scalability_gate_test,
+    cmd_scale_info,
+    cmd_fractal_info,
+)
+
 __all__ = [
     # Core
     'cmd_baseline',
@@ -152,4 +160,9 @@ __all__ = [
     'cmd_full_pipeline',
     'cmd_pilot_info',
     'cmd_pipeline_info',
+    # Scale
+    'cmd_multi_scale_sweep',
+    'cmd_scalability_gate_test',
+    'cmd_scale_info',
+    'cmd_fractal_info',
 ]
