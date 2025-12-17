@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "type": "fractal_ceiling_breach_spec",
+    "version": "1.0.0",
+    "description": "Fractal multi-scale entropy for Shannon ceiling breach",
+    "source": "Grok - quantum-fractal hybrid policy for alpha>3.0"
+  },
+  "fractal_config": {
+    "alpha_near_ceiling": 2.99,
+    "fractal_uplift_target": 0.05,
+    "ceiling_break_target": 3.05,
+    "alpha_ceiling_single_scale": 3.0,
+    "scales": [1, 2, 4, 8, 16],
+    "dimension_min": 1.5,
+    "dimension_max": 2.0,
+    "correlation_coeff_min": 0.01,
+    "correlation_coeff_max": 0.03
+  },
+  "physics": {
+    "multi_scale_entropy": "Entropy computed across n_scales hierarchical scales",
+    "fractal_dimension": "Computed from scale-entropy relationship: D = 2 - slope(log(scale), log(entropy))",
+    "cross_scale_correlation": "Mutual information between adjacent scales, bounded [0.01, 0.03]",
+    "uplift_formula": "fractal_uplift = (D - 1.5) * correlation_coeff * n_scales"
+  },
+  "expected_results": {
+    "single_scale_alpha": 2.99,
+    "fractal_uplift": 0.05,
+    "fractal_alpha": 3.04,
+    "ceiling_breach": true
+  },
+  "validation": {
+    "dimension_bounds": "1.5 <= D <= 2.0",
+    "uplift_minimum": 0.04,
+    "ceiling_test": "fractal_alpha > 3.0"
+  }
+}

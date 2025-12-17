@@ -80,6 +80,7 @@ from cli.quantum import (
     cmd_quantum_estimate,
     cmd_quantum_sim,
     cmd_quantum_rl_hybrid_info,
+    cmd_hybrid_boost_info,
 )
 
 # Pipeline commands
@@ -89,6 +90,14 @@ from cli.pipeline import (
     cmd_full_pipeline,
     cmd_pilot_info,
     cmd_pipeline_info,
+)
+
+# Fractal commands
+from cli.fractal import (
+    cmd_fractal_push,
+    cmd_alpha_boost,
+    cmd_fractal_info,
+    cmd_ceiling_status,
 )
 
 __all__ = [
@@ -146,10 +155,16 @@ __all__ = [
     'cmd_quantum_estimate',
     'cmd_quantum_sim',
     'cmd_quantum_rl_hybrid_info',
+    'cmd_hybrid_boost_info',
     # Pipeline
     'cmd_lr_pilot',
     'cmd_post_tune_execute',
     'cmd_full_pipeline',
     'cmd_pilot_info',
     'cmd_pipeline_info',
+    # Fractal
+    'cmd_fractal_push',
+    'cmd_alpha_boost',
+    'cmd_fractal_info',
+    'cmd_ceiling_status',
 ]

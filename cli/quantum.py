@@ -12,6 +12,7 @@ from src.quantum_hybrid import (
 from src.quantum_rl_hybrid import (
     simulate_quantum_policy,
     get_quantum_rl_hybrid_info,
+    get_hybrid_boost_info,
     QUANTUM_SIM_RUNS,
     ENTANGLED_PENALTY_FACTOR,
     QUANTUM_RETENTION_BOOST,
@@ -30,7 +31,7 @@ def cmd_quantum_estimate(current_retention: float = 1.05):
 
     info = get_quantum_stub_info()
 
-    print(f"\nStub Status:")
+    print("\nStub Status:")
     print(f"  Implemented: {'YES' if quantum_is_implemented() else 'NO (stub only)'}")
     print(f"  Boost estimate: {get_boost_estimate() * 100:.1f}%")
 
@@ -41,11 +42,11 @@ def cmd_quantum_estimate(current_retention: float = 1.05):
     print(f"  Projected retention: {projection['projected_retention']}")
     print(f"  Note: {projection['note']}")
 
-    print(f"\nSequencing:")
+    print("\nSequencing:")
     for step, desc in info['sequencing'].items():
         print(f"  {step}: {desc}")
 
-    print(f"\nWhy stub now:")
+    print("\nWhy stub now:")
     for reason in info['why_stub_now']:
         print(f"  - {reason}")
 
@@ -62,20 +63,20 @@ def cmd_quantum_sim(runs: int, simulate: bool):
     """
     print_header(f"QUANTUM-RL HYBRID SIMULATION ({runs} runs)")
 
-    print(f"\nConfiguration:")
+    print("\nConfiguration:")
     print(f"  Simulation runs: {runs}")
     print(f"  Default runs: {QUANTUM_SIM_RUNS}")
     print(f"  Entangled penalty factor: {ENTANGLED_PENALTY_FACTOR}")
     print(f"  Quantum retention boost: {QUANTUM_RETENTION_BOOST}")
 
-    print(f"\nRunning quantum policy simulation...")
+    print("\nRunning quantum policy simulation...")
 
     result = simulate_quantum_policy(
         runs=runs,
         seed=42
     )
 
-    print(f"\nRESULTS:")
+    print("\nRESULTS:")
     print(f"  Runs completed: {result.get('runs_completed', runs)}")
 
     # Get retention values, compute if not directly available
@@ -91,11 +92,11 @@ def cmd_quantum_sim(runs: int, simulate: bool):
     print(f"  Instability reduction: {result.get('instability_reduction_pct', 8.0):.1f}%")
 
     if result.get('best_action'):
-        print(f"\nBest Action Found:")
+        print("\nBest Action Found:")
         for key, val in result['best_action'].items():
             print(f"  {key}: {val}")
 
-    print(f"\nSLO VALIDATION:")
+    print("\nSLO VALIDATION:")
     retention_ok = avg_retention >= 1.0
     print(f"  Avg retention >= 1.0: {'PASS' if retention_ok else 'FAIL'} ({avg_retention:.5f})")
 
@@ -111,26 +112,62 @@ def cmd_quantum_rl_hybrid_info():
 
     info = get_quantum_rl_hybrid_info()
 
-    print(f"\nQuantum Parameters:")
+    print("\nQuantum Parameters:")
     print(f"  Simulation runs: {info['quantum_sim_runs']}")
     print(f"  Retention boost: {info['quantum_retention_boost']}")
     print(f"  Entanglement penalty: {info['entangled_penalty_factor']}")
 
-    print(f"\nIntegration:")
+    print("\nIntegration:")
     print(f"  Integration mode: {info.get('integration_mode', 'entangled_penalty')}")
     print(f"  Hybrid enabled: {info.get('hybrid_enabled', info.get('implemented', True))}")
 
     if 'state_components' in info:
-        print(f"\nState Components:")
+        print("\nState Components:")
         for comp in info['state_components']:
             print(f"  - {comp}")
 
     if 'action_components' in info:
-        print(f"\nAction Components:")
+        print("\nAction Components:")
         for comp in info['action_components']:
             print(f"  - {comp}")
 
     print(f"\nDescription: {info['description']}")
 
     print("\n[quantum_rl_hybrid_info receipt emitted above]")
+    print("=" * 60)
+
+
+def cmd_hybrid_boost_info():
+    """Output quantum-fractal hybrid boost configuration."""
+    from cli.base import print_result
+    print_header("QUANTUM-FRACTAL HYBRID BOOST CONFIGURATION")
+
+    info = get_hybrid_boost_info()
+
+    print("\nConfiguration:")
+    print_result("quantum_fractal_hybrid", info['quantum_fractal_hybrid'])
+    print_result("quantum_contribution", info['quantum_contribution'])
+    print_result("fractal_contribution", info['fractal_contribution'])
+    print_result("hybrid_boost_total", info['hybrid_boost_total'])
+    print_result("alpha_single_scale", info['alpha_single_scale'])
+    print_result("alpha_ceiling", info['alpha_ceiling'])
+
+    print("\nExpected Results:")
+    expected = info['expected_results']
+    print_result("base_alpha", expected['base_alpha'])
+    print_result("quantum_boost", expected['quantum_boost'])
+    print_result("fractal_boost", expected['fractal_boost'])
+    print_result("total_boost", expected['total_boost'])
+    print_result("final_alpha", expected['final_alpha'])
+    print_result("ceiling_breached", expected['ceiling_breached'])
+
+    print("\nPhysics:")
+    physics = info['physics']
+    print(f"  Quantum: {physics['quantum']}")
+    print(f"  Fractal: {physics['fractal']}")
+    print(f"  Hybrid: {physics['hybrid']}")
+
+    print(f"\nDescription: {info['description']}")
+
+    print("\n[hybrid_boost_info receipt emitted above]")
     print("=" * 60)

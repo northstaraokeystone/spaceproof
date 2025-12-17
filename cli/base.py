@@ -56,3 +56,28 @@ def format_table_row(values: list, widths: list, separator: str = " | ") -> str:
         else:
             parts.append(f"{v:>{w}}")
     return separator.join(parts)
+
+
+def print_result(label: str, value):
+    """Print a labeled result value.
+
+    Args:
+        label: Result label
+        value: Result value
+    """
+    print(f"  {label}: {value}")
+
+
+def print_slo_check(check_name: str, passed: bool, value=None):
+    """Print SLO check result.
+
+    Args:
+        check_name: Name of the SLO check
+        passed: Whether the check passed
+        value: Optional value to display
+    """
+    status = "PASS" if passed else "FAIL"
+    if value is not None:
+        print(f"  [{status}] {check_name} (got: {value})")
+    else:
+        print(f"  [{status}] {check_name}")

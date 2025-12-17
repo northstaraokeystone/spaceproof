@@ -43,6 +43,15 @@ Usage:
     python cli.py --extended_250d --simulate                    # 250d with pruning
     python cli.py --verify_chain --entropy_prune --simulate     # Verify chain integrity
     python cli.py --pruning_info                                # Echo pruning configuration
+
+    # Quantum-fractal hybrid (ceiling breach)
+    python cli.py --fractal_push --simulate                     # Run fractal ceiling breach
+    python cli.py --alpha_boost hybrid --simulate               # Quantum-fractal hybrid boost
+    python cli.py --alpha_boost off                             # No boost (baseline)
+    python cli.py --alpha_boost quantum                         # Quantum boost only (+0.03)
+    python cli.py --alpha_boost fractal                         # Fractal boost only (+0.05)
+    python cli.py --fractal_info                                # Output fractal config
+    python cli.py --ceiling_status                              # Show Shannon ceiling status
 """
 
 import sys
@@ -113,12 +122,18 @@ from cli import (
     cmd_quantum_estimate,
     cmd_quantum_sim,
     cmd_quantum_rl_hybrid_info,
+    cmd_hybrid_boost_info,
     # Pipeline
     cmd_lr_pilot,
     cmd_post_tune_execute,
     cmd_full_pipeline,
     cmd_pilot_info,
     cmd_pipeline_info,
+    # Fractal
+    cmd_fractal_push,
+    cmd_alpha_boost,
+    cmd_fractal_info,
+    cmd_ceiling_status,
 )
 
 
@@ -230,6 +245,14 @@ def main():
     parser.add_argument('--quantum_runs', type=int, default=10, help='Quantum runs (default: 10)')
     parser.add_argument('--sweep_runs', type=int, default=500, help='Sweep runs (default: 500)')
 
+    # Fractal/hybrid flags
+    parser.add_argument('--fractal_push', action='store_true', help='Run fractal ceiling breach')
+    parser.add_argument('--alpha_boost', type=str, default=None, metavar='MODE',
+                        help='Alpha boost mode (off/quantum/fractal/hybrid)')
+    parser.add_argument('--fractal_info', action='store_true', help='Output fractal config')
+    parser.add_argument('--ceiling_status', action='store_true', help='Show Shannon ceiling status')
+    parser.add_argument('--hybrid_boost_info', action='store_true', help='Output hybrid boost config')
+
     args = parser.parse_args()
     reroute_enabled = args.reroute or args.reroute_enabled
 
@@ -268,6 +291,18 @@ def main():
         return cmd_formula_check()
     if args.retention_curve:
         return cmd_retention_curve()
+    if args.fractal_info:
+        return cmd_fractal_info()
+    if args.ceiling_status:
+        return cmd_ceiling_status()
+    if args.hybrid_boost_info:
+        return cmd_hybrid_boost_info()
+
+    # Fractal commands
+    if args.fractal_push:
+        return cmd_fractal_push(args.tree_size, args.simulate)
+    if args.alpha_boost is not None:
+        return cmd_alpha_boost(args.alpha_boost, args.tree_size, args.simulate)
 
     # RL commands
     if args.rl_tune and args.blackout is not None:
