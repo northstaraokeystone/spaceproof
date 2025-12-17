@@ -26,6 +26,14 @@ Usage:
     python cli.py --retention_curve                        # Output retention curve as JSON
     python cli.py --blackout_sweep 60 --simulate           # Single-point extended blackout test
     python cli.py --gnn_stub                               # Echo GNN sensitivity stub config
+
+    # GNN nonlinear caching (Dec 2025 - NEW)
+    python cli.py --gnn_nonlinear --blackout 150 --simulate  # GNN nonlinear at 150d
+    python cli.py --cache_depth 1000000000 --blackout 200 --gnn_nonlinear  # Custom cache depth
+    python cli.py --cache_sweep --simulate                   # Cache depth sensitivity sweep
+    python cli.py --extreme_sweep 200 --simulate             # Extreme sweep to 200d
+    python cli.py --overflow_test --simulate                 # Test cache overflow detection
+    python cli.py --innovation_stubs                         # Echo innovation stub status
 """
 
 import sys
@@ -77,9 +85,25 @@ from src.blackout import (
     generate_retention_curve_data,
     gnn_sensitivity_stub,
     BLACKOUT_SWEEP_MAX_DAYS,
-    RETENTION_BASE_FACTOR
+    RETENTION_BASE_FACTOR,
+    CURVE_TYPE,
+    ASYMPTOTE_ALPHA
 )
-from src.reasoning import extended_blackout_sweep, project_with_degradation
+from src.reasoning import extended_blackout_sweep, project_with_degradation, extreme_blackout_sweep_200d, project_with_asymptote
+from src.gnn_cache import (
+    nonlinear_retention,
+    cache_depth_check,
+    predict_overflow,
+    extreme_blackout_sweep as gnn_extreme_sweep,
+    quantum_relay_stub,
+    swarm_autorepair_stub,
+    cosmos_sim_stub,
+    get_gnn_cache_info,
+    ASYMPTOTE_ALPHA as GNN_ASYMPTOTE_ALPHA,
+    MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
+    CACHE_DEPTH_BASELINE,
+    OVERFLOW_THRESHOLD_DAYS
+)
 
 
 def cmd_baseline():
@@ -677,6 +701,194 @@ def cmd_gnn_stub():
     print("=" * 60)
 
 
+def cmd_gnn_nonlinear(blackout_days: int, cache_depth: int, simulate: bool):
+    """Run GNN nonlinear retention simulation.
+
+    Args:
+        blackout_days: Blackout duration in days
+        cache_depth: Cache depth in entries
+        simulate: Whether to output simulation receipt
+    """
+    import json as json_lib
+
+    print("=" * 60)
+    print(f"GNN NONLINEAR RETENTION ({blackout_days} days)")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  Blackout duration: {blackout_days} days")
+    print(f"  Cache depth: {cache_depth:,} entries")
+    print(f"  Asymptote alpha: {GNN_ASYMPTOTE_ALPHA}")
+    print(f"  Min eff alpha validated: {GNN_MIN_EFF_ALPHA_VALIDATED}")
+
+    try:
+        result = nonlinear_retention(blackout_days, cache_depth)
+
+        print(f"\nRESULTS:")
+        print(f"  Retention factor: {result['retention_factor']}")
+        print(f"  Effective alpha: {result['eff_alpha']}")
+        print(f"  Asymptote proximity: {result['asymptote_proximity']}")
+        print(f"  GNN boost: {result['gnn_boost']}")
+        print(f"  Curve type: {result['curve_type']}")
+
+        print(f"\nSLO VALIDATION:")
+        asymptote_ok = result['asymptote_proximity'] <= 0.02
+        print(f"  Asymptote proximity <= 0.02: {'PASS' if asymptote_ok else 'FAIL'} ({result['asymptote_proximity']})")
+
+        if simulate:
+            print("\n[gnn_nonlinear_receipt emitted above]")
+
+    except Exception as e:
+        print(f"\nOVERFLOW DETECTED: {e}")
+        print("Cache overflow - StopRule triggered")
+
+    print("=" * 60)
+
+
+def cmd_cache_sweep(simulate: bool):
+    """Run cache depth sensitivity sweep.
+
+    Args:
+        simulate: Whether to output simulation receipts
+    """
+    import json as json_lib
+
+    print("=" * 60)
+    print("CACHE DEPTH SENSITIVITY SWEEP")
+    print("=" * 60)
+
+    cache_depths = [int(1e7), int(1e8), int(1e9), int(1e10)]
+    test_days = [90, 150, 180, 200]
+
+    print(f"\nConfiguration:")
+    print(f"  Cache depths: {[f'{d:.0e}' for d in cache_depths]}")
+    print(f"  Test durations: {test_days} days")
+
+    print(f"\nRESULTS:")
+    print(f"  {'Depth':>12} | {'90d':>10} | {'150d':>10} | {'180d':>10} | {'200d':>10}")
+    print(f"  {'-'*12}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
+
+    for depth in cache_depths:
+        row = f"  {depth:>12.0e} |"
+        for days in test_days:
+            try:
+                result = nonlinear_retention(days, depth)
+                row += f" {result['eff_alpha']:>10.4f} |"
+            except Exception:
+                row += f" {'OVERFLOW':>10} |"
+        print(row)
+
+    if simulate:
+        print("\n[cache_sweep receipts emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_extreme_sweep(max_days: int, cache_depth: int, simulate: bool):
+    """Run extreme blackout sweep to specified days.
+
+    Args:
+        max_days: Maximum blackout days
+        cache_depth: Cache depth in entries
+        simulate: Whether to output simulation receipts
+    """
+    import json as json_lib
+
+    print("=" * 60)
+    print(f"EXTREME BLACKOUT SWEEP (43-{max_days}d)")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  Day range: 43-{max_days} days")
+    print(f"  Cache depth: {cache_depth:,} entries")
+    print(f"  Iterations: 100 (abbreviated)")
+
+    result = extreme_blackout_sweep_200d(
+        day_range=(43, max_days),
+        cache_depth=cache_depth,
+        iterations=100,
+        seed=42
+    )
+
+    print(f"\nRESULTS:")
+    print(f"  Total sweeps: {result['total_sweeps']}")
+    print(f"  Overflow events: {result['overflow_events']}")
+    print(f"  Survival events: {result['survival_events']}")
+    print(f"  Overflow at 200d: {result['overflow_at_200d']}")
+    print(f"  StopRule expected: {result['stoprule_expected']}")
+
+    if simulate:
+        print("\n[extreme_blackout_sweep_200d receipt emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_overflow_test(simulate: bool):
+    """Test cache overflow detection.
+
+    Args:
+        simulate: Whether to output simulation receipts
+    """
+    print("=" * 60)
+    print("CACHE OVERFLOW DETECTION TEST")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  Overflow threshold: {OVERFLOW_THRESHOLD_DAYS} days")
+    print(f"  Cache baseline: {CACHE_DEPTH_BASELINE:,} entries")
+
+    # Test overflow detection
+    test_days = [180, 190, 200, 201]
+
+    print(f"\nRESULTS:")
+    for days in test_days:
+        overflow_result = predict_overflow(days, CACHE_DEPTH_BASELINE)
+        overflow = overflow_result["overflow_risk"] >= 0.95
+
+        try:
+            retention = nonlinear_retention(days, CACHE_DEPTH_BASELINE)
+            status = f"alpha={retention['eff_alpha']:.4f}"
+        except Exception:
+            status = "STOPRULE"
+
+        print(f"  {days}d: risk={overflow_result['overflow_risk']:.2%}, overflow={overflow}, status={status}")
+
+    if simulate:
+        print("\n[overflow_test receipts emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_innovation_stubs():
+    """Echo innovation stub status."""
+    import json as json_lib
+
+    print("=" * 60)
+    print("INNOVATION STUBS STATUS")
+    print("=" * 60)
+
+    print("\n[1] QUANTUM RELAY STUB")
+    quantum = quantum_relay_stub()
+    print(f"    Status: {quantum['status']}")
+    print(f"    Potential boost: {quantum['potential_boost']}")
+    print(f"    Description: {quantum['description']}")
+
+    print("\n[2] SWARM AUTOREPAIR STUB")
+    swarm = swarm_autorepair_stub()
+    print(f"    Status: {swarm['status']}")
+    print(f"    Potential boost: {swarm['potential_boost']}")
+    print(f"    Potential: {swarm['potential']}")
+
+    print("\n[3] COSMOS SIM STUB")
+    cosmos = cosmos_sim_stub()
+    print(f"    Status: {cosmos['status']}")
+    print(f"    Reason: {cosmos['reason']}")
+    print(f"    Availability: {cosmos['availability']}")
+
+    print("\n[innovation_stub receipts emitted above]")
+    print("=" * 60)
+
+
 def main():
     # Check for flag-based invocation
     parser = argparse.ArgumentParser(description="AXIOM-CORE CLI - The Sovereignty Calculator")
@@ -721,6 +933,21 @@ def main():
     parser.add_argument('--gnn_stub', action='store_true',
                         help='Echo GNN sensitivity stub config (placeholder for next gate)')
 
+    # GNN nonlinear caching flags (Dec 2025 - NEW)
+    parser.add_argument('--gnn_nonlinear', action='store_true',
+                        help='Use GNN nonlinear retention model')
+    parser.add_argument('--cache_depth', type=int, default=int(1e8),
+                        help='Set cache depth for simulation (default: 1e8)')
+    parser.add_argument('--cache_sweep', action='store_true',
+                        help='Run cache depth sensitivity sweep')
+    parser.add_argument('--extreme_sweep', type=int, default=None,
+                        metavar='DAYS',
+                        help='Run extreme blackout sweep to specified days')
+    parser.add_argument('--overflow_test', action='store_true',
+                        help='Test cache overflow detection')
+    parser.add_argument('--innovation_stubs', action='store_true',
+                        help='Echo innovation stub status (quantum, swarm, cosmos)')
+
     args = parser.parse_args()
 
     # Combine reroute flags
@@ -734,6 +961,31 @@ def main():
     # Handle GNN stub
     if args.gnn_stub:
         cmd_gnn_stub()
+        return
+
+    # Handle innovation stubs
+    if args.innovation_stubs:
+        cmd_innovation_stubs()
+        return
+
+    # Handle cache sweep
+    if args.cache_sweep:
+        cmd_cache_sweep(args.simulate)
+        return
+
+    # Handle overflow test
+    if args.overflow_test:
+        cmd_overflow_test(args.simulate)
+        return
+
+    # Handle extreme sweep
+    if args.extreme_sweep is not None:
+        cmd_extreme_sweep(args.extreme_sweep, args.cache_depth, args.simulate)
+        return
+
+    # Handle GNN nonlinear with blackout
+    if args.gnn_nonlinear and args.blackout is not None:
+        cmd_gnn_nonlinear(args.blackout, args.cache_depth, args.simulate)
         return
 
     # Handle retention curve output

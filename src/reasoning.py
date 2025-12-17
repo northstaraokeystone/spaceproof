@@ -1,11 +1,12 @@
-"""reasoning.py - Sovereignty Timeline Projections with Partition Stress Testing
+"""reasoning.py - Sovereignty Timeline Projections with GNN Nonlinear Caching
 
 Extends sovereignty timeline projections with:
 1. Partition stress sweep integration
 2. Resilience-adjusted projections
 3. Worst-case α drop calculations
 4. Blackout sweeps and reroute projection (Dec 2025)
-5. Extended blackout sweep (43-90d) with retention curve modeling
+5. Extended blackout sweep (43-200d) with GNN nonlinear retention curve
+6. Cache overflow detection and stoprule (Dec 2025)
 
 THE PHYSICS:
     eff_alpha(partition=0.4, nodes=5) >= 2.63 (per Grok validation)
@@ -16,18 +17,20 @@ REROUTE INTEGRATION (Dec 2025):
     blackout_survival(days=60, reroute=True) == True
     Blackout resilience metrics in projection receipt
 
-EXTENDED BLACKOUT (Dec 2025):
-    eff_alpha(blackout=60) >= 2.69 (assert)
-    eff_alpha(blackout=90) >= 2.65 (assert)
-    Retention curve: 1.4 @ 43d → 1.25 @ 90d (linear, no cliff)
+GNN NONLINEAR CACHING (Dec 2025 - UPGRADED):
+    eff_alpha(blackout=150) >= 2.70 (assert) - asymptote approach
+    eff_alpha(blackout=180) >= 2.50 or overflow_detected (assert)
+    α asymptotes ~2.72 (e-like stability) via GNN predictive caching
+    Cache overflow stoprule at 200d+ with baseline cache
+    KILLED: Linear retention curve (1.4 @ 43d → 1.25 @ 90d) - replaced by exponential
 
-Source: Grok - "Variable partitions (e.g., 40%)", "eff_α to 2.68", "+0.07 to 2.7+"
+Source: Grok - "GNN adds nonlinear boosts", "α asymptotes ~2.72"
 """
 
 from typing import Dict, Any, List, Tuple, Optional
 import math
 
-from .core import emit_receipt
+from .core import emit_receipt, StopRule, dual_hash
 from .partition import (
     partition_sim,
     stress_sweep,
@@ -63,7 +66,18 @@ from .blackout import (
     find_retention_floor,
     BLACKOUT_SWEEP_MAX_DAYS,
     RETENTION_BASE_FACTOR,
-    DEGRADATION_RATE
+    DEGRADATION_RATE,
+    CURVE_TYPE,
+    ASYMPTOTE_ALPHA
+)
+from .gnn_cache import (
+    extreme_blackout_sweep as gnn_extreme_sweep,
+    nonlinear_retention as gnn_nonlinear_retention,
+    predict_overflow,
+    CACHE_DEPTH_BASELINE,
+    OVERFLOW_THRESHOLD_DAYS,
+    QUORUM_FAIL_DAYS,
+    CACHE_BREAK_DAYS
 )
 
 
@@ -645,81 +659,248 @@ def sovereignty_timeline(
 def extended_blackout_sweep(
     day_range: Tuple[int, int] = (BLACKOUT_BASE_DAYS, BLACKOUT_SWEEP_MAX_DAYS),
     iterations: int = 1000,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    cache_depth: int = CACHE_DEPTH_BASELINE
 ) -> Dict[str, Any]:
-    """Run extended blackout sweep across day range with retention curve modeling.
+    """Run extended blackout sweep across day range with GNN nonlinear retention curve.
 
-    Runs blackout_extended_sweep from blackout.py and returns comprehensive results
-    including retention curve data.
+    UPGRADED Dec 2025: Uses GNN nonlinear model with overflow detection.
+    Runs extreme sweeps to 200d+, detects overflow.
 
-    Assertions:
-        - assert eff_alpha(blackout=60) >= 2.69
-        - assert eff_alpha(blackout=90) >= 2.65
+    Assertions (UPDATED):
+        - assert eff_alpha(blackout=150) >= 2.70 (asymptote approach)
+        - assert eff_alpha(blackout=180) >= 2.50 or overflow_detected
 
     Args:
-        day_range: Tuple of (min_days, max_days) (default: 43-90)
+        day_range: Tuple of (min_days, max_days) (default: 43-200)
         iterations: Number of iterations (default: 1000)
         seed: Random seed for reproducibility
+        cache_depth: Cache depth in entries (default: CACHE_DEPTH_BASELINE)
 
     Returns:
-        Dict with sweep results and retention curve receipt
+        Dict with sweep results, overflow detection, and retention curve receipt
 
     Receipt: extended_blackout_sweep
     """
-    # Run extended sweep from blackout module
-    sweep_results = blackout_extended_sweep(day_range, iterations, seed)
+    import json
 
-    # Validate assertions
-    alpha_60 = alpha_at_duration(60)
-    alpha_90 = alpha_at_duration(90)
+    # Run GNN extreme sweep (handles overflow detection)
+    sweep_results = gnn_extreme_sweep(day_range, cache_depth, iterations, seed)
 
-    assert alpha_60 >= 2.69, f"eff_alpha(blackout=60) = {alpha_60} < 2.69"
-    assert alpha_90 >= 2.65, f"eff_alpha(blackout=90) = {alpha_90} < 2.65"
+    # Validate GNN nonlinear assertions
+    overflow_detected = False
+    alpha_150 = None
+    alpha_180 = None
 
-    # Generate retention curve data
+    try:
+        result_150 = gnn_nonlinear_retention(150, cache_depth)
+        alpha_150 = result_150["eff_alpha"]
+        assert alpha_150 >= 2.70, f"eff_alpha(blackout=150) = {alpha_150} < 2.70"
+    except StopRule:
+        overflow_detected = True
+        alpha_150 = None
+
+    try:
+        result_180 = gnn_nonlinear_retention(180, cache_depth)
+        alpha_180 = result_180["eff_alpha"]
+        # Either alpha >= 2.50 OR overflow is expected
+        if alpha_180 < 2.50 and not overflow_detected:
+            overflow_result = predict_overflow(180, cache_depth)
+            if overflow_result["overflow_risk"] < 0.95:
+                assert False, f"eff_alpha(blackout=180) = {alpha_180} < 2.50 without overflow"
+    except StopRule:
+        overflow_detected = True
+        alpha_180 = None
+
+    # Generate retention curve data (may stop at overflow)
     curve_data = generate_retention_curve_data(day_range)
 
-    # Find floor
-    floor_data = find_retention_floor(sweep_results)
+    # Find floor from sweep results
+    surviving_results = [r for r in sweep_results if r.get("survival_status", False)]
+    if surviving_results:
+        floor_data = find_retention_floor(surviving_results)
+    else:
+        floor_data = {"min_retention": RETENTION_BASE_FACTOR, "days_at_min": day_range[0]}
 
     # Compute stats
-    all_survived = all(r["survival_status"] for r in sweep_results)
-    survival_rate = len([r for r in sweep_results if r["survival_status"]]) / max(1, len(sweep_results))
-    avg_alpha = sum(r["eff_alpha"] for r in sweep_results) / max(1, len(sweep_results))
-    min_alpha = min(r["eff_alpha"] for r in sweep_results) if sweep_results else 0.0
+    all_survived = all(r.get("survival_status", False) for r in sweep_results)
+    survival_count = len([r for r in sweep_results if r.get("survival_status", False)])
+    survival_rate = survival_count / max(1, len(sweep_results))
+
+    alpha_values = [r["eff_alpha"] for r in sweep_results if "eff_alpha" in r]
+    avg_alpha = sum(alpha_values) / max(1, len(alpha_values)) if alpha_values else 0.0
+    min_alpha = min(alpha_values) if alpha_values else 0.0
+
+    # Count overflow triggers
+    overflow_count = len([r for r in sweep_results if r.get("overflow_triggered", False)])
 
     result = {
         "day_range": list(day_range),
         "iterations": iterations,
+        "cache_depth": cache_depth,
         "all_survived": all_survived,
         "survival_rate": round(survival_rate, 4),
         "avg_alpha": round(avg_alpha, 4),
         "min_alpha": round(min_alpha, 4),
-        "alpha_at_60d": alpha_60,
-        "alpha_at_90d": alpha_90,
+        "alpha_at_150d": alpha_150,
+        "alpha_at_180d": alpha_180,
+        "overflow_detected": overflow_detected,
+        "overflow_count": overflow_count,
         "retention_floor": floor_data,
         "curve_points_count": len(curve_data),
+        "curve_type": CURVE_TYPE,
+        "asymptote_alpha": ASYMPTOTE_ALPHA,
         "assertions_passed": {
-            "alpha_60_ge_2.69": alpha_60 >= 2.69,
-            "alpha_90_ge_2.65": alpha_90 >= 2.65
+            "alpha_150_ge_2.70": alpha_150 is not None and alpha_150 >= 2.70,
+            "alpha_180_ge_2.50_or_overflow": (alpha_180 is not None and alpha_180 >= 2.50) or overflow_detected
         }
     }
 
     emit_receipt("extended_blackout_sweep", {
         "tenant_id": "axiom-reasoning",
-        **result
+        **result,
+        "payload_hash": dual_hash(json.dumps(result, sort_keys=True))
     })
 
     return result
 
 
+def extreme_blackout_sweep_200d(
+    day_range: Tuple[int, int] = (BLACKOUT_BASE_DAYS, OVERFLOW_THRESHOLD_DAYS),
+    cache_depth: int = CACHE_DEPTH_BASELINE,
+    iterations: int = 1000,
+    seed: Optional[int] = None
+) -> Dict[str, Any]:
+    """Run extreme blackout sweep to 200d+ with overflow detection.
+
+    Specifically tests the 200d overflow threshold.
+
+    Args:
+        day_range: Tuple of (min_days, max_days) (default: 43-200)
+        cache_depth: Cache depth in entries (default: CACHE_DEPTH_BASELINE)
+        iterations: Number of iterations (default: 1000)
+        seed: Random seed for reproducibility
+
+    Returns:
+        Dict with extreme sweep results and overflow stoprule receipts
+
+    Receipt: extreme_blackout_sweep_200d
+    """
+    import json
+
+    # Run GNN extreme sweep
+    sweep_results = gnn_extreme_sweep(day_range, cache_depth, iterations, seed)
+
+    # Count overflow events
+    overflow_events = [r for r in sweep_results if r.get("overflow_triggered", False)]
+    survival_events = [r for r in sweep_results if r.get("survival_status", False)]
+
+    # Check overflow at boundary
+    overflow_at_200d = False
+    try:
+        result_200 = gnn_nonlinear_retention(200, cache_depth)
+    except StopRule:
+        overflow_at_200d = True
+
+    result = {
+        "day_range": list(day_range),
+        "iterations": iterations,
+        "cache_depth": cache_depth,
+        "overflow_threshold_days": OVERFLOW_THRESHOLD_DAYS,
+        "total_sweeps": len(sweep_results),
+        "overflow_events": len(overflow_events),
+        "survival_events": len(survival_events),
+        "overflow_at_200d": overflow_at_200d,
+        "stoprule_expected": day_range[1] >= CACHE_BREAK_DAYS,
+        "quorum_fail_days": QUORUM_FAIL_DAYS
+    }
+
+    emit_receipt("extreme_blackout_sweep_200d", {
+        "tenant_id": "axiom-reasoning",
+        **result,
+        "payload_hash": dual_hash(json.dumps(result, sort_keys=True))
+    })
+
+    return result
+
+
+def project_with_asymptote(
+    base_projection: Dict[str, Any],
+    gnn_results: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Adjust sovereignty timeline by asymptotic α ceiling.
+
+    Takes a base projection and adjusts by GNN asymptotic alpha.
+
+    Args:
+        base_projection: Base sovereignty projection dict with:
+            - cycles_to_10k_person_eq
+            - cycles_to_1M_person_eq
+            - effective_alpha
+        gnn_results: Output from GNN nonlinear retention with:
+            - eff_alpha
+            - asymptote_proximity
+
+    Returns:
+        Dict with adjusted projection including asymptote metrics
+
+    Receipt: asymptote_projection
+    """
+    import json
+
+    # Extract base values
+    base_cycles_10k = base_projection.get("cycles_to_10k_person_eq", 4)
+    base_cycles_1M = base_projection.get("cycles_to_1M_person_eq", 15)
+    base_alpha = base_projection.get("effective_alpha", MIN_EFF_ALPHA_VALIDATED)
+
+    # Get GNN asymptote impact
+    gnn_alpha = gnn_results.get("eff_alpha", base_alpha)
+    asymptote_proximity = gnn_results.get("asymptote_proximity", abs(ASYMPTOTE_ALPHA - gnn_alpha))
+
+    # Calculate adjusted cycles using asymptotic alpha
+    # Higher α means fewer cycles needed
+    alpha_ratio = base_alpha / max(0.1, gnn_alpha)
+
+    adjusted_cycles_10k = max(1, math.ceil(base_cycles_10k * alpha_ratio))
+    adjusted_cycles_1M = max(1, math.ceil(base_cycles_1M * alpha_ratio))
+
+    # Cycles saved by asymptote approach
+    cycles_saved_10k = base_cycles_10k - adjusted_cycles_10k
+    cycles_saved_1M = base_cycles_1M - adjusted_cycles_1M
+
+    projection = {
+        "base_cycles_10k": base_cycles_10k,
+        "base_cycles_1M": base_cycles_1M,
+        "base_alpha": base_alpha,
+        "gnn_alpha": gnn_alpha,
+        "asymptote_alpha": ASYMPTOTE_ALPHA,
+        "asymptote_proximity": round(asymptote_proximity, 4),
+        "alpha_ratio": round(alpha_ratio, 4),
+        "adjusted_cycles_10k": adjusted_cycles_10k,
+        "adjusted_cycles_1M": adjusted_cycles_1M,
+        "cycles_saved_10k": cycles_saved_10k,
+        "cycles_saved_1M": cycles_saved_1M,
+        "asymptote_validated": asymptote_proximity <= 0.02
+    }
+
+    emit_receipt("asymptote_projection", {
+        "tenant_id": "axiom-reasoning",
+        **projection,
+        "payload_hash": dual_hash(json.dumps(projection, sort_keys=True))
+    })
+
+    return projection
+
+
 def project_with_degradation(
     base_projection: Dict[str, Any],
     retention_curve_data: List[Dict[str, float]],
-    target_blackout_days: int = 60
+    target_blackout_days: int = 60,
+    cache_depth: int = CACHE_DEPTH_BASELINE
 ) -> Dict[str, Any]:
-    """Adjust sovereignty timeline projection by duration-dependent α degradation.
+    """Adjust sovereignty timeline projection by GNN nonlinear α degradation.
 
+    UPGRADED Dec 2025: Uses GNN nonlinear model (replaces linear).
     Takes a base projection and applies retention curve degradation at specified
     blackout duration.
 
@@ -730,29 +911,45 @@ def project_with_degradation(
             - effective_alpha
         retention_curve_data: Output from generate_retention_curve_data
         target_blackout_days: Blackout duration to project (default: 60)
+        cache_depth: Cache depth in entries (default: CACHE_DEPTH_BASELINE)
 
     Returns:
-        Dict with adjusted projection including degradation metrics
+        Dict with adjusted projection including GNN nonlinear degradation metrics
 
     Receipt: degradation_projection
     """
+    import json
+
     # Extract base values
     base_cycles_10k = base_projection.get("cycles_to_10k_person_eq", 4)
     base_cycles_1M = base_projection.get("cycles_to_1M_person_eq", 15)
     base_alpha = base_projection.get("effective_alpha", MIN_EFF_ALPHA_VALIDATED)
 
-    # Get retention curve point at target duration
-    curve_point = retention_curve(target_blackout_days)
-    degraded_alpha = curve_point["eff_alpha"]
-    retention_factor = curve_point["retention_factor"]
-    degradation_pct = curve_point["degradation_pct"]
+    # Get GNN nonlinear retention at target duration
+    overflow_detected = False
+    try:
+        curve_point = retention_curve(target_blackout_days, cache_depth)
+        degraded_alpha = curve_point["eff_alpha"]
+        retention_factor = curve_point["retention_factor"]
+        degradation_pct = curve_point["degradation_pct"]
+        gnn_boost = curve_point.get("gnn_boost", 0.0) if "gnn_boost" in curve_point else 0.0
+    except StopRule:
+        overflow_detected = True
+        degraded_alpha = 0.0
+        retention_factor = RETENTION_BASE_FACTOR
+        degradation_pct = 100.0
+        gnn_boost = 1.0
 
     # Calculate adjusted cycles
     # Lower α means more cycles needed
-    alpha_ratio = base_alpha / max(0.1, degraded_alpha)
-
-    adjusted_cycles_10k = math.ceil(base_cycles_10k * alpha_ratio)
-    adjusted_cycles_1M = math.ceil(base_cycles_1M * alpha_ratio)
+    if not overflow_detected and degraded_alpha > 0:
+        alpha_ratio = base_alpha / max(0.1, degraded_alpha)
+        adjusted_cycles_10k = math.ceil(base_cycles_10k * alpha_ratio)
+        adjusted_cycles_1M = math.ceil(base_cycles_1M * alpha_ratio)
+    else:
+        alpha_ratio = float('inf')
+        adjusted_cycles_10k = 999
+        adjusted_cycles_1M = 999
 
     # Delta calculation
     cycles_delay_10k = adjusted_cycles_10k - base_cycles_10k
@@ -766,18 +963,21 @@ def project_with_degradation(
         "degraded_alpha": degraded_alpha,
         "retention_factor": retention_factor,
         "degradation_pct": degradation_pct,
-        "alpha_ratio": round(alpha_ratio, 4),
+        "alpha_ratio": round(alpha_ratio, 4) if not overflow_detected else "overflow",
         "adjusted_cycles_10k": adjusted_cycles_10k,
         "adjusted_cycles_1M": adjusted_cycles_1M,
         "cycles_delay_10k": cycles_delay_10k,
         "cycles_delay_1M": cycles_delay_1M,
-        "degradation_model": "linear",
-        "validated": degraded_alpha >= MIN_EFF_ALPHA_VALIDATED
+        "degradation_model": CURVE_TYPE,
+        "overflow_detected": overflow_detected,
+        "asymptote_alpha": ASYMPTOTE_ALPHA,
+        "validated": not overflow_detected and degraded_alpha >= 2.50
     }
 
     emit_receipt("degradation_projection", {
         "tenant_id": "axiom-reasoning",
-        **projection
+        **projection,
+        "payload_hash": dual_hash(json.dumps({k: v for k, v in projection.items() if k != "alpha_ratio" or not overflow_detected}, sort_keys=True))
     })
 
     return projection

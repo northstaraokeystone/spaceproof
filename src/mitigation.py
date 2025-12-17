@@ -1,4 +1,4 @@
-"""mitigation.py - Partition Resilience in Mitigation Stack
+"""mitigation.py - Partition Resilience in Mitigation Stack with GNN Nonlinear Boost
 
 Incorporates partition tolerance into the overall mitigation scoring
 and weights mitigation by quorum health.
@@ -6,26 +6,27 @@ and weights mitigation by quorum health.
 THE PHYSICS:
     - PARTITION_MITIGATION_FACTOR = 0.05 (max expected α drop)
     - Quorum health weight: 1.0 if intact, degraded otherwise
-    - Combined mitigation includes τ-penalty + partition + quorum + reroute
-    - Duration-dependent degradation for extended blackouts (43-90d)
+    - Combined mitigation includes τ-penalty + partition + quorum + reroute + GNN boost
+    - GNN nonlinear degradation for extended blackouts (43-200d)
 
 REROUTE INTEGRATION (Dec 2025 adaptive rerouting):
     - REROUTING_ALPHA_BOOST_LOCKED = 0.07 (validated, immutable)
     - Reroute boost applied multiplicatively in mitigation stack
     - Blackout factor scales mitigation by duration (graceful degradation beyond 43d)
 
-EXTENDED BLACKOUT DEGRADATION (Dec 2025):
-    - DEGRADATION_RATE = 0.0032/day (calibrated: 1.4 @ 43d → 1.25 @ 90d)
-    - Duration degradation applied to mitigation stack when blackout_days > 43
-    - Linear model, no cliff behavior
+GNN NONLINEAR BOOST (Dec 2025 - REPLACES LINEAR):
+    - α asymptotes ~2.72 (e-like stability) via GNN predictive caching
+    - KILLED: DEGRADATION_RATE = 0.0032/day (linear model OBSOLETE)
+    - Nonlinear retention provides smoother degradation curve
+    - Cache overflow stoprule at 200d+
 
-Source: Grok - "Variable partitions (e.g., 40%)", "quorum intact", "+0.07 to 2.7+"
+Source: Grok - "GNN adds nonlinear boosts", "α asymptotes ~2.72"
 """
 
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
-from .core import emit_receipt
+from .core import emit_receipt, StopRule
 from .partition import (
     partition_sim,
     quorum_check,
@@ -38,6 +39,15 @@ from .partition import (
 from .ledger import (
     LEDGER_ALPHA_BOOST_VALIDATED,
     apply_quorum_factor
+)
+from .gnn_cache import (
+    gnn_boost_factor,
+    apply_gnn_nonlinear_boost as gnn_nonlinear_boost,
+    nonlinear_retention as gnn_nonlinear_retention,
+    ASYMPTOTE_ALPHA,
+    MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
+    CACHE_DEPTH_BASELINE,
+    NONLINEAR_RETENTION_FLOOR
 )
 
 
@@ -70,14 +80,18 @@ BLACKOUT_BASE_DAYS = 43
 BLACKOUT_EXTENDED_DAYS = 60
 """physics: Extended blackout tolerance with reroute (43d * 1.4 retention)."""
 
-BLACKOUT_SWEEP_MAX_DAYS = 90
-"""physics: Extreme stress bound (2× conjunction duration)."""
+BLACKOUT_SWEEP_MAX_DAYS = 200
+"""physics: Extended extreme stress bound (was 90, now 200 with GNN caching)."""
 
-DEGRADATION_RATE = 0.0032
-"""physics: Per-day degradation rate beyond 43d (calibrated: 1.4 @ 43d → 1.25 @ 90d)."""
+# KILLED: Linear degradation rate (Dec 2025 - GNN nonlinear replaces)
+# DEGRADATION_RATE = 0.0032 - OBSOLETE, killed by GNN nonlinear model
+DEGRADATION_RATE = 0.0  # DEPRECATED - GNN nonlinear model replaces linear
 
 RETENTION_BASE_FACTOR = 1.4
 """physics: Baseline retention factor at 43d blackout."""
+
+GNN_NONLINEAR_ENABLED = True
+"""physics: GNN nonlinear boost enabled (Dec 2025)."""
 
 
 @dataclass
@@ -284,36 +298,46 @@ def compute_blackout_factor(
 
 def apply_duration_degradation(
     base_mitigation: float,
-    blackout_days: int
+    blackout_days: int,
+    cache_depth: int = CACHE_DEPTH_BASELINE
 ) -> Dict[str, Any]:
     """Apply duration-dependent degradation to mitigation stack.
 
-    Scales mitigation by retention factor when blackout_days > 43.
-    Uses linear degradation model with DEGRADATION_RATE = 0.0032/day.
+    GNN NONLINEAR MODEL (Dec 2025): Uses exponential decay via gnn_cache.
+    KILLED: Linear degradation model (DEGRADATION_RATE = 0.0032/day)
 
-    Formula: degraded_mitigation = base_mitigation * retention_factor
-    Where: retention_factor = RETENTION_BASE * (1 - (days - 43) * DEGRADATION_RATE)
+    Formula: degraded_mitigation = base_mitigation * retention_scale
+    Where: retention_factor from gnn_nonlinear_retention (exponential decay)
 
     Args:
         base_mitigation: Base mitigation value (0-1)
         blackout_days: Current blackout duration in days
+        cache_depth: Cache depth in entries (default: CACHE_DEPTH_BASELINE)
 
     Returns:
-        Dict with degraded_mitigation, retention_factor, degradation_pct
+        Dict with degraded_mitigation, retention_factor, degradation_pct, gnn_boost
 
     Receipt: duration_degradation
     """
     if blackout_days <= BLACKOUT_BASE_DAYS:
         retention_factor = RETENTION_BASE_FACTOR
         degradation_pct = 0.0
+        gnn_boost = 0.0
+        model_type = "gnn_nonlinear"
     else:
-        # Linear degradation beyond base
-        excess_days = blackout_days - BLACKOUT_BASE_DAYS
-        degradation = excess_days * DEGRADATION_RATE
+        # GNN NONLINEAR degradation (replaces linear)
+        try:
+            gnn_result = gnn_nonlinear_retention(blackout_days, cache_depth)
+            retention_factor = gnn_result["retention_factor"]
+            gnn_boost = gnn_result.get("gnn_boost", 0.0)
+            model_type = "gnn_nonlinear"
+        except StopRule:
+            # Cache overflow - use floor values
+            retention_factor = NONLINEAR_RETENTION_FLOOR
+            gnn_boost = 1.0  # Saturated
+            model_type = "gnn_nonlinear_overflow"
 
-        # Retention formula: retention = RETENTION_BASE * (1 - degradation / RETENTION_BASE)
-        retention_factor = RETENTION_BASE_FACTOR - degradation
-        retention_factor = max(1.0, round(retention_factor, 4))  # Floor at 1.0
+        retention_factor = max(NONLINEAR_RETENTION_FLOOR, round(retention_factor, 4))
 
         # Degradation percentage
         degradation_pct = round((1.0 - retention_factor / RETENTION_BASE_FACTOR) * 100, 2)
@@ -322,13 +346,20 @@ def apply_duration_degradation(
     retention_scale = retention_factor / RETENTION_BASE_FACTOR
     degraded_mitigation = base_mitigation * retention_scale
 
+    # Apply GNN boost factor to mitigate degradation
+    if GNN_NONLINEAR_ENABLED and gnn_boost > 0:
+        boost_factor = 1.0 + gnn_boost * 0.05  # Up to 5% boost
+        degraded_mitigation = min(base_mitigation, degraded_mitigation * boost_factor)
+
     result = {
         "base_mitigation": round(base_mitigation, 4),
         "blackout_days": blackout_days,
         "retention_factor": retention_factor,
         "retention_scale": round(retention_scale, 4),
         "degradation_pct": degradation_pct,
-        "degraded_mitigation": round(degraded_mitigation, 4)
+        "degraded_mitigation": round(degraded_mitigation, 4),
+        "gnn_boost": round(gnn_boost, 4),
+        "model_type": model_type
     }
 
     emit_receipt("duration_degradation", {
