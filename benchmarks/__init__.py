@@ -1,9 +1,11 @@
-"""benchmarks - Comparison benchmarks for AXIOM symbolic regression.
+"""benchmarks - Compression Benchmark Suite
 
-Modules:
-    pysr_comparison: Compare AXIOM KAN to pySR symbolic regression
-    symbolic_baselines: Other symbolic regression baselines
-    report: Generate benchmark reports
+Compare AXIOM KAN witness against:
+    - pySR (2024 SOTA symbolic regression)
+    - AI Feynman
+    - Eureqa (legacy)
+
+Source: AXIOM Validation Lock v1
 """
 
 from .pysr_comparison import (
@@ -13,11 +15,30 @@ from .pysr_comparison import (
     batch_compare,
     generate_table,
 )
+from .symbolic_baselines import (
+    run_ai_feynman,
+    run_eureqa_stub,
+    compare_all_baselines,
+)
+from .report import (
+    generate_benchmark_report,
+    format_comparison_table,
+    emit_benchmark_summary,
+)
 
 __all__ = [
+    # pySR
     "run_pysr",
     "run_axiom",
     "compare",
     "batch_compare",
     "generate_table",
+    # Baselines
+    "run_ai_feynman",
+    "run_eureqa_stub",
+    "compare_all_baselines",
+    # Report
+    "generate_benchmark_report",
+    "format_comparison_table",
+    "emit_benchmark_summary",
 ]

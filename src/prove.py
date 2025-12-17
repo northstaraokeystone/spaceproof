@@ -8,12 +8,10 @@ THE PROOF INFRASTRUCTURE:
 Source: CLAUDEME.md (S8)
 
 v1.3 Update: Added Grok answer formatting for cost function baseline question.
-v2.0 Update: Added verify_provenance() for receipt chain validation.
 """
 
 import json
-import os
-from typing import Tuple, Any, Dict, List
+from typing import Tuple, Any, Dict
 
 from .core import dual_hash, emit_receipt, merkle
 
@@ -463,127 +461,224 @@ def emit_grok_answer_receipt(sweep_data: Dict, comparison: Dict) -> dict:
     })
 
 
-# === PROVENANCE VERIFICATION (v2.0) ===
+# === PROVENANCE VERIFICATION (v1.1 - Validation Lock) ===
 
-def verify_provenance(receipts_path: str) -> Dict:
-    """Verify all hashes and check chain integrity.
+def verify_provenance(receipts_path: str = "receipts.jsonl") -> dict:
+    """Verify all receipt hashes and check chain integrity.
 
-    verify_provenance specification:
-        - Load receipts.jsonl
-        - Recompute each payload_hash, compare
-        - For real_data_receipts: verify source accessible, checksum matches
-        - Return {valid_count, invalid_count, broken_chains, verification_receipt}
+    THE VERIFICATION INSIGHT:
+        Trust but verify. Every receipt has a payload_hash.
+        Recompute it. If it doesn't match, the chain is broken.
 
     Args:
         receipts_path: Path to receipts.jsonl file
 
     Returns:
-        Dict with:
-            valid_count: Number of valid receipts
-            invalid_count: Number of invalid receipts
-            broken_chains: List of broken chain points
-            verification_receipt: Receipt for this verification
-    """
-    if not os.path.exists(receipts_path):
-        return {
-            "valid_count": 0,
-            "invalid_count": 0,
-            "broken_chains": [],
-            "error": f"File not found: {receipts_path}",
-            "verification_receipt": None,
+        Dict with verification results:
+        {
+            "valid_count": int,
+            "invalid_count": int,
+            "broken_chains": list,
+            "verification_receipt": dict
         }
 
-    # Load all receipts
-    receipts: List[Dict] = []
-    with open(receipts_path, "r") as f:
-        for line_num, line in enumerate(f, 1):
+    Receipt: verification_receipt
+        - receipts_checked: int
+        - hash_mismatches: list of receipt IDs
+        - chain_breaks: list of gaps in provenance
+        - verification_passed: bool
+    """
+    import os
+
+    results = {
+        "valid_count": 0,
+        "invalid_count": 0,
+        "broken_chains": [],
+        "hash_mismatches": [],
+        "receipts_checked": 0,
+        "verification_passed": True,
+    }
+
+    # Check if file exists
+    if not os.path.exists(receipts_path):
+        results["verification_passed"] = False
+        results["error"] = f"Receipts file not found: {receipts_path}"
+
+        verification_receipt = emit_receipt("verification", {
+            "tenant_id": TENANT_ID,
+            "receipts_checked": 0,
+            "hash_mismatches": [],
+            "chain_breaks": [],
+            "verification_passed": False,
+            "error": results["error"],
+        })
+        results["verification_receipt"] = verification_receipt
+        return results
+
+    # Load and verify receipts
+    receipts = []
+    line_number = 0
+
+    with open(receipts_path, 'r') as f:
+        for line in f:
+            line_number += 1
             line = line.strip()
-            if line:
-                try:
-                    receipt = json.loads(line)
-                    receipt["_line_num"] = line_num
-                    receipts.append(receipt)
-                except json.JSONDecodeError as e:
-                    receipts.append({
-                        "_line_num": line_num,
-                        "_parse_error": str(e),
-                    })
+            if not line:
+                continue
+
+            try:
+                receipt = json.loads(line)
+                receipts.append((line_number, receipt))
+            except json.JSONDecodeError as e:
+                results["broken_chains"].append({
+                    "line": line_number,
+                    "error": f"Invalid JSON: {str(e)}",
+                })
+                results["invalid_count"] += 1
+
+    results["receipts_checked"] = len(receipts)
 
     # Verify each receipt
-    valid_count = 0
-    invalid_count = 0
-    broken_chains = []
-    verification_details = []
+    for line_num, receipt in receipts:
+        # Extract payload hash
+        stored_hash = receipt.get("payload_hash")
 
-    for receipt in receipts:
-        if "_parse_error" in receipt:
-            invalid_count += 1
-            verification_details.append({
-                "line": receipt["_line_num"],
-                "valid": False,
-                "error": receipt["_parse_error"],
-            })
-            continue
-
-        # Extract payload and compute hash
-        payload_hash = receipt.get("payload_hash")
-        if not payload_hash:
-            invalid_count += 1
-            verification_details.append({
-                "line": receipt["_line_num"],
-                "valid": False,
+        if not stored_hash:
+            results["hash_mismatches"].append({
+                "line": line_num,
+                "receipt_type": receipt.get("receipt_type", "unknown"),
                 "error": "Missing payload_hash",
             })
+            results["invalid_count"] += 1
             continue
 
-        # Recompute hash from payload
-        # The payload is the receipt without the computed fields
-        payload = {k: v for k, v in receipt.items()
-                   if k not in ["receipt_type", "ts", "tenant_id", "payload_hash", "_line_num"]}
+        # Reconstruct payload for hashing
+        # Payload is everything except meta fields
+        meta_fields = {"receipt_type", "ts", "tenant_id", "payload_hash"}
+        payload = {k: v for k, v in receipt.items() if k not in meta_fields}
 
-        recomputed_hash = dual_hash(json.dumps(payload, sort_keys=True))
+        # Recompute hash
+        computed_hash = dual_hash(json.dumps(payload, sort_keys=True))
 
-        if recomputed_hash == payload_hash:
-            valid_count += 1
-            verification_details.append({
-                "line": receipt["_line_num"],
-                "valid": True,
-                "receipt_type": receipt.get("receipt_type"),
-            })
+        if computed_hash == stored_hash:
+            results["valid_count"] += 1
         else:
-            invalid_count += 1
-            broken_chains.append({
-                "line": receipt["_line_num"],
-                "expected_hash": payload_hash,
-                "computed_hash": recomputed_hash,
+            results["hash_mismatches"].append({
+                "line": line_num,
+                "receipt_type": receipt.get("receipt_type", "unknown"),
+                "expected": stored_hash,
+                "computed": computed_hash,
             })
-            verification_details.append({
-                "line": receipt["_line_num"],
-                "valid": False,
-                "error": "Hash mismatch",
-            })
+            results["invalid_count"] += 1
 
-    # Compute overall merkle root
-    valid_receipts = [r for r in receipts if "_parse_error" not in r]
-    merkle_root = merkle(valid_receipts) if valid_receipts else dual_hash(b"empty")
+    # Check for chain breaks (gaps in timestamps)
+    if len(receipts) > 1:
+        from datetime import datetime as dt
+
+        timestamps = []
+        for _, receipt in receipts:
+            ts = receipt.get("ts")
+            if ts:
+                try:
+                    timestamps.append(dt.fromisoformat(ts.replace("Z", "+00:00")))
+                except (ValueError, TypeError):
+                    pass
+
+        if timestamps:
+            timestamps.sort()
+            for i in range(1, len(timestamps)):
+                gap = (timestamps[i] - timestamps[i - 1]).total_seconds()
+                # Flag gaps > 1 hour as potential chain breaks
+                if gap > 3600:
+                    results["broken_chains"].append({
+                        "gap_seconds": gap,
+                        "before": timestamps[i - 1].isoformat(),
+                        "after": timestamps[i].isoformat(),
+                    })
+
+    # Determine overall pass/fail
+    results["verification_passed"] = (
+        results["invalid_count"] == 0 and
+        len(results["broken_chains"]) == 0
+    )
 
     # Emit verification receipt
     verification_receipt = emit_receipt("verification", {
         "tenant_id": TENANT_ID,
-        "receipts_path": receipts_path,
-        "total_receipts": len(receipts),
-        "valid_count": valid_count,
-        "invalid_count": invalid_count,
-        "broken_chain_count": len(broken_chains),
-        "merkle_root": merkle_root,
-        "integrity": valid_count / len(receipts) if receipts else 1.0,
+        "receipts_checked": results["receipts_checked"],
+        "hash_mismatches": results["hash_mismatches"],
+        "chain_breaks": results["broken_chains"],
+        "verification_passed": results["verification_passed"],
+        "valid_count": results["valid_count"],
+        "invalid_count": results["invalid_count"],
     })
+    results["verification_receipt"] = verification_receipt
 
-    return {
-        "valid_count": valid_count,
-        "invalid_count": invalid_count,
-        "broken_chains": broken_chains,
-        "merkle_root": merkle_root,
-        "verification_receipt": verification_receipt,
-        "details": verification_details,
+    return results
+
+
+def verify_real_data_provenance(receipts_path: str = "receipts.jsonl") -> dict:
+    """Verify real_data receipts have accessible sources.
+
+    For real_data_receipts, check that:
+    1. source_url is present
+    2. download_hash matches stored data (if cached)
+
+    Args:
+        receipts_path: Path to receipts file
+
+    Returns:
+        Dict with real data verification results
+    """
+    import os
+
+    results = {
+        "real_data_receipts": 0,
+        "verified": 0,
+        "unverified": 0,
+        "errors": [],
     }
+
+    if not os.path.exists(receipts_path):
+        results["errors"].append(f"Receipts file not found: {receipts_path}")
+        return results
+
+    with open(receipts_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                receipt = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            if receipt.get("receipt_type") != "real_data":
+                continue
+
+            results["real_data_receipts"] += 1
+
+            # Check for source_url
+            source_url = receipt.get("source_url")
+            if not source_url:
+                results["errors"].append({
+                    "dataset_id": receipt.get("dataset_id", "unknown"),
+                    "error": "Missing source_url",
+                })
+                results["unverified"] += 1
+                continue
+
+            # Check for provenance chain
+            provenance_chain = receipt.get("provenance_chain")
+            if not provenance_chain or len(provenance_chain) < 2:
+                results["errors"].append({
+                    "dataset_id": receipt.get("dataset_id", "unknown"),
+                    "error": "Missing or incomplete provenance_chain",
+                })
+                results["unverified"] += 1
+                continue
+
+            results["verified"] += 1
+
+    return results
