@@ -46,6 +46,7 @@ from .constants import (
     ABLATION_MODES,
     RETENTION_FACTOR_GNN_RANGE,
 )
+from .alpha_compute import RETENTION_FACTOR_MAX
 
 # Backward-compatible re-exports (other modules import these from here)
 __all__ = [
