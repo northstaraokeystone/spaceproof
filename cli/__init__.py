@@ -1,0 +1,155 @@
+"""AXIOM-CORE CLI command modules.
+
+This package provides modular command handlers for the CLI.
+Each module contains related commands grouped by domain.
+"""
+
+# Core commands (baseline, bootstrap, curve, full)
+from cli.core import (
+    cmd_baseline,
+    cmd_bootstrap,
+    cmd_curve,
+    cmd_full,
+)
+
+# Partition commands
+from cli.partition import (
+    cmd_partition,
+    cmd_stress_quorum,
+)
+
+# Blackout commands (including reroute)
+from cli.blackout import (
+    cmd_reroute,
+    cmd_algo_info,
+    cmd_blackout,
+    cmd_blackout_sweep,
+    cmd_simulate_timeline,
+    cmd_extended_sweep,
+    cmd_retention_curve,
+    cmd_gnn_stub,
+    cmd_gnn_nonlinear,
+    cmd_cache_sweep,
+    cmd_extreme_sweep,
+    cmd_overflow_test,
+    cmd_innovation_stubs,
+)
+
+# Pruning commands
+from cli.pruning import (
+    cmd_entropy_prune,
+    cmd_pruning_sweep,
+    cmd_extended_250d,
+    cmd_verify_chain,
+    cmd_pruning_info,
+)
+
+# Ablation commands
+from cli.ablation import (
+    cmd_ablate,
+    cmd_ablation_sweep,
+    cmd_ceiling_track,
+    cmd_formula_check,
+    cmd_isolate_layers,
+)
+
+# Depth commands
+from cli.depth import (
+    cmd_adaptive_depth_run,
+    cmd_depth_scaling_test,
+    cmd_compute_depth_single,
+    cmd_depth_scaling_info,
+    cmd_efficient_sweep_info,
+)
+
+# RL commands
+from cli.rl import (
+    cmd_rl_info,
+    cmd_adaptive_info,
+    cmd_rl_status,
+    cmd_validate_no_static,
+    cmd_rl_tune,
+    cmd_dynamic_mode,
+    cmd_tune_sweep,
+    cmd_rl_500_sweep,
+    cmd_rl_500_sweep_info,
+)
+
+# Quantum commands
+from cli.quantum import (
+    cmd_quantum_estimate,
+    cmd_quantum_sim,
+    cmd_quantum_rl_hybrid_info,
+)
+
+# Pipeline commands
+from cli.pipeline import (
+    cmd_lr_pilot,
+    cmd_post_tune_execute,
+    cmd_full_pipeline,
+    cmd_pilot_info,
+    cmd_pipeline_info,
+)
+
+__all__ = [
+    # Core
+    'cmd_baseline',
+    'cmd_bootstrap',
+    'cmd_curve',
+    'cmd_full',
+    # Partition
+    'cmd_partition',
+    'cmd_stress_quorum',
+    # Blackout
+    'cmd_reroute',
+    'cmd_algo_info',
+    'cmd_blackout',
+    'cmd_blackout_sweep',
+    'cmd_simulate_timeline',
+    'cmd_extended_sweep',
+    'cmd_retention_curve',
+    'cmd_gnn_stub',
+    'cmd_gnn_nonlinear',
+    'cmd_cache_sweep',
+    'cmd_extreme_sweep',
+    'cmd_overflow_test',
+    'cmd_innovation_stubs',
+    # Pruning
+    'cmd_entropy_prune',
+    'cmd_pruning_sweep',
+    'cmd_extended_250d',
+    'cmd_verify_chain',
+    'cmd_pruning_info',
+    # Ablation
+    'cmd_ablate',
+    'cmd_ablation_sweep',
+    'cmd_ceiling_track',
+    'cmd_formula_check',
+    'cmd_isolate_layers',
+    # Depth
+    'cmd_adaptive_depth_run',
+    'cmd_depth_scaling_test',
+    'cmd_compute_depth_single',
+    'cmd_depth_scaling_info',
+    'cmd_efficient_sweep_info',
+    # RL
+    'cmd_rl_info',
+    'cmd_adaptive_info',
+    'cmd_rl_status',
+    'cmd_validate_no_static',
+    'cmd_rl_tune',
+    'cmd_dynamic_mode',
+    'cmd_tune_sweep',
+    'cmd_rl_500_sweep',
+    'cmd_rl_500_sweep_info',
+    # Quantum
+    'cmd_quantum_estimate',
+    'cmd_quantum_sim',
+    'cmd_quantum_rl_hybrid_info',
+    # Pipeline
+    'cmd_lr_pilot',
+    'cmd_post_tune_execute',
+    'cmd_full_pipeline',
+    'cmd_pilot_info',
+    'cmd_pipeline_info',
+]
