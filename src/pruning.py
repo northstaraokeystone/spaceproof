@@ -512,3 +512,169 @@ def get_pruning_info() -> Dict[str, Any]:
     })
 
     return info
+
+
+# === DYNAMIC AGGRESSIVENESS SUPPORT (Dec 2025) ===
+# Source: Grok - "Stop: Static baselines - go dynamic"
+
+
+# Global dynamic aggressiveness state
+_dynamic_aggressiveness = None  # None means use default LN_N_TRIM_FACTOR_BASE
+
+
+def apply_dynamic_aggressiveness(aggr: float) -> float:
+    """Apply dynamic aggressiveness from RL feedback.
+
+    Updates the global trim_factor to use dynamic value.
+
+    Args:
+        aggr: New aggressiveness value (0.2-0.5 range)
+
+    Returns:
+        Previous aggressiveness value
+
+    Receipt: dynamic_aggressiveness_applied
+    """
+    global _dynamic_aggressiveness
+
+    # Clamp to safety bounds
+    clamped = max(LN_N_TRIM_FACTOR_BASE, min(LN_N_TRIM_FACTOR_MAX, aggr))
+
+    old_value = _dynamic_aggressiveness
+    _dynamic_aggressiveness = clamped
+
+    emit_receipt("dynamic_aggressiveness_applied", {
+        "receipt_type": "dynamic_aggressiveness_applied",
+        "tenant_id": "axiom-pruning",
+        "old_value": old_value if old_value is not None else LN_N_TRIM_FACTOR_BASE,
+        "new_value": clamped,
+        "clamped_from": aggr,
+        "source": "rl",
+        "payload_hash": dual_hash(json.dumps({
+            "old": old_value,
+            "new": clamped
+        }, sort_keys=True, default=str))
+    })
+
+    return old_value if old_value is not None else LN_N_TRIM_FACTOR_BASE
+
+
+def get_current_aggressiveness() -> float:
+    """Get current dynamic aggressiveness value.
+
+    Returns:
+        Current trim_factor (dynamic or default)
+    """
+    if _dynamic_aggressiveness is not None:
+        return _dynamic_aggressiveness
+    return LN_N_TRIM_FACTOR_BASE
+
+
+def reset_dynamic_aggressiveness() -> None:
+    """Reset dynamic aggressiveness to default (static mode).
+
+    Receipt: dynamic_aggressiveness_reset
+    """
+    global _dynamic_aggressiveness
+    _dynamic_aggressiveness = None
+
+    emit_receipt("dynamic_aggressiveness_reset", {
+        "receipt_type": "dynamic_aggressiveness_reset",
+        "tenant_id": "axiom-pruning",
+        "reason": "reset_to_static",
+        "default_value": LN_N_TRIM_FACTOR_BASE,
+        "payload_hash": dual_hash(json.dumps({"reset": True}))
+    })
+
+
+def entropy_prune_dynamic(
+    merkle_tree: Dict[str, Any],
+    dynamic_config: Dict[str, Any] = None,
+    hybrid: bool = True,
+    ablation_mode: str = "full"
+) -> Dict[str, Any]:
+    """Entropy pruning with dynamic configuration support.
+
+    Extends entropy_prune to accept dynamic params from RL/adaptive.
+
+    Args:
+        merkle_tree: Dict containing tree structure
+        dynamic_config: Optional dynamic config dict with:
+            - prune_aggressiveness: Dynamic trim factor
+        hybrid: Whether to enable hybrid mode
+        ablation_mode: Ablation mode for testing
+
+    Returns:
+        Dict with pruning results and dynamic_config_applied flag
+
+    Receipt: entropy_prune_dynamic_receipt
+    """
+    # Determine trim factor to use
+    if dynamic_config is not None and "prune_aggressiveness" in dynamic_config:
+        trim_factor = dynamic_config["prune_aggressiveness"]
+        # Clamp to bounds
+        trim_factor = max(LN_N_TRIM_FACTOR_BASE, min(LN_N_TRIM_FACTOR_MAX, trim_factor))
+        dynamic_applied = True
+    elif _dynamic_aggressiveness is not None:
+        trim_factor = _dynamic_aggressiveness
+        dynamic_applied = True
+    else:
+        trim_factor = LN_N_TRIM_FACTOR_BASE
+        dynamic_applied = False
+
+    # Run standard pruning with determined trim factor
+    result = entropy_prune(merkle_tree, trim_factor, hybrid, ablation_mode)
+
+    # Add dynamic config info
+    result["dynamic_config_applied"] = dynamic_applied
+    result["dynamic_trim_factor"] = trim_factor if dynamic_applied else None
+
+    emit_receipt("entropy_prune_dynamic", {
+        "receipt_type": "entropy_prune_dynamic",
+        "tenant_id": "axiom-pruning",
+        "trim_factor": trim_factor,
+        "dynamic_config_applied": dynamic_applied,
+        "branches_pruned": result["branches_pruned"],
+        "alpha_uplift": result["alpha_uplift"],
+        "payload_hash": dual_hash(json.dumps({
+            "trim": trim_factor,
+            "dynamic": dynamic_applied,
+            "pruned": result["branches_pruned"]
+        }, sort_keys=True))
+    })
+
+    return result
+
+
+def get_pruning_dynamic_info() -> Dict[str, Any]:
+    """Get pruning module info including dynamic config status.
+
+    Returns:
+        Dict with pruning info and current dynamic config
+
+    Receipt: pruning_dynamic_info
+    """
+    base_info = get_pruning_info()
+    current_aggr = get_current_aggressiveness()
+
+    info = {
+        **base_info,
+        "current_aggressiveness": current_aggr,
+        "dynamic_mode": _dynamic_aggressiveness is not None,
+        "kill_list": [
+            "Fixed trim_factor defaults"
+        ],
+        "description_dynamic": "Entropy pruning with dynamic aggressiveness support. "
+                               "Kill static baselines - go dynamic."
+    }
+
+    emit_receipt("pruning_dynamic_info", {
+        "tenant_id": "axiom-pruning",
+        **{k: v for k, v in info.items() if k not in ["description", "kill_list"]},
+        "payload_hash": dual_hash(json.dumps({
+            "current_aggr": current_aggr,
+            "dynamic_mode": info["dynamic_mode"]
+        }, sort_keys=True))
+    })
+
+    return info
