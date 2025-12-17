@@ -156,24 +156,67 @@ def load_mars_params(path: str = None) -> Dict[str, Any]:
     return data
 
 
-def effective_alpha(alpha: float, tau_seconds: float) -> float:
-    """Calculate effective alpha after latency penalty.
+def effective_alpha(alpha: float, tau_seconds: float, receipt_integrity: float = 0.0) -> float:
+    """Calculate effective alpha after latency penalty with receipt mitigation.
 
-    Represents α degradation under latency constraints.
+    THE PARADIGM SHIFT:
+        Without receipts: effective_α = base_α × tau_penalty = 1.69 × 0.35 = 0.59
+        With 90% receipts: effective_α = base_α × (1 - penalty × (1 - integrity)) = 1.58
+
+    That's a 2.7× improvement in effective compounding from receipts alone.
+
+    Formula:
+        effective_α_mars = base_α × (1 - penalty × (1 - receipt_integrity))
+
+    Where:
+        - penalty = 1 - tau_penalty(tau) = latency drop (0.65 at τ=1200s)
+        - receipt_integrity = fraction of decisions with receipts (0-1)
 
     Args:
         alpha: Base compounding exponent (e.g., 1.69)
         tau_seconds: Latency in seconds
+        receipt_integrity: Receipt coverage (0-1). If >0, applies receipt mitigation.
 
     Returns:
-        Effective alpha = alpha × tau_penalty(tau)
+        Effective alpha after latency penalty and receipt mitigation
 
     Example:
         >>> effective_alpha(1.69, 0)
         1.69
-        >>> effective_alpha(1.69, 1200)  # Mars max
+        >>> effective_alpha(1.69, 1200, 0.0)  # Mars max, no receipts
         0.5915  # ~0.59
+        >>> effective_alpha(1.69, 1200, 0.9)  # Mars max, 90% receipts
+        1.58  # ~1.58
+
+    Receipt: effective_alpha_receipt (when receipt_integrity > 0)
     """
-    penalty = tau_penalty(tau_seconds)
-    eff_alpha = alpha * penalty
+    raw_penalty = tau_penalty(tau_seconds)
+    latency_drop = 1.0 - raw_penalty  # How much we lose to latency
+
+    if receipt_integrity > 0.0:
+        # Receipt mitigation formula:
+        # effective_α = base_α × (1 - penalty × (1 - receipt_integrity))
+        # Where penalty = latency_drop (the loss, not the retained)
+        mitigation_factor = 1.0 - latency_drop * (1.0 - receipt_integrity)
+        eff_alpha = alpha * mitigation_factor
+
+        # Calculate unmitigated for comparison
+        unmitigated = alpha * raw_penalty
+        mitigation_benefit = eff_alpha - unmitigated
+
+        # Emit effective_alpha_receipt
+        emit_receipt("effective_alpha", {
+            "tenant_id": "axiom-autonomy",
+            "base_alpha": alpha,
+            "tau_seconds": tau_seconds,
+            "tau_penalty": raw_penalty,
+            "receipt_integrity": receipt_integrity,
+            "effective_alpha": eff_alpha,
+            "mitigation_benefit": mitigation_benefit,
+            "unmitigated_alpha": unmitigated,
+        })
+    else:
+        # No receipt mitigation - original formula
+        eff_alpha = alpha * raw_penalty
+
     return eff_alpha
