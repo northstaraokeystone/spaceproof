@@ -17,11 +17,9 @@ from .core import (
     get_sequence,
     get_body_config,
     compute_latency_budget,
-    compute_autonomy_requirement,
     simulate_body,
     compute_telemetry_compression,
     get_multiplanet_info,
-    EXPANSION_SEQUENCE,
     AUTONOMY_REQUIREMENT,
 )
 
@@ -44,7 +42,7 @@ def cmd_multiplanet_status(args: Optional[Dict[str, Any]] = None) -> Dict[str, A
     print(f"Stage: {status['stage']}")
     print(f"Version: {status['version']}")
     print(f"\nEvolution path: {' -> '.join(status['evolution_path'])}")
-    print(f"\nCurrent capabilities:")
+    print("\nCurrent capabilities:")
     for cap in status.get("current_capabilities", []):
         print(f"  - {cap}")
     print("\nPending capabilities:")

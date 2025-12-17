@@ -11,7 +11,6 @@ Source: AXIOM scalable paths architecture - Mars autonomous habitat
 """
 
 from typing import Dict, Any
-from datetime import datetime
 
 from ..base import emit_path_receipt
 
