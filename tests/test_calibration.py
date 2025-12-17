@@ -285,9 +285,23 @@ class TestLoadFsdEmpirical:
 
     def test_load_fsd_empirical_hash_valid(self, capsys):
         """Payload hash should match computed hash."""
-        data = load_fsd_empirical()
-        assert 'payload_hash' in data
-        # If we get here without StopRule, hash was valid
+        try:
+            data = load_fsd_empirical()
+            assert 'payload_hash' in data
+            # If we get here without StopRule, hash was valid
+        except Exception as e:
+            # Print debug info if test fails
+            import json
+            import os
+            repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            path = os.path.join(repo_root, "data/verified/fsd_empirical.json")
+            with open(path, 'r') as f:
+                raw_data = json.load(f)
+            print(f"DEBUG: Exception={e}")
+            print(f"DEBUG: File path={path}")
+            print(f"DEBUG: File exists={os.path.exists(path)}")
+            print(f"DEBUG: Raw keys={list(raw_data.keys())}")
+            raise
 
     def test_load_fsd_empirical_emits_receipt(self, capsys):
         """Should emit fsd_empirical_ingest receipt."""
