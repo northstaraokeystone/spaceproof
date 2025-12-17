@@ -522,3 +522,195 @@ def get_alpha_compute_info() -> Dict[str, Any]:
     })
 
     return info
+
+
+# === DYNAMIC RETENTION SUPPORT (Dec 2025) ===
+# Source: Grok - "Stop: Static baselines - go dynamic"
+
+
+def alpha_calc_dynamic(
+    min_eff: float,
+    baseline: float,
+    rl_tuner_retention: float = None,
+    static_retention: float = 1.01
+) -> Dict[str, Any]:
+    """Compute alpha with dynamic retention from RL feedback.
+
+    Uses RL-optimized retention if provided, otherwise falls back to static.
+
+    Args:
+        min_eff: Minimum effective redundancy
+        baseline: Baseline efficiency
+        rl_tuner_retention: Optional RL-tuned retention factor
+        static_retention: Fallback static retention (default: 1.01)
+
+    Returns:
+        Dict with computed_alpha, retention_source, gap analysis
+
+    Receipt: alpha_calc_dynamic
+    """
+    # Determine retention source
+    if rl_tuner_retention is not None:
+        retention = rl_tuner_retention
+        retention_source = "rl"
+    else:
+        retention = static_retention
+        retention_source = "static"
+
+    # Compute alpha using standard formula
+    result = alpha_calc(min_eff, baseline, retention)
+
+    # Add source tracking
+    result["retention_source"] = retention_source
+    result["dynamic_mode"] = rl_tuner_retention is not None
+    result["rl_retention"] = rl_tuner_retention
+    result["static_retention"] = static_retention
+
+    # Add milestone tracking
+    milestone_1 = 1.05
+    milestone_2 = 1.08
+    result["milestone_1_achieved"] = retention >= milestone_1
+    result["milestone_2_achieved"] = retention >= milestone_2
+    result["retention_target_next"] = milestone_1 if not result["milestone_1_achieved"] else (
+        milestone_2 if not result["milestone_2_achieved"] else RETENTION_FACTOR_MAX
+    )
+
+    emit_receipt("alpha_calc_dynamic", {
+        "receipt_type": "alpha_calc_dynamic",
+        "tenant_id": "axiom-alpha-compute",
+        "computed_alpha": result["computed_alpha"],
+        "retention_factor": result["retention_factor"],
+        "retention_source": retention_source,
+        "gap_to_ceiling_pct": result["gap_to_ceiling_pct"],
+        "milestone_1_achieved": result["milestone_1_achieved"],
+        "payload_hash": dual_hash(json.dumps({
+            "alpha": result["computed_alpha"],
+            "retention": retention,
+            "source": retention_source
+        }, sort_keys=True))
+    })
+
+    return result
+
+
+def ceiling_gap_with_rl_path(
+    current_alpha: float,
+    rl_projected_retention: float = None
+) -> Dict[str, Any]:
+    """Analyze ceiling gap with RL-projected path.
+
+    Args:
+        current_alpha: Current alpha value
+        rl_projected_retention: Optional RL-projected retention improvement
+
+    Returns:
+        Dict with gap analysis and RL path projection
+
+    Receipt: ceiling_gap_rl_path
+    """
+    # Get base gap analysis
+    gap_result = ceiling_gap(current_alpha)
+
+    # Add RL path projection
+    if rl_projected_retention is not None:
+        # Compute projected alpha with RL retention
+        projected_alpha = SHANNON_FLOOR_ALPHA * rl_projected_retention
+        projected_gap_pct = ((ALPHA_CEILING_TARGET - projected_alpha) / ALPHA_CEILING_TARGET) * 100
+
+        gap_result["rl_projected_retention"] = rl_projected_retention
+        gap_result["rl_projected_alpha"] = round(projected_alpha, 4)
+        gap_result["rl_projected_gap_pct"] = round(projected_gap_pct, 2)
+        gap_result["rl_improvement_pct"] = round(gap_result["gap_pct"] - projected_gap_pct, 2)
+
+        # Update path with RL info
+        if rl_projected_retention >= RETENTION_FACTOR_MAX:
+            gap_result["path_to_ceiling"] = "RL reaches ceiling - quantum validates"
+        elif rl_projected_retention >= 1.08:
+            gap_result["path_to_ceiling"] = f"RL → {rl_projected_retention:.3f} (+quantum hybrid)"
+        elif rl_projected_retention >= 1.05:
+            gap_result["path_to_ceiling"] = f"RL → {rl_projected_retention:.3f} (+RL2 → 1.08 +quantum)"
+        else:
+            gap_result["path_to_ceiling"] = f"RL → {rl_projected_retention:.3f} (continue tuning)"
+
+    emit_receipt("ceiling_gap_rl_path", {
+        "receipt_type": "ceiling_gap_rl_path",
+        "tenant_id": "axiom-alpha-compute",
+        "current_alpha": current_alpha,
+        "gap_pct": gap_result["gap_pct"],
+        "rl_projected_retention": rl_projected_retention,
+        "rl_projected_alpha": gap_result.get("rl_projected_alpha"),
+        "path_to_ceiling": gap_result["path_to_ceiling"],
+        "payload_hash": dual_hash(json.dumps({
+            "alpha": current_alpha,
+            "rl_retention": rl_projected_retention
+        }, sort_keys=True, default=str))
+    })
+
+    return gap_result
+
+
+def get_retention_milestones() -> Dict[str, Any]:
+    """Get retention milestone definitions.
+
+    Returns:
+        Dict with milestone targets and their alpha equivalents
+    """
+    milestones = {
+        "current": {
+            "retention": 1.01,
+            "alpha": round(SHANNON_FLOOR_ALPHA * 1.01, 4),
+            "description": "Current baseline"
+        },
+        "milestone_1": {
+            "retention": 1.05,
+            "alpha": round(SHANNON_FLOOR_ALPHA * 1.05, 4),
+            "description": "First RL target (this build)"
+        },
+        "milestone_2": {
+            "retention": 1.08,
+            "alpha": round(SHANNON_FLOOR_ALPHA * 1.08, 4),
+            "description": "Second RL target (next build)"
+        },
+        "ceiling": {
+            "retention": RETENTION_FACTOR_MAX,
+            "alpha": ALPHA_CEILING_TARGET,
+            "description": "Physics ceiling (quantum hybrid)"
+        }
+    }
+
+    return milestones
+
+
+def get_alpha_compute_dynamic_info() -> Dict[str, Any]:
+    """Get alpha compute module info with dynamic retention support.
+
+    Returns:
+        Dict with alpha compute info and RL integration details
+
+    Receipt: alpha_compute_dynamic_info
+    """
+    base_info = get_alpha_compute_info()
+    milestones = get_retention_milestones()
+
+    info = {
+        **base_info,
+        "retention_milestones": milestones,
+        "rl_integration": {
+            "rl_retention_source": "rl_tune.RLTuner.best_retention",
+            "static_fallback": 1.01,
+            "dynamic_mode_default": False
+        },
+        "kill_list": [
+            "Fixed retention_factor defaults"
+        ],
+        "description_dynamic": "Alpha compute with dynamic RL retention input. "
+                               "Kill static baselines - go dynamic."
+    }
+
+    emit_receipt("alpha_compute_dynamic_info", {
+        "tenant_id": "axiom-alpha-compute",
+        **{k: v for k, v in info.items() if k not in ["description", "kill_list", "physics_clarification"]},
+        "payload_hash": dual_hash(json.dumps(milestones, sort_keys=True))
+    })
+
+    return info

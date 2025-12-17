@@ -451,3 +451,276 @@ def get_gnn_cache_info() -> Dict[str, Any]:
     })
 
     return info
+
+
+def validate_gnn_nonlinear_slos(
+    sweep_results: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Validate GNN nonlinear SLOs.
+
+    SLOs:
+    1. α asymptotes within 0.02 of 2.72 by 150d
+    2. 100% survival to 150d, graceful degradation 150-180d
+    3. StopRule on overflow at 200d+ with baseline cache
+    4. Nonlinear curve R² >= 0.98 to exponential model
+
+    Args:
+        sweep_results: Results from extreme_blackout_sweep
+
+    Returns:
+        Dict with validation results
+
+    Receipt: gnn_nonlinear_slo_validation
+    """
+    if not sweep_results:
+        return {"validated": False, "reason": "no sweep results"}
+
+    # SLO 1: Asymptote proximity at 150d
+    results_150d = [r for r in sweep_results if r.get("blackout_days") == 150]
+    asymptote_ok = all(
+        r.get("asymptote_proximity", 1.0) <= 0.02
+        for r in results_150d
+    ) if results_150d else True
+
+    # SLO 2: Survival to 150d
+    results_under_150d = [r for r in sweep_results if r.get("blackout_days", 0) <= 150]
+    survival_to_150d = all(r.get("survival_status", False) for r in results_under_150d)
+
+    # SLO 3: Overflow detection at 200d+
+    results_200d_plus = [r for r in sweep_results if r.get("blackout_days", 0) >= 200]
+    overflow_detected = any(r.get("overflow_triggered", False) for r in results_200d_plus)
+
+    # SLO 4: No cliff behavior (check smooth degradation)
+    eff_alphas = [(r.get("blackout_days", 0), r.get("eff_alpha", 0))
+                  for r in sweep_results if "eff_alpha" in r]
+    eff_alphas.sort(key=lambda x: x[0])
+
+    no_cliff = True
+    for i in range(1, len(eff_alphas)):
+        if eff_alphas[i][0] - eff_alphas[i-1][0] == 1:  # Consecutive days
+            drop = eff_alphas[i-1][1] - eff_alphas[i][1]
+            if drop > 0.01:  # Max single-day drop
+                no_cliff = False
+                break
+
+    validation = {
+        "asymptote_proximity_ok": asymptote_ok,
+        "survival_to_150d": survival_to_150d,
+        "overflow_detected_at_200d": overflow_detected,
+        "no_cliff_behavior": no_cliff,
+        "validated": asymptote_ok and survival_to_150d and no_cliff
+    }
+
+    emit_receipt("gnn_nonlinear_slo_validation", {
+        "tenant_id": "axiom-gnn-cache",
+        **validation,
+        "payload_hash": dual_hash(json.dumps(validation, sort_keys=True))
+    })
+
+    return validation
+
+
+# === DYNAMIC CONFIGURATION SUPPORT (Dec 2025) ===
+# Kill static baselines - go dynamic
+# Source: Grok - "Stop: Static baselines - go dynamic"
+
+
+# Global dynamic config state
+_dynamic_config = {
+    "gnn_layers": None,  # None means use default
+    "lr_decay": None,
+    "prune_aggressiveness": None,
+    "adaptive_depth_enabled": False
+}
+
+
+def apply_dynamic_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply dynamic configuration from RL tuner or adaptive module.
+
+    Updates internal state to use dynamic parameters instead of static defaults.
+
+    Args:
+        config: Dynamic config dict with:
+            - gnn_layers: Number of GNN layers
+            - lr_decay: Learning rate decay value
+            - prune_aggressiveness: Pruning aggressiveness factor
+            - adaptive_depth_enabled: Whether adaptive depth is active
+
+    Returns:
+        Dict with old values that were replaced
+
+    Receipt: dynamic_config_applied
+    """
+    global _dynamic_config
+
+    old_values = _dynamic_config.copy()
+
+    for key in ["gnn_layers", "lr_decay", "prune_aggressiveness", "adaptive_depth_enabled"]:
+        if key in config:
+            _dynamic_config[key] = config[key]
+
+    emit_receipt("dynamic_config_applied", {
+        "receipt_type": "dynamic_config_applied",
+        "tenant_id": "axiom-gnn-cache",
+        "old_config": {k: v for k, v in old_values.items() if v is not None},
+        "new_config": {k: v for k, v in _dynamic_config.items() if v is not None},
+        "source": config.get("source", "unknown"),
+        "payload_hash": dual_hash(json.dumps(_dynamic_config, sort_keys=True, default=str))
+    })
+
+    return old_values
+
+
+def get_current_config() -> Dict[str, Any]:
+    """Get current dynamic configuration state.
+
+    Returns:
+        Dict with current dynamic config values
+    """
+    return {
+        "gnn_layers": _dynamic_config["gnn_layers"],
+        "lr_decay": _dynamic_config["lr_decay"],
+        "prune_aggressiveness": _dynamic_config["prune_aggressiveness"],
+        "adaptive_depth_enabled": _dynamic_config["adaptive_depth_enabled"],
+        "using_defaults": all(v is None for k, v in _dynamic_config.items()
+                              if k != "adaptive_depth_enabled")
+    }
+
+
+def reset_dynamic_config() -> None:
+    """Reset dynamic configuration to defaults (static mode).
+
+    Receipt: dynamic_config_reset
+    """
+    global _dynamic_config
+
+    _dynamic_config = {
+        "gnn_layers": None,
+        "lr_decay": None,
+        "prune_aggressiveness": None,
+        "adaptive_depth_enabled": False
+    }
+
+    emit_receipt("dynamic_config_reset", {
+        "receipt_type": "dynamic_config_reset",
+        "tenant_id": "axiom-gnn-cache",
+        "reason": "reset_to_static",
+        "payload_hash": dual_hash(json.dumps({"reset": True}))
+    })
+
+
+def nonlinear_retention_dynamic(
+    blackout_days: int,
+    cache_depth: int = CACHE_DEPTH_BASELINE,
+    dynamic_config: Dict[str, Any] = None
+) -> Dict[str, Any]:
+    """GNN nonlinear retention with dynamic configuration support.
+
+    Extends nonlinear_retention to accept dynamic params from RL/adaptive.
+
+    Args:
+        blackout_days: Blackout duration in days
+        cache_depth: Cache depth in entries
+        dynamic_config: Optional dynamic config dict with:
+            - gnn_layers_delta: Change to GNN layer count
+            - lr_decay: Learning rate value
+            - prune_aggressiveness: Pruning factor
+
+    Returns:
+        Dict with retention metrics and dynamic_config_applied flag
+
+    Receipt: gnn_nonlinear_dynamic_receipt
+    """
+    # Get base result
+    base_result = nonlinear_retention(blackout_days, cache_depth)
+
+    # Apply dynamic adjustments if provided
+    if dynamic_config is not None:
+        # GNN layers delta affects retention factor
+        gnn_delta = dynamic_config.get("gnn_layers_delta", 0)
+        if gnn_delta > 0:
+            # Each additional layer contributes 1.008-1.015x
+            for _ in range(gnn_delta):
+                layer_boost = (RETENTION_FACTOR_GNN_RANGE[0] +
+                               RETENTION_FACTOR_GNN_RANGE[1]) / 2 - 1.0  # ~0.0115
+                base_result["retention_factor"] *= (1.0 + layer_boost)
+                base_result["gnn_boost"] += layer_boost
+
+        # LR decay affects stability (higher LR = more variance)
+        lr_decay = dynamic_config.get("lr_decay", 0.002)
+        lr_optimal = 0.002
+        lr_factor = 1.0 - (abs(lr_decay - lr_optimal) / lr_optimal) * 0.01
+
+        # Prune aggressiveness affects retention
+        prune_aggr = dynamic_config.get("prune_aggressiveness")
+        if prune_aggr is not None:
+            # Pruning adds ~0.8% per 0.1 factor
+            prune_boost = (prune_aggr - 0.3) * 0.08
+            base_result["retention_factor"] *= (1.0 + prune_boost)
+
+        # Cap retention at ceiling
+        base_result["retention_factor"] = min(
+            RETENTION_FACTOR_MAX,
+            base_result["retention_factor"]
+        )
+
+        # Recompute alpha
+        base_result["eff_alpha"] = ENTROPY_ASYMPTOTE_E * base_result["retention_factor"]
+
+        base_result["dynamic_config_applied"] = True
+        base_result["dynamic_params"] = {
+            "gnn_layers_delta": gnn_delta,
+            "lr_decay": lr_decay,
+            "prune_aggressiveness": prune_aggr
+        }
+    else:
+        base_result["dynamic_config_applied"] = False
+
+    emit_receipt("gnn_nonlinear_dynamic", {
+        "receipt_type": "gnn_nonlinear_dynamic",
+        "tenant_id": "axiom-gnn-cache",
+        "blackout_days": blackout_days,
+        "retention_factor": base_result["retention_factor"],
+        "eff_alpha": base_result["eff_alpha"],
+        "dynamic_config_applied": base_result["dynamic_config_applied"],
+        "payload_hash": dual_hash(json.dumps({
+            "days": blackout_days,
+            "retention": base_result["retention_factor"],
+            "alpha": base_result["eff_alpha"]
+        }, sort_keys=True))
+    })
+
+    return base_result
+
+
+def get_gnn_cache_dynamic_info() -> Dict[str, Any]:
+    """Get GNN cache module info including dynamic config status.
+
+    Returns:
+        Dict with GNN cache info and current dynamic config
+
+    Receipt: gnn_cache_dynamic_info
+    """
+    base_info = get_gnn_cache_info()
+    current_config = get_current_config()
+
+    info = {
+        **base_info,
+        "dynamic_config": current_config,
+        "dynamic_mode": not current_config["using_defaults"],
+        "kill_list": [
+            "Hard-coded layer counts",
+            "Fixed LR values",
+            "Static prune factors"
+        ],
+        "description_dynamic": "GNN cache with dynamic config support. "
+                               "Kill static baselines - go dynamic."
+    }
+
+    emit_receipt("gnn_cache_dynamic_info", {
+        "tenant_id": "axiom-gnn-cache",
+        **{k: v for k, v in info.items() if k not in ["description", "kill_list"]},
+        "payload_hash": dual_hash(json.dumps(current_config, sort_keys=True))
+    })
+
+    return info

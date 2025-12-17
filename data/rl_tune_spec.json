@@ -1,0 +1,41 @@
+{
+    "version": "v1.0",
+    "targets": {
+        "retention_milestone_1": 1.05,
+        "retention_milestone_2": 1.08,
+        "retention_ceiling": 1.10,
+        "alpha_target_m1": 2.85,
+        "alpha_target_m2": 2.93,
+        "alpha_ceiling": 3.00
+    },
+    "action_space": {
+        "gnn_layers_add": {"min": 0, "max": 3, "type": "int"},
+        "lr_decay": {"min": 0.0005, "max": 0.005, "type": "float"},
+        "prune_aggressiveness": {"min": 0.2, "max": 0.5, "type": "float"},
+        "adaptive_depth_enabled": {"type": "bool"}
+    },
+    "safety_bounds": {
+        "alpha_drop_threshold": 0.05,
+        "exploration_bound": 0.15,
+        "max_episodes_without_improvement": 50,
+        "revert_on_overflow": true
+    },
+    "reward_weights": {
+        "alpha_gain": 1.0,
+        "overflow_penalty": -2.0,
+        "instability_penalty": -1.5,
+        "efficiency_bonus": 0.5
+    },
+    "layer_retention_validated": {
+        "min": 1.008,
+        "max": 1.015,
+        "source": "ablation_37_tests"
+    },
+    "physics_anchors": {
+        "shannon_floor_alpha": 2.71828,
+        "alpha_ceiling_target": 3.0,
+        "retention_factor_max": 1.10,
+        "per_layer_contribution": "1.008-1.015x multiplicative compounding"
+    },
+    "description": "RL auto-tuning targets, action spaces, and safety bounds. Kill static baselines - go dynamic. Source: Grok analysis - 'Start: RL integration for auto-tuning'"
+}
