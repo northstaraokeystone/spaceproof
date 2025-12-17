@@ -252,7 +252,7 @@ def check_tests() -> dict[str, Any]:
 
     try:
         result = subprocess.run(
-            pytest_cmd + [str(tests_dir), "-x", "-q", "--tb=no"],
+            pytest_cmd + [str(tests_dir), "-x", "-v", "--tb=short"],
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout for tests
@@ -260,9 +260,14 @@ def check_tests() -> dict[str, Any]:
         )
         passed = result.returncode == 0
         if not passed:
-            # Extract summary line
+            # Extract failing test name and summary
             lines = result.stdout.strip().split("\n")
-            error = lines[-1] if lines else result.stderr[:200]
+            failed_lines = [l for l in lines if "FAILED" in l]
+            summary = lines[-1] if lines else ""
+            if failed_lines:
+                error = f"{failed_lines[0][:100]} | {summary}"
+            else:
+                error = summary if summary else result.stderr[:200]
         else:
             error = None
     except subprocess.TimeoutExpired:
