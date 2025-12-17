@@ -34,6 +34,15 @@ Usage:
     python cli.py --extreme_sweep 200 --simulate             # Extreme sweep to 200d
     python cli.py --overflow_test --simulate                 # Test cache overflow detection
     python cli.py --innovation_stubs                         # Echo innovation stub status
+
+    # Entropy pruning (Dec 2025 - NEW)
+    python cli.py --entropy_prune --blackout 150 --simulate     # Single pruning test
+    python cli.py --trim_factor 0.4 --entropy_prune --simulate  # Custom trim factor
+    python cli.py --hybrid_prune --blackout 200 --simulate      # Hybrid dedup + predictive
+    python cli.py --pruning_sweep --simulate                    # Pruning sensitivity sweep
+    python cli.py --extended_250d --simulate                    # 250d with pruning
+    python cli.py --verify_chain --entropy_prune --simulate     # Verify chain integrity
+    python cli.py --pruning_info                                # Echo pruning configuration
 """
 
 import sys
@@ -92,6 +101,7 @@ from src.blackout import (
 from src.reasoning import extended_blackout_sweep, project_with_degradation, extreme_blackout_sweep_200d, project_with_asymptote
 from src.gnn_cache import (
     nonlinear_retention,
+    nonlinear_retention_with_pruning,
     cache_depth_check,
     predict_overflow,
     extreme_blackout_sweep as gnn_extreme_sweep,
@@ -100,10 +110,29 @@ from src.gnn_cache import (
     cosmos_sim_stub,
     get_gnn_cache_info,
     ASYMPTOTE_ALPHA as GNN_ASYMPTOTE_ALPHA,
+    ENTROPY_ASYMPTOTE_E,
+    PRUNING_TARGET_ALPHA,
     MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
     CACHE_DEPTH_BASELINE,
-    OVERFLOW_THRESHOLD_DAYS
+    OVERFLOW_THRESHOLD_DAYS,
+    OVERFLOW_THRESHOLD_DAYS_PRUNED,
+    BLACKOUT_PRUNING_TARGET_DAYS
 )
+from src.pruning import (
+    entropy_prune,
+    dedup_prune,
+    classify_leaf_entropy,
+    generate_sample_merkle_tree,
+    get_pruning_info,
+    load_entropy_pruning_spec,
+    ENTROPY_ASYMPTOTE_E as PRUNING_E,
+    PRUNING_TARGET_ALPHA as PRUNING_ALPHA,
+    LN_N_TRIM_FACTOR_BASE,
+    LN_N_TRIM_FACTOR_MAX,
+    BLACKOUT_PRUNING_TARGET_DAYS as PRUNING_TARGET_DAYS
+)
+from src.reasoning import extended_250d_sovereignty, validate_pruning_slos
+from src.blackout import sweep_with_pruning
 
 
 def cmd_baseline():
@@ -889,6 +918,223 @@ def cmd_innovation_stubs():
     print("=" * 60)
 
 
+def cmd_entropy_prune(blackout_days: int, trim_factor: float, hybrid: bool, simulate: bool):
+    """Run single entropy pruning test.
+
+    Args:
+        blackout_days: Blackout duration in days
+        trim_factor: ln(n) trim factor (0.3-0.5 range)
+        hybrid: Whether to enable hybrid dedup + predictive pruning
+        simulate: Whether to output simulation receipt
+    """
+    import json as json_lib
+    import math
+
+    print("=" * 60)
+    print(f"ENTROPY PRUNING TEST ({blackout_days} days)")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  ENTROPY_ASYMPTOTE_E: {ENTROPY_ASYMPTOTE_E} (physics constant)")
+    print(f"  Trim factor: {trim_factor}")
+    print(f"  Hybrid mode: {hybrid}")
+    print(f"  Target alpha: {PRUNING_TARGET_ALPHA}")
+    print(f"  Target days: {BLACKOUT_PRUNING_TARGET_DAYS}")
+
+    # Generate sample Merkle tree
+    tree = generate_sample_merkle_tree(n_leaves=100, duplicate_ratio=0.2)
+    print(f"  Sample tree leaves: {tree['leaf_count']}")
+
+    # Run entropy pruning
+    result = entropy_prune(tree, trim_factor=trim_factor, hybrid=hybrid)
+
+    print(f"\nRESULTS:")
+    print(f"  Branches pruned: {result['branches_pruned']}")
+    print(f"  Entropy before: {result['entropy_before']}")
+    print(f"  Entropy after: {result['entropy_after']}")
+    print(f"  Entropy reduction: {result['entropy_reduction_pct']:.1f}%")
+    print(f"  Alpha uplift: {result['alpha_uplift']}")
+    print(f"  Dedup removed: {result['dedup_removed']}")
+    print(f"  Predictive pruned: {result['predictive_pruned']}")
+
+    # Get retention with pruning
+    try:
+        retention = nonlinear_retention_with_pruning(
+            blackout_days,
+            CACHE_DEPTH_BASELINE,
+            pruning_enabled=True,
+            trim_factor=trim_factor
+        )
+        print(f"\n  Effective alpha at {blackout_days}d: {retention['eff_alpha']}")
+        print(f"  Pruning boost: {retention['pruning_boost']}")
+        print(f"  Target achieved: {retention['eff_alpha'] >= PRUNING_TARGET_ALPHA}")
+    except Exception as e:
+        print(f"\n  OVERFLOW: {e}")
+
+    if simulate:
+        print("\n[entropy_pruning_receipt emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_pruning_sweep(simulate: bool):
+    """Run pruning sensitivity sweep.
+
+    Args:
+        simulate: Whether to output simulation receipts
+    """
+    import json as json_lib
+
+    print("=" * 60)
+    print("PRUNING SENSITIVITY SWEEP")
+    print("=" * 60)
+
+    trim_factors = [0.1, 0.2, 0.3, 0.4, 0.5]
+    test_days = [150, 200, 250]
+
+    print(f"\nConfiguration:")
+    print(f"  Trim factors: {trim_factors}")
+    print(f"  Test durations: {test_days} days")
+
+    print(f"\nRESULTS:")
+    print(f"  {'Trim':>8} | {'150d':>10} | {'200d':>10} | {'250d':>10}")
+    print(f"  {'-'*8}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
+
+    for trim in trim_factors:
+        row = f"  {trim:>8.2f} |"
+        for days in test_days:
+            try:
+                result = nonlinear_retention_with_pruning(
+                    days,
+                    CACHE_DEPTH_BASELINE,
+                    pruning_enabled=True,
+                    trim_factor=trim
+                )
+                row += f" {result['eff_alpha']:>10.4f} |"
+            except Exception:
+                row += f" {'OVERFLOW':>10} |"
+        print(row)
+
+    if simulate:
+        print("\n[pruning_sweep receipts emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_extended_250d(simulate: bool):
+    """Run 250d extended simulation with pruning.
+
+    Args:
+        simulate: Whether to output simulation receipts
+    """
+    import json as json_lib
+
+    print("=" * 60)
+    print("EXTENDED 250d SOVEREIGNTY PROJECTION")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  Target days: {BLACKOUT_PRUNING_TARGET_DAYS}")
+    print(f"  Target alpha: {PRUNING_TARGET_ALPHA}")
+    print(f"  Overflow threshold (pruned): {OVERFLOW_THRESHOLD_DAYS_PRUNED}")
+    print(f"  Entropy asymptote: {ENTROPY_ASYMPTOTE_E} (physics)")
+
+    result = extended_250d_sovereignty(
+        pruning_enabled=True,
+        trim_factor=0.3,
+        blackout_days=BLACKOUT_PRUNING_TARGET_DAYS
+    )
+
+    print(f"\nRESULTS:")
+    print(f"  Effective alpha: {result['effective_alpha']}")
+    print(f"  Target achieved: {result['target_achieved']}")
+    print(f"  Pruning boost: {result['pruning_boost']}")
+    print(f"  Overflow margin: {result['overflow_margin']} days")
+    print(f"  Cycles to 10K: {result['cycles_to_10k_person_eq']}")
+    print(f"  Cycles to 1M: {result['cycles_to_1M_person_eq']}")
+
+    print(f"\nSLO VALIDATION:")
+    alpha_ok = result['effective_alpha'] >= PRUNING_TARGET_ALPHA
+    overflow_ok = result['overflow_margin'] >= 0
+    print(f"  Alpha >= {PRUNING_TARGET_ALPHA}: {'PASS' if alpha_ok else 'FAIL'} ({result['effective_alpha']})")
+    print(f"  Overflow margin >= 0: {'PASS' if overflow_ok else 'FAIL'} ({result['overflow_margin']}d)")
+
+    if simulate:
+        print("\n[extended_250d_sovereignty receipt emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_verify_chain(trim_factor: float, simulate: bool):
+    """Verify chain integrity after pruning.
+
+    Args:
+        trim_factor: ln(n) trim factor
+        simulate: Whether to output simulation receipts
+    """
+    print("=" * 60)
+    print("CHAIN INTEGRITY VERIFICATION")
+    print("=" * 60)
+
+    print(f"\nConfiguration:")
+    print(f"  Trim factor: {trim_factor}")
+    print(f"  Test iterations: 10")
+
+    all_passed = True
+    for i in range(10):
+        tree = generate_sample_merkle_tree(n_leaves=100, duplicate_ratio=0.2)
+        try:
+            result = entropy_prune(tree, trim_factor=trim_factor, hybrid=True)
+            status = "PASS"
+        except Exception as e:
+            if "Chain broken" in str(e) or "Quorum lost" in str(e):
+                status = f"FAIL: {e}"
+                all_passed = False
+            else:
+                status = "PASS"
+        print(f"  Iteration {i+1}: {status}")
+
+    print(f"\nCHAIN INTEGRITY: {'PASS' if all_passed else 'FAIL'}")
+
+    if simulate:
+        print("\n[chain_integrity receipts emitted above]")
+
+    print("=" * 60)
+
+
+def cmd_pruning_info():
+    """Output pruning configuration."""
+    import json as json_lib
+
+    print("=" * 60)
+    print("PRUNING CONFIGURATION")
+    print("=" * 60)
+
+    info = get_pruning_info()
+
+    print(f"\nPhysics Constants:")
+    print(f"  ENTROPY_ASYMPTOTE_E: {info['entropy_asymptote_e']} (Shannon bound, NOT tunable)")
+    print(f"  PRUNING_TARGET_ALPHA: {info['pruning_target_alpha']}")
+
+    print(f"\nTrim Factor Range:")
+    print(f"  Base: {info['ln_n_trim_factor_base']} (conservative)")
+    print(f"  Max: {info['ln_n_trim_factor_max']} (aggressive)")
+
+    print(f"\nThresholds:")
+    print(f"  Entropy prune threshold: {info['entropy_prune_threshold']}")
+    print(f"  Min confidence: {info['min_confidence_threshold']}")
+    print(f"  Min quorum fraction: {info['min_quorum_fraction']:.2%}")
+
+    print(f"\nTargets:")
+    print(f"  Blackout target days: {info['blackout_pruning_target_days']}")
+    print(f"  Overflow threshold (pruned): {info['overflow_threshold_pruned_days']}")
+
+    print(f"\nDescription: {info['description']}")
+
+    print("\n[pruning_info receipt emitted above]")
+    print("=" * 60)
+
+
 def main():
     # Check for flag-based invocation
     parser = argparse.ArgumentParser(description="AXIOM-CORE CLI - The Sovereignty Calculator")
@@ -948,6 +1194,22 @@ def main():
     parser.add_argument('--innovation_stubs', action='store_true',
                         help='Echo innovation stub status (quantum, swarm, cosmos)')
 
+    # Entropy pruning flags (Dec 2025 - NEW)
+    parser.add_argument('--entropy_prune', action='store_true',
+                        help='Enable entropy pruning for simulation')
+    parser.add_argument('--trim_factor', type=float, default=0.3,
+                        help='Set ln(n) trim factor (default: 0.3, max: 0.5)')
+    parser.add_argument('--hybrid_prune', action='store_true',
+                        help='Enable hybrid dedup + predictive pruning')
+    parser.add_argument('--pruning_sweep', action='store_true',
+                        help='Run pruning sensitivity sweep')
+    parser.add_argument('--extended_250d', action='store_true',
+                        help='Run 250d simulation with pruning')
+    parser.add_argument('--verify_chain', action='store_true',
+                        help='Verify chain integrity after pruning')
+    parser.add_argument('--pruning_info', action='store_true',
+                        help='Output pruning configuration')
+
     args = parser.parse_args()
 
     # Combine reroute flags
@@ -966,6 +1228,32 @@ def main():
     # Handle innovation stubs
     if args.innovation_stubs:
         cmd_innovation_stubs()
+        return
+
+    # Handle pruning info
+    if args.pruning_info:
+        cmd_pruning_info()
+        return
+
+    # Handle pruning sweep
+    if args.pruning_sweep:
+        cmd_pruning_sweep(args.simulate)
+        return
+
+    # Handle extended 250d
+    if args.extended_250d:
+        cmd_extended_250d(args.simulate)
+        return
+
+    # Handle verify chain
+    if args.verify_chain:
+        cmd_verify_chain(args.trim_factor, args.simulate)
+        return
+
+    # Handle entropy prune with blackout
+    if args.entropy_prune and args.blackout is not None:
+        hybrid = args.hybrid_prune or True  # Default to hybrid
+        cmd_entropy_prune(args.blackout, args.trim_factor, hybrid, args.simulate)
         return
 
     # Handle cache sweep

@@ -2,26 +2,32 @@
 
 THE PHYSICS (from Grok analysis):
     - GNN adds nonlinear boosts via anticipatory buffering
-    - α asymptotes ~2.72 (e-like stability) rather than linear decay
+    - α asymptotes ~e (2.71828) - Shannon entropy bound, NOT tunable
+    - Merkle batch entropy bounds as ~e*ln(n) - physics, not coincidence
     - Holds to 150d before dipping, <2.5 at 180d+, breaks at 200d+ on cache overflow
     - Nonlinear retention prevents decay cliff observed in linear model
+    - With pruning: extends to 250d at α>2.8, overflow pushed to 300d+
 
 KEY DISCOVERY:
     - GNN predictive caching provides nonlinear boost
-    - Model was conservative. α asymptotes ~2.72 rather than degrading linearly
+    - e is physics (Shannon entropy bound), not parameter tuning
+    - GNN doesn't create the bound - it surfaces it by removing noise
+    - Pruning compresses ln(n) factor while e remains invariant
     - Hidden constraint: Cache depth, not algorithm, is the limiting factor
 
 CONSTANTS:
-    ASYMPTOTE_ALPHA = 2.72 (e-like stability ceiling)
+    ENTROPY_ASYMPTOTE_E = 2.71828 (Shannon bound, physics - NOT tunable)
+    ASYMPTOTE_ALPHA = 2.72 (e-like stability ceiling, references ENTROPY_ASYMPTOTE_E)
     MIN_EFF_ALPHA_VALIDATED = 2.7185 (from 1000-run sweep at 90d)
     CACHE_DEPTH_BASELINE = 1e8 (~150d buffer at 50k entries/sol)
-    OVERFLOW_THRESHOLD_DAYS = 200 (stoprule trigger)
+    OVERFLOW_THRESHOLD_DAYS = 200 (stoprule trigger without pruning)
+    OVERFLOW_THRESHOLD_DAYS_PRUNED = 300 (with pruning - ~50% extension)
     OVERFLOW_CAPACITY_PCT = 0.95 (halt at 95% saturation)
     QUORUM_FAIL_DAYS = 180 (quorum degradation onset)
-    CACHE_BREAK_DAYS = 200 (cache overflow failure)
+    CACHE_BREAK_DAYS = 200 (cache overflow failure without pruning)
     ENTRIES_PER_SOL = 50000 (Merkle batch scaling factor)
 
-Source: Grok - "Flatter retention... GNN adds nonlinear boosts", "α asymptotes ~2.72"
+Source: Grok - "Not coincidence - Merkle batch entropy bounds as ~e*ln(n)"
 """
 
 import json
@@ -33,10 +39,18 @@ from typing import Dict, Any, List, Tuple, Optional
 from .core import emit_receipt, dual_hash, StopRule
 
 
-# === CONSTANTS (Dec 2025 GNN Nonlinear Caching) ===
+# === CONSTANTS (Dec 2025 GNN Nonlinear Caching + Entropy Pruning) ===
+
+ENTROPY_ASYMPTOTE_E = 2.71828
+"""physics: Shannon entropy bound ~e*ln(n). This is a PHYSICS CONSTANT, NOT tunable.
+The value ~e appears because Merkle batch entropy bounds as ~e*ln(n).
+GNN doesn't create this bound - it surfaces it by removing noise."""
 
 ASYMPTOTE_ALPHA = 2.72
-"""physics: e-like stability ceiling from GNN saturation."""
+"""physics: e-like stability ceiling from GNN saturation. References ENTROPY_ASYMPTOTE_E."""
+
+PRUNING_TARGET_ALPHA = 2.80
+"""physics: Target effective alpha with ln(n) compression via pruning."""
 
 MIN_EFF_ALPHA_VALIDATED = 2.7185
 """physics: Validated minimum effective alpha from 1000-run sweep at 90d."""
@@ -51,7 +65,13 @@ CACHE_DEPTH_MAX = int(1e10)
 """physics: ~300d theoretical max (10^10 entries)."""
 
 OVERFLOW_THRESHOLD_DAYS = 200
-"""physics: Cache overflow stoprule trigger."""
+"""physics: Cache overflow stoprule trigger (without pruning)."""
+
+OVERFLOW_THRESHOLD_DAYS_PRUNED = 300
+"""physics: Cache overflow threshold with pruning enabled (~50% extension)."""
+
+BLACKOUT_PRUNING_TARGET_DAYS = 250
+"""physics: Extended survival target with entropy pruning (250d at α>2.8)."""
 
 OVERFLOW_CAPACITY_PCT = 0.95
 """physics: Halt at 95% saturation."""
@@ -264,6 +284,159 @@ def nonlinear_retention(
     }
 
     emit_receipt("gnn_nonlinear", {
+        "tenant_id": "axiom-gnn-cache",
+        **result,
+        "payload_hash": dual_hash(json.dumps(result, sort_keys=True))
+    })
+
+    return result
+
+
+def compute_asymptote_with_pruning(
+    blackout_days: int,
+    base_alpha: float = MIN_EFF_ALPHA_VALIDATED,
+    pruning_uplift: float = 0.0
+) -> float:
+    """Compute effective alpha with asymptotic formula and pruning boost.
+
+    Formula: eff_alpha = ASYMPTOTE + pruning_uplift - decay_term
+    where pruning_uplift comes from ln(n) compression.
+
+    Args:
+        blackout_days: Blackout duration in days
+        base_alpha: Base effective alpha (default: MIN_EFF_ALPHA_VALIDATED)
+        pruning_uplift: Alpha uplift from pruning (default: 0.0)
+
+    Returns:
+        eff_alpha: float (may exceed ASYMPTOTE_ALPHA with pruning)
+    """
+    boost = gnn_boost_factor(blackout_days)
+
+    # Asymptotic approach to ENTROPY_ASYMPTOTE_E
+    decay_term = (ENTROPY_ASYMPTOTE_E - base_alpha) * math.exp(-3.0 * boost)
+    eff_alpha = ENTROPY_ASYMPTOTE_E - decay_term
+
+    # Apply pruning uplift (can push above base asymptote)
+    if pruning_uplift > 0:
+        # Pruning compresses ln(n), giving additional headroom
+        eff_alpha = min(PRUNING_TARGET_ALPHA, eff_alpha + pruning_uplift)
+
+    # Clamp to realistic bounds
+    eff_alpha = max(base_alpha, eff_alpha)
+
+    return round(eff_alpha, 4)
+
+
+def nonlinear_retention_with_pruning(
+    blackout_days: int,
+    cache_depth: int = CACHE_DEPTH_BASELINE,
+    pruning_enabled: bool = True,
+    trim_factor: float = 0.3
+) -> Dict[str, Any]:
+    """Compute nonlinear retention with GNN caching and entropy pruning.
+
+    Extended version of nonlinear_retention that incorporates pruning boost.
+    With pruning enabled:
+    - Overflow threshold extends from 200d to 300d
+    - Alpha target increases from 2.72 to 2.80
+    - ln(n) compression provides additional headroom
+
+    Args:
+        blackout_days: Blackout duration in days
+        cache_depth: Cache depth in entries (default: 1e8)
+        pruning_enabled: Whether entropy pruning is active (default: True)
+        trim_factor: ln(n) trim factor (0.3-0.5 range)
+
+    Returns:
+        Dict with retention_factor, eff_alpha, curve_type, pruning_boost
+
+    Raises:
+        StopRule: If cache overflow detected
+
+    Receipt: gnn_nonlinear_pruned
+    """
+    # Determine overflow threshold based on pruning
+    overflow_threshold = OVERFLOW_THRESHOLD_DAYS_PRUNED if pruning_enabled else CACHE_BREAK_DAYS
+
+    # Check for cache overflow
+    overflow_result = predict_overflow(blackout_days, cache_depth)
+
+    # Adjust overflow check for pruning-extended threshold
+    if pruning_enabled:
+        # Pruning reduces effective cache usage by trim_factor
+        effective_usage = overflow_result["overflow_risk"] * (1 - trim_factor)
+    else:
+        effective_usage = overflow_result["overflow_risk"]
+
+    # StopRule if blackout > threshold AND cache saturated
+    if blackout_days > overflow_threshold and effective_usage >= OVERFLOW_CAPACITY_PCT:
+        emit_receipt("overflow_stoprule", {
+            "tenant_id": "axiom-gnn-cache",
+            "blackout_days": blackout_days,
+            "cache_depth": cache_depth,
+            "overflow_pct": effective_usage,
+            "pruning_enabled": pruning_enabled,
+            "action": "halt",
+            "payload_hash": dual_hash(json.dumps({
+                "blackout_days": blackout_days,
+                "cache_depth": cache_depth,
+                "pruning_enabled": pruning_enabled
+            }, sort_keys=True))
+        })
+        raise StopRule(
+            f"Cache overflow at {blackout_days}d (pruning={pruning_enabled}): "
+            f"{effective_usage*100:.1f}% > {OVERFLOW_CAPACITY_PCT*100:.0f}%"
+        )
+
+    # Compute base nonlinear retention
+    if blackout_days <= BLACKOUT_BASE_DAYS:
+        retention_factor = RETENTION_BASE_FACTOR
+    else:
+        excess_days = blackout_days - BLACKOUT_BASE_DAYS
+        decay = math.exp(-DECAY_LAMBDA * excess_days)
+        retention_factor = NONLINEAR_RETENTION_FLOOR + \
+            (RETENTION_BASE_FACTOR - NONLINEAR_RETENTION_FLOOR) * decay
+        retention_factor = max(NONLINEAR_RETENTION_FLOOR, retention_factor)
+
+    retention_factor = round(retention_factor, 4)
+
+    # Compute pruning uplift (based on trim_factor)
+    if pruning_enabled and trim_factor > 0:
+        # Pruning compresses ln(n), providing alpha uplift
+        # Formula: uplift = trim_factor * 0.1 * (1 - exp(-excess_days/100))
+        excess = max(0, blackout_days - BLACKOUT_BASE_DAYS)
+        pruning_boost = trim_factor * 0.1 * (1 - math.exp(-excess / 100))
+        pruning_boost = round(min(0.08, pruning_boost), 4)  # Cap at 0.08
+    else:
+        pruning_boost = 0.0
+
+    # Compute effective alpha with pruning
+    eff_alpha = compute_asymptote_with_pruning(blackout_days, pruning_uplift=pruning_boost)
+
+    # GNN boost factor
+    gnn_boost = gnn_boost_factor(blackout_days)
+
+    # Asymptote proximity (to target, not base)
+    target = PRUNING_TARGET_ALPHA if pruning_enabled else ASYMPTOTE_ALPHA
+    asymptote_proximity = abs(target - eff_alpha)
+
+    result = {
+        "blackout_days": blackout_days,
+        "cache_depth": cache_depth,
+        "retention_factor": retention_factor,
+        "eff_alpha": eff_alpha,
+        "curve_type": CURVE_TYPE,
+        "gnn_boost": gnn_boost,
+        "pruning_enabled": pruning_enabled,
+        "pruning_boost": pruning_boost,
+        "trim_factor": trim_factor,
+        "asymptote_proximity": round(asymptote_proximity, 4),
+        "target_alpha": target,
+        "overflow_threshold": overflow_threshold,
+        "model": "gnn_nonlinear_pruned" if pruning_enabled else "gnn_nonlinear"
+    }
+
+    emit_receipt("gnn_nonlinear_pruned", {
         "tenant_id": "axiom-gnn-cache",
         **result,
         "payload_hash": dual_hash(json.dumps(result, sort_keys=True))

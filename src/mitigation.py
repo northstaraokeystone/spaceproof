@@ -44,10 +44,15 @@ from .gnn_cache import (
     gnn_boost_factor,
     apply_gnn_nonlinear_boost as gnn_nonlinear_boost,
     nonlinear_retention as gnn_nonlinear_retention,
+    nonlinear_retention_with_pruning,
     ASYMPTOTE_ALPHA,
+    ENTROPY_ASYMPTOTE_E,
+    PRUNING_TARGET_ALPHA,
     MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
     CACHE_DEPTH_BASELINE,
-    NONLINEAR_RETENTION_FLOOR
+    NONLINEAR_RETENTION_FLOOR,
+    OVERFLOW_THRESHOLD_DAYS_PRUNED,
+    BLACKOUT_PRUNING_TARGET_DAYS
 )
 
 
@@ -363,6 +368,71 @@ def apply_duration_degradation(
     }
 
     emit_receipt("duration_degradation", {
+        "tenant_id": "axiom-mitigation",
+        **result
+    })
+
+    return result
+
+
+def apply_pruning_boost(
+    base_mitigation: float,
+    pruning_result: Dict[str, Any],
+    blackout_days: int = 0
+) -> Dict[str, Any]:
+    """Apply pruning boost to mitigation stack.
+
+    Enhances base mitigation with alpha uplift from entropy pruning.
+
+    Args:
+        base_mitigation: Base mitigation value (0-1)
+        pruning_result: Result from entropy_prune containing alpha_uplift
+        blackout_days: Current blackout duration in days
+
+    Returns:
+        Dict with boosted_mitigation, pruning_uplift, enhanced_alpha
+
+    Receipt: pruning_boost_mitigation
+    """
+    alpha_uplift = pruning_result.get("alpha_uplift", ENTROPY_ASYMPTOTE_E)
+    entropy_reduction_pct = pruning_result.get("entropy_reduction_pct", 0.0)
+    branches_pruned = pruning_result.get("branches_pruned", 0)
+
+    # Compute pruning uplift factor (based on entropy reduction)
+    uplift_factor = 1.0 + (entropy_reduction_pct / 100) * 0.1  # 10% of reduction
+
+    # Apply uplift to mitigation
+    boosted_mitigation = min(1.0, base_mitigation * uplift_factor)
+
+    # Compute enhanced alpha
+    base_alpha = ENTROPY_ASYMPTOTE_E
+    if blackout_days > 0:
+        try:
+            retention_result = nonlinear_retention_with_pruning(
+                blackout_days,
+                CACHE_DEPTH_BASELINE,
+                pruning_enabled=True,
+                trim_factor=0.3
+            )
+            enhanced_alpha = retention_result["eff_alpha"]
+        except Exception:
+            enhanced_alpha = alpha_uplift
+    else:
+        enhanced_alpha = alpha_uplift
+
+    result = {
+        "base_mitigation": round(base_mitigation, 4),
+        "boosted_mitigation": round(boosted_mitigation, 4),
+        "pruning_uplift": round(alpha_uplift, 4),
+        "entropy_reduction_pct": entropy_reduction_pct,
+        "branches_pruned": branches_pruned,
+        "enhanced_alpha": round(enhanced_alpha, 4),
+        "target_alpha": PRUNING_TARGET_ALPHA,
+        "target_achieved": enhanced_alpha >= PRUNING_TARGET_ALPHA,
+        "blackout_days": blackout_days
+    }
+
+    emit_receipt("pruning_boost_mitigation", {
         "tenant_id": "axiom-mitigation",
         **result
     })

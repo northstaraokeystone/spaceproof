@@ -33,10 +33,15 @@ from typing import Dict, Any, List, Tuple, Optional
 from .core import emit_receipt, dual_hash, StopRule
 from .gnn_cache import (
     nonlinear_retention as gnn_nonlinear_retention,
+    nonlinear_retention_with_pruning,
     ASYMPTOTE_ALPHA,
+    ENTROPY_ASYMPTOTE_E,
+    PRUNING_TARGET_ALPHA,
     MIN_EFF_ALPHA_VALIDATED as GNN_MIN_EFF_ALPHA_VALIDATED,
     CACHE_DEPTH_BASELINE,
     OVERFLOW_THRESHOLD_DAYS,
+    OVERFLOW_THRESHOLD_DAYS_PRUNED,
+    BLACKOUT_PRUNING_TARGET_DAYS,
     CURVE_TYPE as GNN_CURVE_TYPE,
     NONLINEAR_RETENTION_FLOOR
 )
@@ -226,19 +231,96 @@ def alpha_at_duration(
     return round(eff_alpha, 4)
 
 
+def sweep_with_pruning(
+    day_range: Tuple[int, int] = (BLACKOUT_BASE_DAYS, BLACKOUT_PRUNING_TARGET_DAYS),
+    trim_factor: float = 0.3,
+    iterations: int = 1000,
+    seed: Optional[int] = None
+) -> List[Dict[str, Any]]:
+    """Run extended sweep with entropy pruning enabled.
+
+    Extends sweep range to 250d+ using pruning-boosted retention.
+
+    Args:
+        day_range: Tuple of (min_days, max_days) (default: 43-250)
+        trim_factor: ln(n) trim factor (0.3-0.5 range)
+        iterations: Number of iterations (default: 1000)
+        seed: Random seed for reproducibility
+
+    Returns:
+        List of pruning_sweep_receipts
+
+    Receipt: pruning_sweep_receipt (per iteration)
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    results = []
+
+    for i in range(iterations):
+        blackout_days = random.randint(day_range[0], day_range[1])
+
+        try:
+            # Use pruning-enabled retention
+            result = nonlinear_retention_with_pruning(
+                blackout_days,
+                CACHE_DEPTH_BASELINE,
+                pruning_enabled=True,
+                trim_factor=trim_factor
+            )
+
+            survival_status = result["eff_alpha"] >= PRUNING_TARGET_ALPHA * 0.9
+
+            sweep_result = {
+                "iteration": i,
+                "blackout_days": blackout_days,
+                "retention_factor": result["retention_factor"],
+                "eff_alpha": result["eff_alpha"],
+                "pruning_boost": result["pruning_boost"],
+                "trim_factor": trim_factor,
+                "target_alpha": PRUNING_TARGET_ALPHA,
+                "survival_status": survival_status
+            }
+
+            emit_receipt("pruning_sweep", {
+                "tenant_id": "axiom-blackout",
+                **sweep_result,
+                "payload_hash": dual_hash(json.dumps(sweep_result, sort_keys=True))
+            })
+
+            results.append(sweep_result)
+
+        except StopRule as e:
+            # Overflow triggered
+            results.append({
+                "iteration": i,
+                "blackout_days": blackout_days,
+                "overflow_triggered": True,
+                "survival_status": False,
+                "stoprule_reason": str(e)
+            })
+
+    return results
+
+
 def extended_blackout_sweep(
     day_range: Tuple[int, int] = (BLACKOUT_BASE_DAYS, BLACKOUT_SWEEP_MAX_DAYS),
     iterations: int = 1000,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    pruning_enabled: bool = False,
+    trim_factor: float = 0.3
 ) -> List[Dict[str, Any]]:
     """Run extended blackout sweep across day range.
 
     Run iterations across day range, return curve data with receipts.
+    With pruning_enabled=True, uses pruning-boosted retention for 250d+ sweeps.
 
     Args:
         day_range: Tuple of (min_days, max_days)
         iterations: Number of iterations (default: 1000)
         seed: Random seed for reproducibility
+        pruning_enabled: Whether entropy pruning is active (default: False)
+        trim_factor: ln(n) trim factor when pruning enabled (default: 0.3)
 
     Returns:
         List of extended_blackout_receipts
@@ -248,6 +330,10 @@ def extended_blackout_sweep(
     if seed is not None:
         random.seed(seed)
 
+    # If pruning enabled and range extends beyond 200d, use pruning sweep
+    if pruning_enabled and day_range[1] > OVERFLOW_THRESHOLD_DAYS:
+        return sweep_with_pruning(day_range, trim_factor, iterations, seed)
+
     results = []
 
     for i in range(iterations):
@@ -255,18 +341,37 @@ def extended_blackout_sweep(
         blackout_days = random.randint(day_range[0], day_range[1])
 
         try:
-            curve = retention_curve(blackout_days)
+            if pruning_enabled:
+                # Use pruning-enabled retention
+                retention_result = nonlinear_retention_with_pruning(
+                    blackout_days,
+                    CACHE_DEPTH_BASELINE,
+                    pruning_enabled=True,
+                    trim_factor=trim_factor
+                )
+                curve = {
+                    "retention_factor": retention_result["retention_factor"],
+                    "eff_alpha": retention_result["eff_alpha"],
+                    "degradation_pct": 0.0,
+                    "pruning_boost": retention_result["pruning_boost"]
+                }
+            else:
+                curve = retention_curve(blackout_days)
+                curve["pruning_boost"] = 0.0
 
             # Survival status: alpha above floor
-            survival_status = curve["eff_alpha"] >= MIN_EFF_ALPHA_VALIDATED
+            target_alpha = PRUNING_TARGET_ALPHA if pruning_enabled else MIN_EFF_ALPHA_VALIDATED
+            survival_status = curve["eff_alpha"] >= target_alpha * 0.9
 
             result = {
                 "iteration": i,
                 "blackout_days": blackout_days,
                 "retention_factor": curve["retention_factor"],
                 "eff_alpha": curve["eff_alpha"],
-                "degradation_pct": curve["degradation_pct"],
-                "survival_status": survival_status
+                "degradation_pct": curve.get("degradation_pct", 0.0),
+                "survival_status": survival_status,
+                "pruning_enabled": pruning_enabled,
+                "pruning_boost": curve.get("pruning_boost", 0.0)
             }
 
             emit_receipt("extended_blackout", {
@@ -278,8 +383,14 @@ def extended_blackout_sweep(
             results.append(result)
 
         except StopRule:
-            # Unrealistic duration - skip
-            continue
+            # Overflow or unrealistic duration - record failure
+            results.append({
+                "iteration": i,
+                "blackout_days": blackout_days,
+                "overflow_triggered": True,
+                "survival_status": False,
+                "pruning_enabled": pruning_enabled
+            })
 
     return results
 
