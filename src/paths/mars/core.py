@@ -316,3 +316,176 @@ def get_mars_info() -> Dict[str, Any]:
 
     emit_path_receipt("mars", "info", info)
     return info
+
+
+# === MOXIE INTEGRATION ===
+
+# MOXIE Constants (from NASA Perseverance Dec 2025)
+MOXIE_O2_TOTAL_G = 122
+"""Total O2 produced by MOXIE (grams)."""
+
+MOXIE_O2_PEAK_G_HR = 12
+"""Peak O2 production rate (g/hr)."""
+
+MOXIE_O2_AVG_G_HR = 5.5
+"""Average O2 production rate (g/hr)."""
+
+
+def integrate_moxie(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Wire MOXIE calibration data to Mars path.
+
+    Args:
+        config: Optional override config
+
+    Returns:
+        Dict with MOXIE integration result
+
+    Receipt: mars_moxie_integration
+    """
+    if config is None:
+        config = {}
+
+    # Load MOXIE calibration from isru_hybrid module
+    try:
+        from ...isru_hybrid import load_moxie_calibration, MOXIE_O2_TOTAL_G as TOTAL
+        calibration = load_moxie_calibration()
+    except ImportError:
+        # Fallback to local constants
+        calibration = {
+            "o2_total_g": MOXIE_O2_TOTAL_G,
+            "o2_peak_g_hr": MOXIE_O2_PEAK_G_HR,
+            "o2_avg_g_hr": MOXIE_O2_AVG_G_HR,
+            "source": "NASA Perseverance MOXIE",
+            "date": "2025-12"
+        }
+
+    result = {
+        "integrated": True,
+        "moxie_calibration": calibration,
+        "production_scaled": {
+            "single_unit_g_hr": calibration.get("o2_avg_g_hr", MOXIE_O2_AVG_G_HR),
+            "ten_units_g_hr": calibration.get("o2_avg_g_hr", MOXIE_O2_AVG_G_HR) * 10,
+            "hundred_units_kg_hr": calibration.get("o2_avg_g_hr", MOXIE_O2_AVG_G_HR) * 100 / 1000
+        },
+        "tenant_id": MARS_TENANT_ID
+    }
+
+    emit_path_receipt("mars", "moxie_integration", result)
+    return result
+
+
+def compute_o2_autonomy(
+    production_rate_kg_hr: float,
+    crew: int
+) -> float:
+    """Compute O2 self-sufficiency ratio.
+
+    Autonomy = production_rate / consumption_rate
+
+    Args:
+        production_rate_kg_hr: O2 production rate (kg/hr)
+        crew: Number of crew members
+
+    Returns:
+        Autonomy ratio (>= 1.0 means self-sufficient)
+
+    Receipt: mars_o2_autonomy
+    """
+    # Daily O2 consumption per crew member (kg)
+    daily_o2_per_crew = 0.84
+
+    # Convert to hourly
+    hourly_consumption = crew * daily_o2_per_crew / 24
+
+    if hourly_consumption == 0:
+        autonomy = 0.0
+    else:
+        autonomy = production_rate_kg_hr / hourly_consumption
+
+    # Clamp to reasonable range
+    autonomy = min(10.0, max(0.0, autonomy))
+
+    result = {
+        "production_rate_kg_hr": round(production_rate_kg_hr, 6),
+        "consumption_rate_kg_hr": round(hourly_consumption, 6),
+        "autonomy_ratio": round(autonomy, 4),
+        "crew": crew,
+        "self_sufficient": autonomy >= 1.0,
+        "tenant_id": MARS_TENANT_ID
+    }
+
+    emit_path_receipt("mars", "o2_autonomy", result)
+    return autonomy
+
+
+def simulate_dome_moxie(
+    crew: int = DEFAULT_CREW,
+    duration_days: int = 365,
+    moxie_units: int = 100,
+    config: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Dome simulation with MOXIE-calibrated O2 production.
+
+    Uses real NASA MOXIE data for O2 production estimates.
+
+    Args:
+        crew: Number of crew members
+        duration_days: Simulation duration in days
+        moxie_units: Number of MOXIE units deployed
+        config: Optional override config
+
+    Returns:
+        Dict with simulation results
+
+    Receipt: mars_dome_moxie
+    """
+    if config is None:
+        config = {}
+
+    # Get MOXIE integration
+    moxie = integrate_moxie(config)
+    moxie_cal = moxie.get("moxie_calibration", {})
+
+    # O2 production based on MOXIE units
+    avg_rate_g_hr = moxie_cal.get("o2_avg_g_hr", MOXIE_O2_AVG_G_HR)
+    production_kg_day = (avg_rate_g_hr * 24 * moxie_units) / 1000
+
+    # O2 consumption
+    daily_o2_per_crew = 0.84  # kg
+    consumption_kg_day = crew * daily_o2_per_crew
+
+    # Total over duration
+    total_production_kg = production_kg_day * duration_days
+    total_consumption_kg = consumption_kg_day * duration_days
+
+    # ISRU closure for O2
+    o2_closure = min(1.0, total_production_kg / total_consumption_kg) if total_consumption_kg > 0 else 0
+
+    # Run base simulation for other resources
+    base_result = simulate_dome(crew, duration_days, config)
+
+    # Override O2 values with MOXIE-calibrated data
+    result = {
+        **base_result,
+        "moxie_enabled": True,
+        "moxie_units": moxie_units,
+        "moxie_calibration": moxie_cal,
+        "o2_production": {
+            "rate_kg_day": round(production_kg_day, 4),
+            "total_kg": round(total_production_kg, 2),
+            "moxie_avg_g_hr": avg_rate_g_hr
+        },
+        "o2_consumption": {
+            "rate_kg_day": round(consumption_kg_day, 4),
+            "total_kg": round(total_consumption_kg, 2)
+        },
+        "o2_closure": round(o2_closure, 4),
+        "o2_self_sufficient": o2_closure >= 1.0,
+        "isru_closure_moxie_adjusted": round(
+            (base_result["isru_closure_projected"] * 0.75) + (o2_closure * 0.25),
+            4
+        )
+    }
+
+    emit_path_receipt("mars", "dome_moxie", result)
+    return result

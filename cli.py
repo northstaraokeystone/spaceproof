@@ -148,6 +148,14 @@ from cli import (
     cmd_d4_push,
     cmd_d4_info,
     cmd_registry_info,
+    # ISRU hybrid (D5 + MOXIE)
+    cmd_moxie_info,
+    cmd_isru_simulate,
+    cmd_isru_closure,
+    cmd_d5_isru_hybrid,
+    cmd_d5_push_isru,
+    cmd_d5_info_isru,
+    cmd_isru_info,
 )
 
 
@@ -323,6 +331,28 @@ def main():
     parser.add_argument('--registry_info', action='store_true',
                         help='Show path registry info')
 
+    # D5 + ISRU hybrid flags
+    parser.add_argument('--d5_push', action='store_true',
+                        help='Run D5 recursion for alpha>=3.25')
+    parser.add_argument('--d5_info', action='store_true',
+                        help='Show D5 + ISRU configuration')
+    parser.add_argument('--d5_isru_hybrid', action='store_true',
+                        help='Run integrated D5+ISRU hybrid')
+    parser.add_argument('--moxie_info', action='store_true',
+                        help='Show MOXIE calibration data')
+    parser.add_argument('--isru_simulate', action='store_true',
+                        help='Run ISRU O2 production simulation')
+    parser.add_argument('--isru_closure', action='store_true',
+                        help='Show ISRU closure metrics')
+    parser.add_argument('--isru_info', action='store_true',
+                        help='Show ISRU module info')
+    parser.add_argument('--crew', type=int, default=4,
+                        help='Crew size for ISRU simulation (default: 4)')
+    parser.add_argument('--hours', type=int, default=24,
+                        help='Simulation hours for ISRU (default: 24)')
+    parser.add_argument('--moxie_units', type=int, default=10,
+                        help='Number of MOXIE units (default: 10)')
+
     args = parser.parse_args()
     reroute_enabled = args.reroute or args.reroute_enabled
 
@@ -397,6 +427,22 @@ def main():
         return cmd_agi_status()
     if args.path is not None and args.path_cmd is not None:
         return cmd_path_run(args.path, args.path_cmd)
+
+    # D5 + ISRU hybrid commands
+    if args.moxie_info:
+        return cmd_moxie_info()
+    if args.isru_info:
+        return cmd_isru_info()
+    if args.d5_info:
+        return cmd_d5_info_isru()
+    if args.isru_closure:
+        return cmd_isru_closure(args.simulate)
+    if args.isru_simulate:
+        return cmd_isru_simulate(args.hours, args.crew, args.moxie_units, args.simulate)
+    if args.d5_push:
+        return cmd_d5_push_isru(args.tree_size, args.base_alpha, args.simulate)
+    if args.d5_isru_hybrid:
+        return cmd_d5_isru_hybrid(args.tree_size, args.base_alpha, args.crew, args.hours, args.moxie_units, args.simulate)
 
     # Scale commands
     if args.scalability_gate_test:
