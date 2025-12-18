@@ -139,6 +139,17 @@ from cli.paths import (
     cmd_registry_info,
 )
 
+# ISRU hybrid commands (D5 + MOXIE)
+from cli.isru import (
+    cmd_moxie_info,
+    cmd_isru_simulate,
+    cmd_isru_closure,
+    cmd_d5_isru_hybrid,
+    cmd_d5_push_isru,
+    cmd_d5_info_isru,
+    cmd_isru_info,
+)
+
 __all__ = [
     # Core
     'cmd_baseline',
@@ -230,4 +241,12 @@ __all__ = [
     'cmd_d4_push',
     'cmd_d4_info',
     'cmd_registry_info',
+    # ISRU hybrid (D5 + MOXIE)
+    'cmd_moxie_info',
+    'cmd_isru_simulate',
+    'cmd_isru_closure',
+    'cmd_d5_isru_hybrid',
+    'cmd_d5_push_isru',
+    'cmd_d5_info_isru',
+    'cmd_isru_info',
 ]
