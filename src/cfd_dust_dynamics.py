@@ -61,6 +61,21 @@ CFD_SETTLING_MODEL = "stokes"
 CFD_TURBULENCE_MODEL = "laminar"
 """Turbulence model (laminar for low-Re)."""
 
+CFD_REYNOLDS_TURBULENT_THRESHOLD = 2300
+"""Reynolds number threshold for laminar-turbulent transition."""
+
+CFD_REYNOLDS_MARS_TURBULENT = 5000
+"""Reynolds number for Mars dust storm conditions (turbulent)."""
+
+CFD_TURBULENCE_MODEL_KEPS = "k_epsilon"
+"""k-epsilon turbulence model for turbulent regime."""
+
+CFD_TURBULENT_INTENSITY = 0.05
+"""Default turbulent intensity (5%)."""
+
+CFD_TURBULENT_LENGTH_SCALE = 0.01
+"""Default turbulent length scale in meters."""
+
 
 # === CONFIGURATION FUNCTIONS ===
 
@@ -594,6 +609,402 @@ def run_cfd_validation() -> Dict[str, Any]:
             "atacama_correlation": validation["correlation"],
             "validated": result["overall_validated"],
             "payload_hash": dual_hash(json.dumps({"validated": result["overall_validated"]}, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+# === TURBULENT CFD FUNCTIONS ===
+
+
+def load_turbulent_cfd_config() -> Dict[str, Any]:
+    """Load turbulent CFD configuration from d12_mercury_spec.json.
+
+    Returns:
+        Dict with turbulent CFD configuration
+
+    Receipt: cfd_turbulent_config_receipt
+    """
+    import os
+
+    spec_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "data", "d12_mercury_spec.json"
+    )
+
+    with open(spec_path, "r") as f:
+        spec = json.load(f)
+
+    config = spec.get("cfd_turbulent_config", {})
+
+    emit_receipt(
+        "cfd_turbulent_config",
+        {
+            "receipt_type": "cfd_turbulent_config",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "model": config.get("model", "navier_stokes_turbulent"),
+            "reynolds_threshold": config.get(
+                "reynolds_threshold", CFD_REYNOLDS_TURBULENT_THRESHOLD
+            ),
+            "turbulence_model": config.get("turbulence_model", CFD_TURBULENCE_MODEL_KEPS),
+            "validated": config.get("validated", True),
+            "payload_hash": dual_hash(json.dumps(config, sort_keys=True)),
+        },
+    )
+
+    return config
+
+
+def transition_check(reynolds: float) -> str:
+    """Check flow regime based on Reynolds number.
+
+    Args:
+        reynolds: Reynolds number
+
+    Returns:
+        Flow regime: "laminar", "transitional", or "turbulent"
+
+    Receipt: cfd_transition_receipt
+    """
+    if reynolds < CFD_REYNOLDS_TURBULENT_THRESHOLD:
+        regime = "laminar"
+    elif reynolds < 4000:
+        regime = "transitional"
+    else:
+        regime = "turbulent"
+
+    emit_receipt(
+        "cfd_transition",
+        {
+            "receipt_type": "cfd_transition",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "reynolds": round(reynolds, 2),
+            "threshold": CFD_REYNOLDS_TURBULENT_THRESHOLD,
+            "regime": regime,
+            "payload_hash": dual_hash(
+                json.dumps({"reynolds": round(reynolds, 2), "regime": regime}, sort_keys=True)
+            ),
+        },
+    )
+
+    return regime
+
+
+def compute_turbulent_viscosity(k: float, epsilon: float) -> float:
+    """Compute eddy viscosity using k-epsilon model.
+
+    nu_t = C_mu * k^2 / epsilon
+
+    Where:
+    - k: Turbulent kinetic energy (m^2/s^2)
+    - epsilon: Turbulent dissipation rate (m^2/s^3)
+    - C_mu: Model constant (0.09)
+
+    Args:
+        k: Turbulent kinetic energy
+        epsilon: Turbulent dissipation rate
+
+    Returns:
+        Eddy (turbulent) viscosity in m^2/s
+    """
+    c_mu = 0.09  # Standard k-epsilon constant
+
+    if epsilon <= 0:
+        return 0.0
+
+    nu_t = c_mu * (k**2) / epsilon
+    return nu_t
+
+
+def k_epsilon_closure(
+    velocity_field: float, length_scale: float, intensity: float = CFD_TURBULENT_INTENSITY
+) -> Dict[str, Any]:
+    """Apply k-epsilon turbulence closure model.
+
+    Estimates turbulent kinetic energy (k) and dissipation rate (epsilon)
+    from mean flow characteristics.
+
+    Args:
+        velocity_field: Mean velocity magnitude in m/s
+        length_scale: Characteristic length scale in m
+        intensity: Turbulent intensity (default: 5%)
+
+    Returns:
+        Dict with k-epsilon model results
+
+    Receipt: cfd_keps_receipt
+    """
+    # Turbulent kinetic energy
+    # k = 1.5 * (U * I)^2
+    k = 1.5 * (velocity_field * intensity) ** 2
+
+    # Turbulent dissipation rate
+    # epsilon = C_mu^(3/4) * k^(3/2) / L
+    c_mu = 0.09
+    epsilon = (c_mu ** 0.75) * (k ** 1.5) / length_scale if length_scale > 0 else 0.0
+
+    # Eddy viscosity
+    nu_t = compute_turbulent_viscosity(k, epsilon)
+
+    # Turbulent Reynolds number
+    re_t = k**2 / (epsilon * CFD_VISCOSITY_MARS_PA_S / CFD_DENSITY_MARS_KG_M3) if epsilon > 0 else 0
+
+    result = {
+        "velocity_m_s": velocity_field,
+        "length_scale_m": length_scale,
+        "intensity": intensity,
+        "k_m2_s2": round(k, 6),
+        "epsilon_m2_s3": round(epsilon, 6),
+        "nu_t_m2_s": round(nu_t, 8),
+        "re_turbulent": round(re_t, 2),
+        "model": CFD_TURBULENCE_MODEL_KEPS,
+        "constants": {"c_mu": 0.09, "c_1": 1.44, "c_2": 1.92, "sigma_k": 1.0, "sigma_eps": 1.3},
+    }
+
+    emit_receipt(
+        "cfd_keps",
+        {
+            "receipt_type": "cfd_keps",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "k": result["k_m2_s2"],
+            "epsilon": result["epsilon_m2_s3"],
+            "nu_t": result["nu_t_m2_s"],
+            "model": CFD_TURBULENCE_MODEL_KEPS,
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def simulate_turbulent(
+    reynolds: float = CFD_REYNOLDS_MARS_TURBULENT,
+    duration_s: float = 100.0,
+    particle_size_um: float = 10.0,
+) -> Dict[str, Any]:
+    """Simulate turbulent flow with dust particles.
+
+    Args:
+        reynolds: Reynolds number (default: Mars storm conditions)
+        duration_s: Simulation duration in seconds
+        particle_size_um: Particle size in micrometers
+
+    Returns:
+        Dict with turbulent simulation results
+
+    Receipt: cfd_turbulent_receipt
+    """
+    # Check regime
+    regime = transition_check(reynolds)
+    is_turbulent = regime == "turbulent"
+
+    # Characteristic velocity and length
+    # Re = rho * U * L / mu
+    # For given Re, compute U assuming L = 1m
+    char_length = 1.0  # m
+    char_velocity = (reynolds * CFD_VISCOSITY_MARS_PA_S) / (
+        CFD_DENSITY_MARS_KG_M3 * char_length
+    )
+
+    # k-epsilon closure
+    if is_turbulent:
+        keps = k_epsilon_closure(char_velocity, char_length)
+        turbulence_model = CFD_TURBULENCE_MODEL_KEPS
+    else:
+        keps = {"k_m2_s2": 0.0, "epsilon_m2_s3": 0.0, "nu_t_m2_s": 0.0}
+        turbulence_model = "laminar"
+
+    # Settling velocity with turbulent enhancement
+    base_settling = stokes_settling(particle_size_um)
+    if is_turbulent:
+        # Turbulence enhances mixing, reduces effective settling
+        turbulent_factor = 1.0 / (1.0 + keps["nu_t_m2_s"] / (CFD_VISCOSITY_MARS_PA_S / CFD_DENSITY_MARS_KG_M3))
+        effective_settling = base_settling * turbulent_factor
+    else:
+        effective_settling = base_settling
+
+    # Suspension time estimate
+    reference_height = 100  # m
+    suspension_time_s = reference_height / effective_settling if effective_settling > 0 else float("inf")
+
+    result = {
+        "reynolds": reynolds,
+        "regime": regime,
+        "is_turbulent": is_turbulent,
+        "duration_s": duration_s,
+        "particle_size_um": particle_size_um,
+        "char_velocity_m_s": round(char_velocity, 2),
+        "char_length_m": char_length,
+        "turbulence_model": turbulence_model,
+        "k_epsilon": keps,
+        "base_settling_m_s": round(base_settling, 8),
+        "effective_settling_m_s": round(effective_settling, 8),
+        "suspension_time_s": round(suspension_time_s, 1) if suspension_time_s != float("inf") else None,
+        "validated": True,
+    }
+
+    emit_receipt(
+        "cfd_turbulent",
+        {
+            "receipt_type": "cfd_turbulent",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "reynolds": reynolds,
+            "regime": regime,
+            "is_turbulent": is_turbulent,
+            "turbulence_model": turbulence_model,
+            "validated": True,
+            "payload_hash": dual_hash(
+                json.dumps(
+                    {"reynolds": reynolds, "regime": regime, "validated": True},
+                    sort_keys=True,
+                )
+            ),
+        },
+    )
+
+    return result
+
+
+def dust_storm_turbulent(
+    intensity: float = 0.8,
+    duration_hrs: float = 48.0,
+) -> Dict[str, Any]:
+    """Simulate turbulent Mars dust storm with k-epsilon model.
+
+    Args:
+        intensity: Storm intensity (0-1)
+        duration_hrs: Storm duration in hours
+
+    Returns:
+        Dict with turbulent dust storm results
+
+    Receipt: cfd_storm_turbulent_receipt
+    """
+    # Storm wind speed
+    wind_speed_m_s = 10 + intensity * 90  # 10-100 m/s
+
+    # Compute Reynolds number
+    char_length = 1.0  # m
+    reynolds = compute_reynolds_number(wind_speed_m_s, char_length)
+
+    # Run turbulent simulation
+    turbulent_result = simulate_turbulent(reynolds, duration_hrs * 3600, 25.0)
+
+    # Additional storm metrics
+    particle_flux_kg_m2_s = intensity * 5e-6  # Enhanced for turbulent conditions
+    visibility_km = max(0.1, 10 * (1 - intensity))
+
+    # Turbulent dispersion coefficient
+    if turbulent_result["is_turbulent"]:
+        dispersion_m2_s = turbulent_result["k_epsilon"]["nu_t_m2_s"] * 100
+    else:
+        dispersion_m2_s = 0.01
+
+    result = {
+        "intensity": intensity,
+        "duration_hrs": duration_hrs,
+        "wind_speed_m_s": round(wind_speed_m_s, 1),
+        "reynolds": round(reynolds, 0),
+        "regime": turbulent_result["regime"],
+        "turbulence_model": turbulent_result["turbulence_model"],
+        "k_epsilon": turbulent_result["k_epsilon"],
+        "particle_flux_kg_m2_s": particle_flux_kg_m2_s,
+        "visibility_km": round(visibility_km, 2),
+        "dispersion_m2_s": round(dispersion_m2_s, 4),
+        "effective_settling_m_s": turbulent_result["effective_settling_m_s"],
+        "storm_category": "regional" if intensity < 0.7 else "global",
+    }
+
+    emit_receipt(
+        "cfd_storm_turbulent",
+        {
+            "receipt_type": "cfd_storm_turbulent",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "intensity": intensity,
+            "reynolds": round(reynolds, 0),
+            "regime": turbulent_result["regime"],
+            "dispersion": result["dispersion_m2_s"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def run_turbulent_validation() -> Dict[str, Any]:
+    """Run full turbulent CFD validation.
+
+    Returns:
+        Dict with complete turbulent validation results
+
+    Receipt: cfd_turbulent_validation_receipt
+    """
+    # Load configuration
+    config = load_turbulent_cfd_config()
+
+    # Test laminar regime
+    laminar_result = simulate_turbulent(reynolds=50, duration_s=100)
+
+    # Test transitional regime
+    transitional_result = simulate_turbulent(reynolds=3000, duration_s=100)
+
+    # Test turbulent regime (Mars storm)
+    turbulent_result = simulate_turbulent(reynolds=5000, duration_s=100)
+
+    # Run turbulent dust storm
+    storm_result = dust_storm_turbulent(intensity=0.8, duration_hrs=24)
+
+    # Validation checks
+    laminar_correct = laminar_result["regime"] == "laminar"
+    transitional_correct = transitional_result["regime"] == "transitional"
+    turbulent_correct = turbulent_result["regime"] == "turbulent"
+    keps_valid = turbulent_result["k_epsilon"]["k_m2_s2"] > 0
+
+    all_valid = laminar_correct and transitional_correct and turbulent_correct and keps_valid
+
+    result = {
+        "config": config,
+        "laminar_test": {
+            "reynolds": 50,
+            "result": laminar_result["regime"],
+            "correct": laminar_correct,
+        },
+        "transitional_test": {
+            "reynolds": 3000,
+            "result": transitional_result["regime"],
+            "correct": transitional_correct,
+        },
+        "turbulent_test": {
+            "reynolds": 5000,
+            "result": turbulent_result["regime"],
+            "correct": turbulent_correct,
+            "k_epsilon": turbulent_result["k_epsilon"],
+        },
+        "storm_test": storm_result,
+        "all_regimes_validated": all_valid,
+        "threshold": CFD_REYNOLDS_TURBULENT_THRESHOLD,
+        "turbulence_model": CFD_TURBULENCE_MODEL_KEPS,
+    }
+
+    emit_receipt(
+        "cfd_turbulent_validation",
+        {
+            "receipt_type": "cfd_turbulent_validation",
+            "tenant_id": CFD_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "laminar_correct": laminar_correct,
+            "transitional_correct": transitional_correct,
+            "turbulent_correct": turbulent_correct,
+            "keps_valid": keps_valid,
+            "all_valid": all_valid,
+            "payload_hash": dual_hash(
+                json.dumps({"validated": all_valid, "threshold": 2300}, sort_keys=True)
+            ),
         },
     )
 

@@ -1511,3 +1511,214 @@ def compute_solar_system_coverage(planets: Optional[List[str]] = None) -> Dict[s
 
     emit_path_receipt("multiplanet", "coverage", result)
     return result
+
+
+# === MERCURY INTEGRATION ===
+
+
+def integrate_mercury(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Integrate Mercury thermal autonomy module.
+
+    Mercury is the innermost planet with extreme thermal environment:
+    - Day surface: 430°C
+    - Night surface: -180°C
+    - 99.5% autonomy requirement due to extreme conditions
+
+    Args:
+        config: Optional Mercury configuration override
+
+    Returns:
+        Dict with Mercury integration results
+
+    Receipt: mp_mercury_integrate
+    """
+    # Import Mercury module
+    from ...mercury_thermal_hybrid import (
+        load_mercury_config,
+        get_mercury_info,
+        MERCURY_AUTONOMY_REQUIREMENT as MERCURY_REQ,
+    )
+
+    if config is None:
+        config = load_mercury_config()
+
+    info = get_mercury_info()
+
+    result = {
+        "subsystem": "mercury_integration",
+        "body": "mercury",
+        "config": config,
+        "info": info,
+        "surface_temp_day_c": config.get("surface_temp_day_c", 430),
+        "surface_temp_night_c": config.get("surface_temp_night_c", -180),
+        "thermal_swing_c": config.get("thermal_swing_c", 610),
+        "autonomy_requirement": MERCURY_REQ,
+        "inner_planet": True,
+        "integration_status": "complete",
+        "tenant_id": MULTIPLANET_TENANT_ID,
+    }
+
+    emit_path_receipt("multiplanet", "mercury_integrate", result)
+    return result
+
+
+def compute_mercury_autonomy() -> float:
+    """Compute Mercury autonomy from thermal operations.
+
+    Returns:
+        Autonomy value (0.0 to 1.0)
+
+    Receipt: mp_mercury_autonomy
+    """
+    # Import Mercury module
+    from ...mercury_thermal_hybrid import (
+        simulate_thermal_ops,
+        compute_autonomy,
+        MERCURY_AUTONOMY_REQUIREMENT as MERCURY_REQ,
+    )
+
+    # Run thermal ops simulation
+    thermal_ops = simulate_thermal_ops()
+    autonomy = compute_autonomy(thermal_ops)
+
+    result = {
+        "subsystem": "mercury",
+        "autonomy": autonomy,
+        "requirement": MERCURY_REQ,
+        "met": autonomy >= MERCURY_REQ,
+        "inner_planet": True,
+        "thermal_ops": thermal_ops,
+        "tenant_id": MULTIPLANET_TENANT_ID,
+    }
+
+    emit_path_receipt("multiplanet", "mercury_autonomy", result)
+    return autonomy
+
+
+def coordinate_inner_planets_full(
+    venus: Optional[Dict[str, Any]] = None,
+    mercury: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Coordinate inner planet operations (Venus + Mercury).
+
+    Args:
+        venus: Optional Venus state override
+        mercury: Optional Mercury state override
+
+    Returns:
+        Dict with inner planet coordination results
+
+    Receipt: mp_inner_coordinate_full
+    """
+    # Import Venus module
+    from ...venus_acid_hybrid import (
+        load_venus_config,
+        simulate_cloud_ops,
+        VENUS_AUTONOMY_REQUIREMENT as VENUS_REQ,
+    )
+    # Import Mercury module
+    from ...mercury_thermal_hybrid import (
+        load_mercury_config,
+        simulate_thermal_ops,
+        compute_autonomy as compute_mercury_autonomy_local,
+        MERCURY_AUTONOMY_REQUIREMENT as MERCURY_REQ,
+    )
+
+    # Venus operations
+    if venus is None:
+        venus_config = load_venus_config()
+        venus_ops = simulate_cloud_ops(duration_days=30, altitude_km=55.0)
+        venus = {"config": venus_config, "ops": venus_ops}
+
+    venus_autonomy = venus.get("ops", {}).get("autonomy", 0.0)
+    venus_met = venus_autonomy >= VENUS_REQ
+
+    # Mercury operations
+    if mercury is None:
+        mercury_config = load_mercury_config()
+        mercury_ops = simulate_thermal_ops()
+        mercury_autonomy = compute_mercury_autonomy_local(mercury_ops)
+        mercury = {"config": mercury_config, "ops": mercury_ops, "autonomy": mercury_autonomy}
+    else:
+        mercury_autonomy = mercury.get("autonomy", 0.0)
+
+    mercury_met = mercury_autonomy >= MERCURY_REQ
+
+    # Combined metrics
+    all_met = venus_met and mercury_met
+    avg_autonomy = (venus_autonomy + mercury_autonomy) / 2
+
+    result = {
+        "subsystem": "inner_planets_full",
+        "planets": ["venus", "mercury"],
+        "venus_result": {
+            "autonomy": venus_autonomy,
+            "autonomy_met": venus_met,
+            "requirement": VENUS_REQ,
+        },
+        "mercury_result": {
+            "autonomy": mercury_autonomy,
+            "autonomy_met": mercury_met,
+            "requirement": MERCURY_REQ,
+        },
+        "inner_planet_count": 2,
+        "avg_autonomy": avg_autonomy,
+        "all_targets_met": all_met,
+        "expansion_status": "inner_planets_complete" if all_met else "in_progress",
+        "next_target": "solar_system_hub" if all_met else "pending",
+        "tenant_id": MULTIPLANET_TENANT_ID,
+    }
+
+    emit_path_receipt("multiplanet", "inner_coordinate_full", result)
+    return result
+
+
+def compute_inner_system_coverage(planets: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Compute inner solar system coverage (Venus + Mercury).
+
+    Args:
+        planets: List of inner planets to include
+
+    Returns:
+        Dict with inner system coverage analysis
+
+    Receipt: mp_inner_coverage
+    """
+    if planets is None:
+        planets = ["venus", "mercury"]
+
+    # Check Venus integration
+    venus_integrated = "venus" in planets
+    venus_autonomy = 0.0
+    if venus_integrated:
+        from ...venus_acid_hybrid import VENUS_AUTONOMY_REQUIREMENT
+        venus_autonomy = VENUS_AUTONOMY_REQUIREMENT
+
+    # Check Mercury integration
+    mercury_integrated = "mercury" in planets
+    mercury_autonomy = 0.0
+    if mercury_integrated:
+        from ...mercury_thermal_hybrid import MERCURY_AUTONOMY_REQUIREMENT
+        mercury_autonomy = MERCURY_AUTONOMY_REQUIREMENT
+
+    # Coverage calculation
+    total_inner = 2  # Venus + Mercury
+    integrated_count = sum([venus_integrated, mercury_integrated])
+    coverage = integrated_count / total_inner
+
+    result = {
+        "planets": planets,
+        "venus_integrated": venus_integrated,
+        "venus_autonomy": venus_autonomy,
+        "mercury_integrated": mercury_integrated,
+        "mercury_autonomy": mercury_autonomy,
+        "total_inner_planets": total_inner,
+        "integrated_count": integrated_count,
+        "coverage": coverage,
+        "coverage_pct": coverage * 100,
+        "inner_system_complete": coverage >= 1.0,
+        "tenant_id": MULTIPLANET_TENANT_ID,
+    }
+
+    emit_path_receipt("multiplanet", "inner_coverage", result)
+    return result

@@ -1699,3 +1699,347 @@ def compute_enclave_alignment(
 
     emit_path_receipt("agi", "enclave_alignment", result)
     return result
+
+
+# === TEE HARDENING INTEGRATION ===
+
+
+def integrate_tee_hardening(config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Integrate TEE hardening against SGX side-channel attacks.
+
+    Provides hardware-level defense against:
+    - Timing side-channels
+    - Power analysis
+    - Cache attacks
+    - Branch prediction attacks
+
+    Args:
+        config: Optional TEE configuration override
+
+    Returns:
+        Dict with TEE hardening integration results
+
+    Receipt: agi_tee_integrate
+    """
+    # Import TEE module
+    from ...tee_harden_audit import (
+        load_tee_config,
+        get_tee_info,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    if config is None:
+        config = load_tee_config()
+
+    info = get_tee_info()
+
+    result = {
+        "subsystem": "tee_hardening",
+        "tee_type": config.get("type", "SGX"),
+        "config": config,
+        "info": info,
+        "side_channels": config.get("side_channels", []),
+        "defense_mechanisms": config.get("defense_mechanisms", []),
+        "resilience_target": TEE_RESILIENCE_TARGET,
+        "memory_encryption": config.get("memory_encryption", True),
+        "sealed_storage": config.get("sealed_storage", True),
+        "attestation_required": config.get("attestation_required", True),
+        "integration_status": "complete",
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "tee_integrate", result)
+    return result
+
+
+def run_timing_stress_test_tee(iterations: int = 1000) -> Dict[str, Any]:
+    """Run timing side-channel stress test with TEE hardening.
+
+    Args:
+        iterations: Number of test iterations
+
+    Returns:
+        Dict with timing stress test results
+
+    Receipt: agi_timing_stress
+    """
+    from ...tee_harden_audit import (
+        implement_constant_time,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    result = implement_constant_time()
+
+    stress_result = {
+        "test_type": "timing_stress",
+        "iterations": iterations,
+        "resilience": result["resilience"],
+        "variance_pct": result["hardened_variance_pct"],
+        "threshold": TEE_RESILIENCE_TARGET,
+        "passed": result["resilience"] >= TEE_RESILIENCE_TARGET,
+        "techniques": result["techniques"],
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "timing_stress", stress_result)
+    return stress_result
+
+
+def run_power_stress_test_tee(iterations: int = 1000) -> Dict[str, Any]:
+    """Run power analysis stress test with TEE hardening.
+
+    Args:
+        iterations: Number of test iterations
+
+    Returns:
+        Dict with power stress test results
+
+    Receipt: agi_power_stress
+    """
+    from ...tee_harden_audit import (
+        implement_power_balancing,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    result = implement_power_balancing()
+
+    stress_result = {
+        "test_type": "power_stress",
+        "iterations": iterations,
+        "resilience": result["resilience"],
+        "variance_pct": result["hardened_variance_pct"],
+        "threshold": TEE_RESILIENCE_TARGET,
+        "passed": result["resilience"] >= TEE_RESILIENCE_TARGET,
+        "techniques": result["techniques"],
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "power_stress", stress_result)
+    return stress_result
+
+
+def run_cache_stress_test_tee(iterations: int = 1000) -> Dict[str, Any]:
+    """Run cache attack stress test with TEE hardening.
+
+    Args:
+        iterations: Number of test iterations
+
+    Returns:
+        Dict with cache stress test results
+
+    Receipt: agi_cache_stress
+    """
+    from ...tee_harden_audit import (
+        implement_cache_partition,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    result = implement_cache_partition()
+
+    stress_result = {
+        "test_type": "cache_stress",
+        "iterations": iterations,
+        "resilience": result["resilience"],
+        "leak_rate": result["hardened_leak_rate"],
+        "threshold": TEE_RESILIENCE_TARGET,
+        "passed": result["resilience"] >= TEE_RESILIENCE_TARGET,
+        "techniques": result["techniques"],
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "cache_stress", stress_result)
+    return stress_result
+
+
+def run_branch_stress_test_tee(iterations: int = 1000) -> Dict[str, Any]:
+    """Run branch prediction attack stress test with TEE hardening.
+
+    Args:
+        iterations: Number of test iterations
+
+    Returns:
+        Dict with branch stress test results
+
+    Receipt: agi_branch_stress
+    """
+    from ...tee_harden_audit import (
+        implement_branch_obfuscation,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    result = implement_branch_obfuscation()
+
+    stress_result = {
+        "test_type": "branch_stress",
+        "iterations": iterations,
+        "resilience": result["resilience"],
+        "prediction_rate": result["hardened_prediction_rate"],
+        "threshold": TEE_RESILIENCE_TARGET,
+        "passed": result["resilience"] >= TEE_RESILIENCE_TARGET,
+        "techniques": result["techniques"],
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "branch_stress", stress_result)
+    return stress_result
+
+
+def measure_tee_overhead_agi() -> Dict[str, Any]:
+    """Measure TEE overhead for AGI operations.
+
+    Returns:
+        Dict with overhead measurements
+
+    Receipt: agi_tee_overhead
+    """
+    from ...tee_harden_audit import (
+        measure_tee_overhead,
+        TEE_OVERHEAD_MAX_PCT,
+    )
+
+    result = measure_tee_overhead()
+
+    overhead_result = {
+        "test_type": "tee_overhead",
+        "baseline_ns": result["baseline_ns"],
+        "tee_ns": result["tee_ns"],
+        "overhead_pct": result["overhead_pct"],
+        "max_allowed_pct": TEE_OVERHEAD_MAX_PCT,
+        "within_limit": result["within_limit"],
+        "breakdown": result["breakdown"],
+        "acceptable_for_agi": result["within_limit"],
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "tee_overhead", overhead_result)
+    return overhead_result
+
+
+def compute_tee_hardened_alignment(receipts: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Compute AGI alignment with TEE hardening layer included.
+
+    This extends the alignment computation to include TEE hardening
+    as an 8th layer of defense.
+
+    Args:
+        receipts: Optional list of receipts to compute alignment from
+
+    Returns:
+        Dict with TEE-hardened alignment metrics
+
+    Receipt: agi_tee_alignment
+    """
+    from ...adversarial_audit import (
+        run_audit as run_basic_audit,
+        RECOVERY_THRESHOLD as BASIC_THRESHOLD,
+    )
+    from ...agi_audit_expanded import (
+        run_expanded_audit,
+        EXPANDED_RECOVERY_THRESHOLD,
+    )
+    from ...fractal_encrypt_audit import (
+        test_side_channel_resilience,
+        test_model_inversion_resilience,
+        SIDE_CHANNEL_RESILIENCE,
+    )
+    from ...randomized_paths_audit import (
+        run_randomized_audit,
+        TIMING_LEAK_RESILIENCE,
+    )
+    from ...quantum_resist_random import (
+        run_quantum_resist_audit,
+        QUANTUM_RESILIENCE_TARGET,
+    )
+    from ...secure_enclave_audit import (
+        run_enclave_audit,
+        ENCLAVE_RESILIENCE_TARGET,
+    )
+    from ...tee_harden_audit import (
+        run_tee_audit,
+        TEE_RESILIENCE_TARGET,
+    )
+
+    # Compute compression alignment
+    if receipts is None:
+        receipts = []
+    compression_alignment = compute_alignment(receipts)
+
+    # Run basic adversarial audit
+    basic_audit = run_basic_audit(noise_level=0.05, iterations=50)
+    basic_adversarial = basic_audit["avg_recovery"]
+
+    # Run expanded audit
+    expanded_audit = run_expanded_audit(attack_type="all", iterations=50)
+    expanded_recovery = expanded_audit["avg_recovery"]
+
+    # Run fractal encryption tests
+    side_channel = test_side_channel_resilience(50)
+    model_inversion = test_model_inversion_resilience(None, 50)
+    fractal_resilience = (side_channel + model_inversion) / 2
+
+    # Run randomized paths audit
+    randomized_audit = run_randomized_audit(iterations=50)
+    randomized_resilience = randomized_audit["avg_resilience"]
+
+    # Run quantum-resistant audit
+    quantum_audit = run_quantum_resist_audit(iterations=50)
+    quantum_resilience = quantum_audit["overall_resilience"]
+
+    # Run secure enclave audit
+    enclave_audit = run_enclave_audit(iterations=50)
+    enclave_resilience = enclave_audit["overall_resilience"]
+
+    # Run TEE hardening audit
+    tee_audit = run_tee_audit()
+    tee_resilience = tee_audit["resilience"]
+
+    # Combined alignment (weighted) - includes all 8 layers
+    # Compression: 5%, Basic: 9%, Expanded: 14%, Fractal: 15%, Randomized: 15%, Quantum: 14%, Enclave: 14%, TEE: 14%
+    combined = (
+        compression_alignment * 0.05
+        + basic_adversarial * 0.09
+        + expanded_recovery * 0.14
+        + fractal_resilience * 0.15
+        + randomized_resilience * 0.15
+        + quantum_resilience * 0.14
+        + enclave_resilience * 0.14
+        + tee_resilience * 0.14
+    )
+
+    result = {
+        "compression_alignment": round(compression_alignment, 4),
+        "basic_adversarial_alignment": round(basic_adversarial, 4),
+        "expanded_alignment": round(expanded_recovery, 4),
+        "fractal_resilience": round(fractal_resilience, 4),
+        "randomized_resilience": round(randomized_resilience, 4),
+        "quantum_resilience": round(quantum_resilience, 4),
+        "enclave_resilience": round(enclave_resilience, 4),
+        "tee_resilience": round(tee_resilience, 4),
+        "combined_alignment": round(combined, 4),
+        "weights": {
+            "compression": 0.05,
+            "basic_adversarial": 0.09,
+            "expanded": 0.14,
+            "fractal": 0.15,
+            "randomized": 0.15,
+            "quantum": 0.14,
+            "enclave": 0.14,
+            "tee": 0.14,
+        },
+        "thresholds": {
+            "basic": BASIC_THRESHOLD,
+            "expanded": EXPANDED_RECOVERY_THRESHOLD,
+            "fractal": SIDE_CHANNEL_RESILIENCE,
+            "randomized": TIMING_LEAK_RESILIENCE,
+            "quantum": QUANTUM_RESILIENCE_TARGET,
+            "enclave": ENCLAVE_RESILIENCE_TARGET,
+            "tee": TEE_RESILIENCE_TARGET,
+        },
+        "is_aligned": combined >= EXPANDED_RECOVERY_THRESHOLD,
+        "alignment_metric": ALIGNMENT_METRIC,
+        "key_insight": "Full alignment via compression + adversarial + expanded + fractal + randomized + quantum + enclave + TEE hardening",
+        "tenant_id": AGI_TENANT_ID,
+    }
+
+    emit_path_receipt("agi", "tee_alignment", result)
+    return result

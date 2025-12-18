@@ -275,6 +275,28 @@ from cli import (
     cmd_enclave_pht,
     cmd_enclave_rsb,
     cmd_enclave_overhead,
+    # D12 + Mercury thermal + turbulent CFD + TEE hardening
+    cmd_d12_info,
+    cmd_d12_push,
+    cmd_d12_mercury_hybrid,
+    cmd_mercury_info,
+    cmd_mercury_thermal,
+    cmd_mercury_alloy,
+    cmd_mercury_ops,
+    cmd_mercury_autonomy,
+    cmd_mercury_hazard,
+    cmd_mercury_shield,
+    cmd_mercury_budget,
+    cmd_tee_info,
+    cmd_tee_init,
+    cmd_tee_audit,
+    cmd_tee_timing,
+    cmd_tee_power,
+    cmd_tee_cache,
+    cmd_tee_branch,
+    cmd_tee_attestation,
+    cmd_tee_overhead,
+    cmd_tee_sealed,
 )
 
 
@@ -1324,6 +1346,103 @@ def main():
         help="Enclave test iterations (default: 100)",
     )
 
+    # D12 + Mercury thermal flags
+    parser.add_argument("--d12_info", action="store_true", help="Show D12 configuration")
+    parser.add_argument(
+        "--d12_push", action="store_true", help="Run D12 recursion for alpha>=3.65"
+    )
+    parser.add_argument(
+        "--d12_mercury_hybrid",
+        action="store_true",
+        help="Run integrated D12 + Mercury thermal hybrid",
+    )
+    parser.add_argument(
+        "--mercury_info", action="store_true", help="Show Mercury thermal config"
+    )
+    parser.add_argument(
+        "--mercury_thermal", action="store_true", help="Show Mercury thermal zones"
+    )
+    parser.add_argument(
+        "--mercury_alloy", action="store_true", help="Test Mercury alloy performance"
+    )
+    parser.add_argument(
+        "--mercury_ops", action="store_true", help="Run Mercury thermal ops simulation"
+    )
+    parser.add_argument(
+        "--mercury_autonomy", action="store_true", help="Show Mercury autonomy metrics"
+    )
+    parser.add_argument(
+        "--mercury_hazard", action="store_true", help="Show Mercury hazard assessment"
+    )
+    parser.add_argument(
+        "--mercury_time",
+        type=float,
+        default=0.5,
+        help="Mercury time of day (0.0-1.0, default: 0.5)",
+    )
+    parser.add_argument(
+        "--mercury_lat",
+        type=float,
+        default=0.0,
+        help="Mercury latitude (-90 to 90, default: 0)",
+    )
+    parser.add_argument(
+        "--alloy",
+        type=str,
+        default="inconel_718",
+        help="Alloy type (default: inconel_718)",
+    )
+
+    # Turbulent CFD flags
+    parser.add_argument(
+        "--cfd_turbulent", action="store_true", help="Run turbulent CFD simulation"
+    )
+    parser.add_argument(
+        "--cfd_transition", action="store_true", help="Check flow regime transition"
+    )
+    parser.add_argument(
+        "--cfd_reynolds",
+        type=float,
+        default=5000.0,
+        help="Reynolds number for CFD (default: 5000)",
+    )
+
+    # TEE hardening flags
+    parser.add_argument("--tee_info", action="store_true", help="Show TEE configuration")
+    parser.add_argument(
+        "--tee_init", action="store_true", help="Initialize TEE enclave"
+    )
+    parser.add_argument(
+        "--tee_audit", action="store_true", help="Run full TEE side-channel audit"
+    )
+    parser.add_argument(
+        "--tee_timing", action="store_true", help="Test timing side-channel defense"
+    )
+    parser.add_argument(
+        "--tee_power", action="store_true", help="Test power analysis defense"
+    )
+    parser.add_argument(
+        "--tee_cache", action="store_true", help="Test cache attack defense"
+    )
+    parser.add_argument(
+        "--tee_branch", action="store_true", help="Test branch prediction defense"
+    )
+    parser.add_argument(
+        "--tee_attestation", action="store_true", help="Run remote attestation"
+    )
+    parser.add_argument(
+        "--tee_overhead", action="store_true", help="Measure TEE execution overhead"
+    )
+    parser.add_argument(
+        "--tee_sealed", action="store_true", help="Test sealed storage"
+    )
+    parser.add_argument(
+        "--tee_memory",
+        type=int,
+        default=256,
+        help="TEE memory MB (default: 256)",
+    )
+
     args = parser.parse_args()
     reroute_enabled = args.reroute or args.reroute_enabled
 
@@ -1690,6 +1809,64 @@ def main():
         return cmd_enclave_rsb(args.enclave_iterations)
     if args.enclave_overhead:
         return cmd_enclave_overhead()
+
+    # D12 + Mercury thermal commands
+    if args.d12_info:
+        return cmd_d12_info()
+    if args.d12_push:
+        return cmd_d12_push(args.tree_size, args.base_alpha, args.simulate)
+    if args.d12_mercury_hybrid:
+        return cmd_d12_mercury_hybrid(args.tree_size, args.base_alpha, args.simulate)
+    if args.mercury_info:
+        return cmd_mercury_info()
+    if args.mercury_thermal:
+        return cmd_mercury_thermal(args.mercury_time, args.mercury_lat)
+    if args.mercury_alloy:
+        return cmd_mercury_alloy(args.alloy, 400.0, 100.0)
+    if args.mercury_ops:
+        return cmd_mercury_ops(args.simulate)
+    if args.mercury_autonomy:
+        return cmd_mercury_autonomy()
+    if args.mercury_hazard:
+        return cmd_mercury_hazard()
+
+    # Turbulent CFD commands
+    if args.cfd_turbulent:
+        from src.cfd_dust_dynamics import simulate_turbulent
+        import json
+
+        result = simulate_turbulent(reynolds=args.cfd_reynolds, duration_s=100.0)
+        print(json.dumps(result, indent=2))
+        return
+    if args.cfd_transition:
+        from src.cfd_dust_dynamics import transition_check
+        import json
+
+        regime = transition_check(args.cfd_reynolds)
+        print(json.dumps({"reynolds": args.cfd_reynolds, "regime": regime}, indent=2))
+        return
+
+    # TEE hardening commands
+    if args.tee_info:
+        return cmd_tee_info()
+    if args.tee_init:
+        return cmd_tee_init(args.tee_memory)
+    if args.tee_audit:
+        return cmd_tee_audit()
+    if args.tee_timing:
+        return cmd_tee_timing()
+    if args.tee_power:
+        return cmd_tee_power()
+    if args.tee_cache:
+        return cmd_tee_cache()
+    if args.tee_branch:
+        return cmd_tee_branch()
+    if args.tee_attestation:
+        return cmd_tee_attestation()
+    if args.tee_overhead:
+        return cmd_tee_overhead()
+    if args.tee_sealed:
+        return cmd_tee_sealed()
 
     # Expanded AGI audit commands
     if args.audit_expanded:

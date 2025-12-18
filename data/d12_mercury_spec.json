@@ -1,0 +1,160 @@
+{
+  "version": "1.0.0",
+  "description": "D12 recursion + Mercury extreme thermal autonomy + turbulent Navier-Stokes CFD + TEE SGX side-channel hardening",
+  "d12_config": {
+    "recursion_depth": 12,
+    "alpha_floor": 3.63,
+    "alpha_target": 3.65,
+    "alpha_ceiling": 3.67,
+    "instability_max": 0.00,
+    "tree_min": 1000000000000,
+    "uplift": 0.30
+  },
+  "uplift_by_depth": {
+    "1": 0.05,
+    "2": 0.09,
+    "3": 0.122,
+    "4": 0.148,
+    "5": 0.168,
+    "6": 0.185,
+    "7": 0.20,
+    "8": 0.22,
+    "9": 0.24,
+    "10": 0.26,
+    "11": 0.28,
+    "12": 0.30
+  },
+  "depth_contributions": {
+    "1": {
+      "contribution": 0.05,
+      "decay_factor": 1.0,
+      "cumulative": 0.05
+    },
+    "2": {
+      "contribution": 0.04,
+      "decay_factor": 0.8,
+      "cumulative": 0.09
+    },
+    "3": {
+      "contribution": 0.032,
+      "decay_factor": 0.64,
+      "cumulative": 0.122
+    },
+    "4": {
+      "contribution": 0.0256,
+      "decay_factor": 0.512,
+      "cumulative": 0.148
+    },
+    "5": {
+      "contribution": 0.02048,
+      "decay_factor": 0.4096,
+      "cumulative": 0.168
+    },
+    "6": {
+      "contribution": 0.01638,
+      "decay_factor": 0.3277,
+      "cumulative": 0.185
+    },
+    "7": {
+      "contribution": 0.01311,
+      "decay_factor": 0.2621,
+      "cumulative": 0.20
+    },
+    "8": {
+      "contribution": 0.01049,
+      "decay_factor": 0.2097,
+      "cumulative": 0.22
+    },
+    "9": {
+      "contribution": 0.00839,
+      "decay_factor": 0.1678,
+      "cumulative": 0.24
+    },
+    "10": {
+      "contribution": 0.00671,
+      "decay_factor": 0.1342,
+      "cumulative": 0.26
+    },
+    "11": {
+      "contribution": 0.00537,
+      "decay_factor": 0.1074,
+      "cumulative": 0.28
+    },
+    "12": {
+      "contribution": 0.00430,
+      "decay_factor": 0.0859,
+      "cumulative": 0.30
+    }
+  },
+  "expected_alpha": {
+    "depth_1": 3.05,
+    "depth_2": 3.09,
+    "depth_3": 3.12,
+    "depth_4": 3.148,
+    "depth_5": 3.168,
+    "depth_6": 3.185,
+    "depth_7": 3.20,
+    "depth_8": 3.22,
+    "depth_9": 3.24,
+    "depth_10": 3.26,
+    "depth_11": 3.28,
+    "depth_12": 3.30
+  },
+  "mercury_config": {
+    "body": "mercury",
+    "surface_temp_day_c": 430,
+    "surface_temp_night_c": -180,
+    "thermal_swing_c": 610,
+    "solar_flux_w_m2": 9082,
+    "autonomy_requirement": 0.995,
+    "latency_min": [3, 13],
+    "alloy_temp_limit_c": 500,
+    "alloys": ["inconel_718", "haynes_230", "tungsten_rhenium"],
+    "hazards": ["extreme_heat", "extreme_cold", "solar_radiation", "thermal_cycling"],
+    "earth_callback_max_pct": 0.005,
+    "operation_zones": ["terminator", "polar_crater", "nightside"],
+    "radiation_level": "extreme"
+  },
+  "cfd_turbulent_config": {
+    "model": "navier_stokes_turbulent",
+    "reynolds_threshold": 2300,
+    "reynolds_mars_storm": 5000,
+    "turbulence_model": "k_epsilon",
+    "gravity_mars_m_s2": 3.71,
+    "viscosity_mars_pa_s": 1.1e-5,
+    "density_mars_kg_m3": 0.02,
+    "validated": true,
+    "particle_size_um": [1, 100],
+    "laminar_limit": 2300,
+    "transitional_range": [2300, 4000],
+    "turbulent_floor": 4000
+  },
+  "tee_config": {
+    "type": "SGX",
+    "side_channels": ["timing", "power", "cache", "branch"],
+    "defense_mechanisms": ["constant_time", "power_balancing", "cache_partition", "branch_obfuscation"],
+    "resilience_target": 1.0,
+    "attestation_required": true,
+    "memory_encryption": true,
+    "sealed_storage": true,
+    "memory_mb": 256,
+    "overhead_max_pct": 5.0
+  },
+  "validation": {
+    "instability_max": 0.00,
+    "eff_alpha_min_d12": 3.63,
+    "mercury_autonomy_min": 0.995,
+    "cfd_turbulent_validated": true,
+    "tee_resilience_min": 1.0,
+    "scale_decay_threshold": 0.02,
+    "receipt_required": "d12_fractal_receipt",
+    "mercury_receipt_required": "mercury_autonomy_receipt",
+    "cfd_receipt_required": "cfd_turbulent_receipt",
+    "tee_receipt_required": "tee_harden_receipt"
+  },
+  "dual_hash": {
+    "algorithm": "SHA256:BLAKE3",
+    "reference": "CLAUDEME S4.1"
+  },
+  "source": "AXIOM D12 recursion + Mercury extreme thermal + turbulent Navier-Stokes CFD + TEE SGX hardening - alpha 3.65+ target"
+}

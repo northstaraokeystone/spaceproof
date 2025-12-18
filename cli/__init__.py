@@ -320,6 +320,37 @@ from cli.enclave import (
     cmd_enclave_overhead,
 )
 
+# D12 + Mercury + turbulent CFD + TEE hardening commands
+from cli.d12 import (
+    cmd_d12_info,
+    cmd_d12_push,
+    cmd_d12_mercury_hybrid,
+)
+
+from cli.mercury import (
+    cmd_mercury_info,
+    cmd_mercury_thermal,
+    cmd_mercury_alloy,
+    cmd_mercury_ops,
+    cmd_mercury_autonomy,
+    cmd_mercury_hazard,
+    cmd_mercury_shield,
+    cmd_mercury_budget,
+)
+
+from cli.tee import (
+    cmd_tee_info,
+    cmd_tee_init,
+    cmd_tee_audit,
+    cmd_tee_timing,
+    cmd_tee_power,
+    cmd_tee_cache,
+    cmd_tee_branch,
+    cmd_tee_attestation,
+    cmd_tee_overhead,
+    cmd_tee_sealed,
+)
+
 __all__ = [
     # Core
     "cmd_baseline",
@@ -548,4 +579,27 @@ __all__ = [
     "cmd_enclave_pht",
     "cmd_enclave_rsb",
     "cmd_enclave_overhead",
+    # D12 + Mercury thermal
+    "cmd_d12_info",
+    "cmd_d12_push",
+    "cmd_d12_mercury_hybrid",
+    "cmd_mercury_info",
+    "cmd_mercury_thermal",
+    "cmd_mercury_alloy",
+    "cmd_mercury_ops",
+    "cmd_mercury_autonomy",
+    "cmd_mercury_hazard",
+    "cmd_mercury_shield",
+    "cmd_mercury_budget",
+    # TEE hardening
+    "cmd_tee_info",
+    "cmd_tee_init",
+    "cmd_tee_audit",
+    "cmd_tee_timing",
+    "cmd_tee_power",
+    "cmd_tee_cache",
+    "cmd_tee_branch",
+    "cmd_tee_attestation",
+    "cmd_tee_overhead",
+    "cmd_tee_sealed",
 ]
