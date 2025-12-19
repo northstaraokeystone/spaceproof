@@ -1233,6 +1233,13 @@ KUIPER_BODIES = ["ceres", "pluto", "eris", "makemake", "haumea"]
 KUIPER_EXTENDED_BODY_COUNT = 12
 """Extended body count with Kuiper objects."""
 
+# Heliosphere-Oort integration constants
+HELIOSPHERE_INTEGRATION_ENABLED = True
+"""D17 Heliosphere integration enabled."""
+
+OORT_INTEGRATION_DISTANCE_AU = 50000
+"""Oort cloud integration distance in AU."""
+
 
 def integrate_kuiper_dynamics(kuiper_results: Dict[str, Any]) -> Dict[str, Any]:
     """Wire Kuiper 12-body chaos simulation to backbone.
@@ -1435,6 +1442,240 @@ def d16_kuiper_hybrid_backbone(
             "ts": datetime.utcnow().isoformat() + "Z",
             "combined_alpha": round(combined_alpha, 4),
             "combined_stability": round(combined_stability, 4),
+            "all_targets_met": result["all_targets_met"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+# === D17 HELIOSPHERE INTEGRATION ===
+
+
+def integrate_heliosphere(helio_results: Dict[str, Any]) -> Dict[str, Any]:
+    """Integrate Heliosphere results with backbone.
+
+    Args:
+        helio_results: Results from heliosphere_oort_sim
+
+    Returns:
+        Dict with integration results
+
+    Receipt: heliosphere_backbone_integration_receipt
+    """
+    # Get current backbone status
+    backbone_autonomy = compute_backbone_autonomy()
+
+    # Extract Heliosphere metrics
+    helio_zones = helio_results.get("zones", {})
+    helio_status = helio_results.get("operational", True)
+
+    result = {
+        "heliosphere_integrated": True,
+        "heliosphere_zones": list(helio_zones.keys()) if helio_zones else [],
+        "heliosphere_status": "operational" if helio_status else "offline",
+        "backbone_autonomy": backbone_autonomy.get("autonomy", 0.98),
+        "integration_mode": "d17_heliosphere",
+    }
+
+    emit_receipt(
+        "heliosphere_backbone_integration",
+        {
+            "receipt_type": "heliosphere_backbone_integration",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "heliosphere_integrated": True,
+            "backbone_autonomy": result["backbone_autonomy"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def integrate_oort(oort_results: Dict[str, Any]) -> Dict[str, Any]:
+    """Integrate Oort cloud simulation results with backbone.
+
+    Args:
+        oort_results: Results from heliosphere_oort_sim.simulate_oort_coordination
+
+    Returns:
+        Dict with integration results
+
+    Receipt: oort_backbone_full_integration_receipt
+    """
+    # Get backbone status
+    backbone_autonomy = compute_backbone_autonomy()
+
+    # Extract Oort metrics
+    oort_distance = oort_results.get("distance_au", OORT_INTEGRATION_DISTANCE_AU)
+    oort_autonomy = oort_results.get("autonomy_level", 0.999)
+    coordination_viable = oort_results.get("coordination_viable", True)
+    light_delay = oort_results.get("light_delay_hours", 6.9)
+
+    # Combined autonomy (weighted)
+    combined_autonomy = (
+        backbone_autonomy.get("autonomy", 0.98) * 0.4
+        + oort_autonomy * 0.6
+    )
+
+    result = {
+        "oort_integrated": True,
+        "oort_distance_au": oort_distance,
+        "oort_autonomy": round(oort_autonomy, 4),
+        "oort_light_delay_hours": light_delay,
+        "coordination_viable": coordination_viable,
+        "backbone_autonomy": backbone_autonomy.get("autonomy", 0.98),
+        "combined_autonomy": round(combined_autonomy, 4),
+        "integration_mode": "d17_oort_heliosphere",
+    }
+
+    emit_receipt(
+        "oort_backbone_full_integration",
+        {
+            "receipt_type": "oort_backbone_full_integration",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "oort_distance_au": oort_distance,
+            "oort_autonomy": round(oort_autonomy, 4),
+            "combined_autonomy": round(combined_autonomy, 4),
+            "coordination_viable": coordination_viable,
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def compute_heliosphere_coordination() -> Dict[str, Any]:
+    """Compute full Heliosphere-Oort-backbone coordination.
+
+    Returns:
+        Dict with coordination metrics
+
+    Receipt: heliosphere_coordination_receipt
+    """
+    from .heliosphere_oort_sim import (
+        simulate_oort_coordination,
+        get_heliosphere_status,
+        get_oort_status,
+    )
+
+    # Get statuses
+    helio_status = get_heliosphere_status()
+    _oort_status = get_oort_status()  # Status cached for receipt metadata
+
+    # Run Oort simulation
+    oort_sim = simulate_oort_coordination(
+        au=OORT_INTEGRATION_DISTANCE_AU, duration_days=365
+    )
+
+    # Integrate with backbone
+    helio_integration = integrate_heliosphere(helio_status)
+    oort_integration = integrate_oort(oort_sim)
+
+    # Compute backbone coordination
+    kuiper_coordination = compute_kuiper_coordination()
+
+    result = {
+        "heliosphere_integration": helio_integration,
+        "oort_integration": oort_integration,
+        "kuiper_coordination": kuiper_coordination,
+        "total_coordinated_bodies": (
+            kuiper_coordination["total_bodies"]
+        ),
+        "oort_distance_au": OORT_INTEGRATION_DISTANCE_AU,
+        "combined_autonomy": oort_integration["combined_autonomy"],
+        "coordination_viable": oort_sim["coordination_viable"],
+        "heliosphere_operational": helio_status.get("operational", True),
+    }
+
+    emit_receipt(
+        "heliosphere_coordination",
+        {
+            "receipt_type": "heliosphere_coordination",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "oort_distance_au": OORT_INTEGRATION_DISTANCE_AU,
+            "combined_autonomy": result["combined_autonomy"],
+            "coordination_viable": result["coordination_viable"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def get_heliosphere_backbone_status() -> Dict[str, Any]:
+    """Get Heliosphere backbone integration status.
+
+    Returns:
+        Dict with status information
+    """
+    return {
+        "heliosphere_integration_enabled": HELIOSPHERE_INTEGRATION_ENABLED,
+        "oort_integration_distance_au": OORT_INTEGRATION_DISTANCE_AU,
+        "kuiper_bodies": KUIPER_BODIES,
+        "backbone_bodies": INTERSTELLAR_BODY_COUNT,
+        "extended_mode": "d17_heliosphere_hybrid",
+        "description": "D17 Heliosphere-Oort backbone integration at 50kAU",
+    }
+
+
+def d17_heliosphere_hybrid_backbone(
+    tree_size: int = 10**12, base_alpha: float = 3.55
+) -> Dict[str, Any]:
+    """Run D17 + Heliosphere-Oort + backbone hybrid integration.
+
+    Args:
+        tree_size: Tree size for D17 recursion
+        base_alpha: Base alpha for D17
+
+    Returns:
+        Dict with hybrid results
+
+    Receipt: d17_heliosphere_hybrid_backbone_receipt
+    """
+    from .fractal_layers import d17_depth_first_push
+
+    # Run D17 fractal
+    d17_result = d17_depth_first_push(tree_size, base_alpha)
+
+    # Run Heliosphere coordination
+    helio_coordination = compute_heliosphere_coordination()
+
+    # Combined metrics
+    combined_alpha = d17_result["eff_alpha"]
+    combined_autonomy = helio_coordination["combined_autonomy"]
+    coordination_viable = helio_coordination["coordination_viable"]
+
+    result = {
+        "d17_result": {
+            "eff_alpha": d17_result["eff_alpha"],
+            "depth_first": d17_result["depth_first"],
+            "non_asymptotic": d17_result["non_asymptotic"],
+            "target_met": d17_result["target_met"],
+        },
+        "heliosphere_result": {
+            "oort_distance_au": OORT_INTEGRATION_DISTANCE_AU,
+            "combined_autonomy": combined_autonomy,
+            "coordination_viable": coordination_viable,
+        },
+        "combined_alpha": round(combined_alpha, 4),
+        "combined_autonomy": round(combined_autonomy, 4),
+        "all_targets_met": d17_result["target_met"] and coordination_viable,
+        "gate": "t24h",
+    }
+
+    emit_receipt(
+        "d17_heliosphere_hybrid_backbone",
+        {
+            "receipt_type": "d17_heliosphere_hybrid_backbone",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "combined_alpha": round(combined_alpha, 4),
+            "combined_autonomy": round(combined_autonomy, 4),
             "all_targets_met": result["all_targets_met"],
             "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
         },

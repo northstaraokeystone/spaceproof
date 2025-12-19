@@ -132,6 +132,12 @@ def create_parser() -> argparse.ArgumentParser:
     # PLONK flags
     _add_plonk_args(parser)
 
+    # D17 Heliosphere flags
+    _add_d17_args(parser)
+
+    # Heliosphere-Oort flags
+    _add_heliosphere_args(parser)
+
     return parser
 
 
@@ -1748,4 +1754,102 @@ def _add_ml_ensemble_args(parser: argparse.ArgumentParser) -> None:
         type=int,
         default=60,
         help="Prediction horizon in seconds (default: 60)",
+    )
+
+
+def _add_d17_args(parser: argparse.ArgumentParser) -> None:
+    """Add D17 depth-first Heliosphere arguments."""
+    parser.add_argument(
+        "--d17_push", action="store_true", help="Run D17 recursion for alpha>=3.92"
+    )
+    parser.add_argument(
+        "--d17_info", action="store_true", help="Show D17 configuration"
+    )
+    parser.add_argument(
+        "--d17_depthfirst",
+        action="store_true",
+        help="Show D17 depth-first metrics",
+    )
+    parser.add_argument(
+        "--d17_plateau_check",
+        action="store_true",
+        help="Check for asymptotic plateau",
+    )
+    parser.add_argument(
+        "--d17_heliosphere_hybrid",
+        action="store_true",
+        help="Run integrated D17+Heliosphere hybrid",
+    )
+    parser.add_argument(
+        "--bulletproofs_infinite_chain",
+        action="store_true",
+        help="Run 10k infinite chain test",
+    )
+    parser.add_argument(
+        "--bulletproofs_10k_stress",
+        action="store_true",
+        help="Run 10k stress test",
+    )
+    parser.add_argument(
+        "--ml_ensemble_90s",
+        action="store_true",
+        help="Run 90s ML ensemble forecast",
+    )
+    parser.add_argument(
+        "--ml_ensemble_90s_info",
+        action="store_true",
+        help="Show 90s ML ensemble configuration",
+    )
+
+
+def _add_heliosphere_args(parser: argparse.ArgumentParser) -> None:
+    """Add Heliosphere-Oort cloud arguments."""
+    parser.add_argument(
+        "--heliosphere_info",
+        action="store_true",
+        help="Show Heliosphere configuration",
+    )
+    parser.add_argument(
+        "--heliosphere_zones",
+        action="store_true",
+        help="Show Heliosphere zone boundaries",
+    )
+    parser.add_argument(
+        "--heliosphere_status",
+        action="store_true",
+        help="Show current Heliosphere status",
+    )
+    parser.add_argument(
+        "--oort_info", action="store_true", help="Show Oort cloud configuration"
+    )
+    parser.add_argument(
+        "--oort_simulate",
+        action="store_true",
+        help="Run Oort cloud coordination simulation",
+    )
+    parser.add_argument(
+        "--oort_latency",
+        action="store_true",
+        help="Show Oort latency metrics",
+    )
+    parser.add_argument(
+        "--oort_autonomy",
+        action="store_true",
+        help="Show Oort autonomy level",
+    )
+    parser.add_argument(
+        "--oort_compression",
+        action="store_true",
+        help="Show compression metrics",
+    )
+    parser.add_argument(
+        "--oort_stability",
+        action="store_true",
+        help="Check Oort coordination stability",
+    )
+    parser.add_argument(
+        "--oort_au",
+        type=float,
+        default=50000,
+        help="Oort simulation distance in AU (default: 50000)",
     )
