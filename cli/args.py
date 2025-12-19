@@ -1438,3 +1438,165 @@ def _add_plonk_args(parser: argparse.ArgumentParser) -> None:
         default=5,
         help="PLONK audit attestation count (default: 5)",
     )
+
+    # D15 flags
+    _add_d15_args(parser)
+
+    # Chaos simulation flags
+    _add_chaos_args(parser)
+
+    # Halo2 flags
+    _add_halo2_args(parser)
+
+    # Atacama 200Hz flags
+    _add_atacama_200hz_args(parser)
+
+
+def _add_d15_args(parser: argparse.ArgumentParser) -> None:
+    """Add D15 quantum-entangled fractal recursion arguments."""
+    parser.add_argument(
+        "--d15_push", action="store_true", help="Run D15 recursion for alpha>=3.81"
+    )
+    parser.add_argument(
+        "--d15_info", action="store_true", help="Show D15 configuration"
+    )
+    parser.add_argument(
+        "--d15_chaos_hybrid",
+        action="store_true",
+        help="Run integrated D15+chaos+backbone hybrid",
+    )
+    parser.add_argument(
+        "--d15_entanglement",
+        action="store_true",
+        help="Test quantum entanglement correlation",
+    )
+
+
+def _add_chaos_args(parser: argparse.ArgumentParser) -> None:
+    """Add chaotic n-body simulation arguments."""
+    parser.add_argument(
+        "--chaos_info", action="store_true", help="Show chaos simulation configuration"
+    )
+    parser.add_argument(
+        "--chaos_simulate", action="store_true", help="Run chaotic n-body simulation"
+    )
+    parser.add_argument(
+        "--chaos_stability", action="store_true", help="Check simulation stability"
+    )
+    parser.add_argument(
+        "--chaos_monte_carlo",
+        action="store_true",
+        help="Run Monte Carlo stability analysis",
+    )
+    parser.add_argument(
+        "--chaos_backbone_tolerance",
+        action="store_true",
+        help="Compute backbone chaos tolerance",
+    )
+    parser.add_argument(
+        "--chaos_lyapunov", action="store_true", help="Compute Lyapunov exponent"
+    )
+    parser.add_argument(
+        "--chaos_iterations",
+        type=int,
+        default=1000,
+        help="Chaos simulation iterations (default: 1000)",
+    )
+    parser.add_argument(
+        "--chaos_dt",
+        type=float,
+        default=0.001,
+        help="Chaos simulation time step (default: 0.001)",
+    )
+    parser.add_argument(
+        "--chaos_monte_carlo_runs",
+        type=int,
+        default=100,
+        help="Monte Carlo runs (default: 100)",
+    )
+
+
+def _add_halo2_args(parser: argparse.ArgumentParser) -> None:
+    """Add Halo2 recursive ZK proof arguments."""
+    parser.add_argument(
+        "--halo2_info", action="store_true", help="Show Halo2 configuration"
+    )
+    parser.add_argument(
+        "--halo2_prove", action="store_true", help="Generate Halo2 proof"
+    )
+    parser.add_argument(
+        "--halo2_verify", action="store_true", help="Verify Halo2 proof"
+    )
+    parser.add_argument(
+        "--halo2_recursive",
+        action="store_true",
+        help="Generate recursive proof (infinite depth capable)",
+    )
+    parser.add_argument(
+        "--halo2_attestation",
+        action="store_true",
+        help="Create Halo2 attestation",
+    )
+    parser.add_argument(
+        "--halo2_audit", action="store_true", help="Run full Halo2 audit"
+    )
+    parser.add_argument(
+        "--halo2_benchmark", action="store_true", help="Benchmark Halo2 proof system"
+    )
+    parser.add_argument(
+        "--halo2_compare", action="store_true", help="Compare Halo2 vs PLONK vs Groth16"
+    )
+    parser.add_argument(
+        "--halo2_infinite_chain",
+        action="store_true",
+        help="Generate infinite attestation chain",
+    )
+    parser.add_argument(
+        "--halo2_recursive_depth",
+        type=int,
+        default=5,
+        help="Recursive proof depth (default: 5)",
+    )
+    parser.add_argument(
+        "--halo2_iterations",
+        type=int,
+        default=10,
+        help="Halo2 benchmark iterations (default: 10)",
+    )
+    parser.add_argument(
+        "--halo2_attestation_count",
+        type=int,
+        default=5,
+        help="Halo2 audit attestation count (default: 5)",
+    )
+    parser.add_argument(
+        "--halo2_chain_depth",
+        type=int,
+        default=10,
+        help="Infinite chain depth (default: 10)",
+    )
+
+
+def _add_atacama_200hz_args(parser: argparse.ArgumentParser) -> None:
+    """Add Atacama 200Hz drone sampling arguments."""
+    parser.add_argument(
+        "--atacama_200hz",
+        action="store_true",
+        help="Run Atacama 200Hz mode",
+    )
+    parser.add_argument(
+        "--atacama_200hz_info",
+        action="store_true",
+        help="Show Atacama 200Hz configuration",
+    )
+    parser.add_argument(
+        "--atacama_200hz_predict",
+        action="store_true",
+        help="Run dust devil prediction at 200Hz",
+    )
+    parser.add_argument(
+        "--atacama_200hz_duration",
+        type=float,
+        default=60.0,
+        help="200Hz simulation duration in seconds (default: 60)",
+    )

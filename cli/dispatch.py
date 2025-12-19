@@ -273,6 +273,37 @@ from cli.plonk import (
     cmd_plonk_compare,
 )
 
+# D15 quantum-entangled fractal commands
+from cli.d15 import (
+    cmd_d15_info,
+    cmd_d15_push,
+    cmd_d15_chaos_hybrid,
+    cmd_d15_entanglement,
+)
+
+# Chaotic n-body simulation commands
+from cli.chaos import (
+    cmd_chaos_info,
+    cmd_chaos_simulate,
+    cmd_chaos_stability,
+    cmd_chaos_monte_carlo,
+    cmd_chaos_backbone_tolerance,
+    cmd_chaos_lyapunov,
+)
+
+# Halo2 recursive ZK proof commands
+from cli.halo2 import (
+    cmd_halo2_info,
+    cmd_halo2_prove,
+    cmd_halo2_verify,
+    cmd_halo2_recursive,
+    cmd_halo2_attestation,
+    cmd_halo2_audit,
+    cmd_halo2_benchmark,
+    cmd_halo2_compare,
+    cmd_halo2_infinite_chain,
+)
+
 
 def dispatch(args, docstring: str) -> None:
     """Dispatch command based on parsed arguments.
@@ -752,6 +783,89 @@ def dispatch(args, docstring: str) -> None:
         return cmd_plonk_benchmark(args)
     if args.plonk_compare:
         return cmd_plonk_compare(args)
+
+    # D15 quantum-entangled fractal commands
+    if args.d15_info:
+        return cmd_d15_info(args)
+    if args.d15_push:
+        return cmd_d15_push(args)
+    if args.d15_chaos_hybrid:
+        return cmd_d15_chaos_hybrid(args)
+    if args.d15_entanglement:
+        return cmd_d15_entanglement(args)
+
+    # Chaotic n-body simulation commands
+    if args.chaos_info:
+        return cmd_chaos_info(args)
+    if args.chaos_simulate:
+        return cmd_chaos_simulate(args)
+    if args.chaos_stability:
+        return cmd_chaos_stability(args)
+    if args.chaos_monte_carlo:
+        return cmd_chaos_monte_carlo(args)
+    if args.chaos_backbone_tolerance:
+        return cmd_chaos_backbone_tolerance(args)
+    if args.chaos_lyapunov:
+        return cmd_chaos_lyapunov(args)
+
+    # Halo2 recursive ZK proof commands
+    if args.halo2_info:
+        return cmd_halo2_info(args)
+    if args.halo2_prove:
+        return cmd_halo2_prove(args)
+    if args.halo2_verify:
+        return cmd_halo2_verify(args)
+    if args.halo2_recursive:
+        return cmd_halo2_recursive(args)
+    if args.halo2_attestation:
+        return cmd_halo2_attestation(args)
+    if args.halo2_audit:
+        args.count = args.halo2_attestation_count
+        return cmd_halo2_audit(args)
+    if args.halo2_benchmark:
+        args.iterations = args.halo2_iterations
+        return cmd_halo2_benchmark(args)
+    if args.halo2_compare:
+        return cmd_halo2_compare(args)
+    if args.halo2_infinite_chain:
+        return cmd_halo2_infinite_chain(args)
+
+    # Atacama 200Hz commands
+    if args.atacama_200hz:
+        from src.cfd_dust_dynamics import atacama_200hz
+
+        result = atacama_200hz(
+            duration_sec=args.atacama_200hz_duration,
+        )
+        print("\n=== ATACAMA 200Hz MODE ===")
+        print(f"Duration: {result.get('duration_sec', 0)} sec")
+        print(f"Sampling: {result.get('sampling_hz', 200)} Hz")
+        print(f"Samples collected: {result.get('samples_collected', 0)}")
+        print(f"Correlation: {result.get('correlation', 0):.4f}")
+        print(f"Target met: {result.get('target_met', False)}")
+        return
+    if args.atacama_200hz_info:
+        from src.cfd_dust_dynamics import get_atacama_200hz_info
+
+        result = get_atacama_200hz_info()
+        print("\n=== ATACAMA 200Hz CONFIGURATION ===")
+        print(f"Sampling rate: {result.get('sampling_hz', 200)} Hz")
+        print(f"Correlation target: {result.get('correlation_target', 0.97)}")
+        print(f"Upgrade from: 100Hz")
+        return
+    if args.atacama_200hz_predict:
+        from src.cfd_dust_dynamics import predict_dust_devil
+
+        result = predict_dust_devil(
+            duration_sec=args.atacama_200hz_duration,
+            sampling_hz=200,
+        )
+        print("\n=== ATACAMA 200Hz DUST DEVIL PREDICTION ===")
+        print(f"Duration: {result.get('duration_sec', 0)} sec")
+        print(f"Predictions made: {result.get('predictions_made', 0)}")
+        print(f"Prediction accuracy: {result.get('accuracy', 0):.2%}")
+        print(f"Lead time: {result.get('lead_time_sec', 0):.1f} sec")
+        return
 
     # Expanded AGI audit commands
     if args.audit_expanded:

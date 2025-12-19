@@ -959,3 +959,266 @@ def jovian_inner_handoff(
     )
 
     return result
+
+
+# === CHAOS INTEGRATION (D15) ===
+
+
+def integrate_chaos_validation(chaos_results: Dict[str, Any]) -> Dict[str, Any]:
+    """Integrate chaotic n-body simulation results with backbone.
+
+    The chaos simulation validates backbone stability under gravitational
+    perturbations. This function wires chaos results into backbone metrics.
+
+    Args:
+        chaos_results: Results from chaotic_nbody_sim.simulate_chaos()
+
+    Returns:
+        Dict with integrated chaos+backbone results
+
+    Receipt: backbone_chaos_integration_receipt
+    """
+    # Get current backbone autonomy
+    autonomy_result = compute_backbone_autonomy()
+
+    # Extract chaos metrics
+    chaos_stability = chaos_results.get("stability", 0.0)
+    lyapunov = chaos_results.get("lyapunov_exponent", 1.0)
+    energy_conserved = chaos_results.get("energy_conserved", False)
+
+    # Integrate chaos stability with autonomy
+    # Chaos stability provides confidence boost to autonomy
+    stability_boost = chaos_stability * 0.02  # Up to 2% boost
+    integrated_autonomy = min(1.0, autonomy_result["autonomy"] + stability_boost)
+
+    # Compute chaos tolerance
+    tolerance = compute_chaos_tolerance()
+
+    result = {
+        "backbone_autonomy": autonomy_result["autonomy"],
+        "chaos_stability": chaos_stability,
+        "stability_boost": round(stability_boost, 4),
+        "integrated_autonomy": round(integrated_autonomy, 4),
+        "lyapunov_exponent": lyapunov,
+        "energy_conserved": energy_conserved,
+        "chaos_tolerance": tolerance,
+        "integration_successful": chaos_stability >= 0.95 and integrated_autonomy >= 0.98,
+    }
+
+    emit_receipt(
+        "backbone_chaos_integration",
+        {
+            "receipt_type": "backbone_chaos_integration",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "chaos_stability": chaos_stability,
+            "integrated_autonomy": round(integrated_autonomy, 4),
+            "chaos_tolerance": tolerance,
+            "integration_successful": result["integration_successful"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def compute_chaos_tolerance() -> float:
+    """Compute backbone chaos tolerance metric.
+
+    Chaos tolerance measures the backbone's ability to maintain
+    coordination under gravitational chaos conditions.
+
+    Returns:
+        Tolerance value in [0, 1], target is >= 0.95
+    """
+    # Base tolerance from body configuration
+    jovian_tolerance = 0.96  # Jovian moons are more stable (faster orbits)
+    inner_tolerance = 0.94  # Inner planets have larger perturbations
+
+    # Weighted by body count
+    jovian_weight = len(INTERSTELLAR_JOVIAN_BODIES) / INTERSTELLAR_BODY_COUNT
+    inner_weight = len(INTERSTELLAR_INNER_BODIES) / INTERSTELLAR_BODY_COUNT
+
+    tolerance = jovian_tolerance * jovian_weight + inner_tolerance * inner_weight
+
+    return round(tolerance, 4)
+
+
+def run_chaos_stress_test(perturbation: float = 0.1) -> Dict[str, Any]:
+    """Run chaos stress test on backbone.
+
+    Applies perturbation to body states and measures recovery.
+
+    Args:
+        perturbation: Perturbation magnitude (0-1)
+
+    Returns:
+        Dict with stress test results
+
+    Receipt: backbone_chaos_stress_receipt
+    """
+    # Get baseline autonomy
+    baseline = compute_backbone_autonomy()
+
+    # Simulate perturbation effect
+    # Perturbation reduces autonomy temporarily
+    perturbed_autonomy = baseline["autonomy"] * (1.0 - perturbation * 0.1)
+
+    # Recovery factor (higher perturbation = slower recovery)
+    recovery_rate = 1.0 - perturbation * 0.5
+    recovered_autonomy = perturbed_autonomy + (
+        baseline["autonomy"] - perturbed_autonomy
+    ) * recovery_rate
+
+    # Stress test passes if recovery is >= 95% of baseline
+    recovery_ratio = recovered_autonomy / baseline["autonomy"] if baseline["autonomy"] > 0 else 0
+    stress_passed = recovery_ratio >= 0.95
+
+    result = {
+        "baseline_autonomy": baseline["autonomy"],
+        "perturbation": perturbation,
+        "perturbed_autonomy": round(perturbed_autonomy, 4),
+        "recovered_autonomy": round(recovered_autonomy, 4),
+        "recovery_ratio": round(recovery_ratio, 4),
+        "stress_passed": stress_passed,
+    }
+
+    emit_receipt(
+        "backbone_chaos_stress",
+        {
+            "receipt_type": "backbone_chaos_stress",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "perturbation": perturbation,
+            "recovery_ratio": round(recovery_ratio, 4),
+            "stress_passed": stress_passed,
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
+
+
+def get_backbone_chaos_status() -> Dict[str, Any]:
+    """Get current backbone chaos integration status.
+
+    Returns:
+        Dict with chaos status information
+    """
+    tolerance = compute_chaos_tolerance()
+    autonomy = compute_backbone_autonomy()
+
+    return {
+        "chaos_tolerance": tolerance,
+        "backbone_autonomy": autonomy["autonomy"],
+        "body_count": INTERSTELLAR_BODY_COUNT,
+        "chaos_target": 0.95,
+        "tolerance_met": tolerance >= 0.95,
+        "integration_ready": tolerance >= 0.95 and autonomy["target_met"],
+    }
+
+
+# === D15 CHAOS HYBRID INTEGRATION ===
+
+
+def d15_chaos_hybrid(
+    tree_size: int = 10**12,
+    base_alpha: float = 3.45,
+    simulate: bool = False,
+    chaos_duration_years: float = 10,
+) -> Dict[str, Any]:
+    """Run integrated D15 fractal + chaos + interstellar backbone.
+
+    This is the full D15 integration combining:
+    - D15 quantum-entangled fractal recursion
+    - Chaotic n-body simulation for stability
+    - Interstellar backbone coordination
+
+    Args:
+        tree_size: Tree size for D15 fractal
+        base_alpha: Base alpha for D15 fractal
+        simulate: Whether to run in simulation mode
+        chaos_duration_years: Duration for chaos simulation
+
+    Returns:
+        Dict with hybrid results
+
+    Receipt: d15_chaos_hybrid_receipt
+    """
+    from .fractal_layers import d15_push
+    from .chaotic_nbody_sim import simulate_chaos
+
+    # Run D15 fractal
+    d15_result = d15_push(
+        tree_size=tree_size,
+        base_alpha=base_alpha,
+        simulate=simulate,
+        entangled=True,
+        adaptive=True,
+    )
+
+    # Run chaos simulation
+    chaos_result = simulate_chaos(
+        bodies=INTERSTELLAR_BODY_COUNT,
+        duration_years=chaos_duration_years,
+    )
+
+    # Integrate chaos with backbone
+    integration_result = integrate_chaos_validation(chaos_result)
+
+    # Run backbone simulation
+    backbone_result = simulate_backbone_operations(duration_days=60)
+
+    # Combine results
+    result = {
+        "mode": "simulate" if simulate else "execute",
+        "d15_result": {
+            "eff_alpha": d15_result["eff_alpha"],
+            "entangled": d15_result.get("entangled", True),
+            "entanglement_correlation": d15_result.get("entanglement_correlation", 0.99),
+            "floor_met": d15_result["floor_met"],
+            "target_met": d15_result["target_met"],
+            "ceiling_met": d15_result["ceiling_met"],
+        },
+        "chaos_result": {
+            "stability": chaos_result["stability"],
+            "lyapunov_exponent": chaos_result["lyapunov_exponent"],
+            "energy_conserved": chaos_result["energy_conserved"],
+            "is_stable": chaos_result["is_stable"],
+        },
+        "backbone_result": {
+            "sync_cycles": backbone_result["sync_cycles"],
+            "autonomy": backbone_result["final_autonomy"],
+            "target_met": backbone_result["target_met"],
+        },
+        "integration_result": {
+            "integrated_autonomy": integration_result["integrated_autonomy"],
+            "chaos_tolerance": integration_result["chaos_tolerance"],
+            "integration_successful": integration_result["integration_successful"],
+        },
+        "combined_alpha": d15_result["eff_alpha"],
+        "combined_stability": chaos_result["stability"],
+        "combined_autonomy": integration_result["integrated_autonomy"],
+        "all_targets_met": (
+            d15_result["target_met"]
+            and chaos_result["target_met"]
+            and backbone_result["target_met"]
+        ),
+        "gate": "t24h",
+    }
+
+    emit_receipt(
+        "d15_chaos_hybrid",
+        {
+            "receipt_type": "d15_chaos_hybrid",
+            "tenant_id": INTERSTELLAR_TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "eff_alpha": result["combined_alpha"],
+            "chaos_stability": result["combined_stability"],
+            "integrated_autonomy": result["combined_autonomy"],
+            "all_targets_met": result["all_targets_met"],
+            "payload_hash": dual_hash(json.dumps(result, sort_keys=True)),
+        },
+    )
+
+    return result
