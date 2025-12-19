@@ -322,6 +322,28 @@ from cli.d16 import (
     cmd_ml_ensemble_train,
 )
 
+# D17 depth-first fractal + Heliosphere/Oort commands
+from cli.d17 import (
+    cmd_d17_info,
+    cmd_d17_push,
+    cmd_d17_depthfirst,
+    cmd_d17_plateau_check,
+    cmd_d17_heliosphere_hybrid,
+    cmd_heliosphere_info,
+    cmd_heliosphere_zones,
+    cmd_heliosphere_status,
+    cmd_oort_info,
+    cmd_oort_simulate,
+    cmd_oort_latency,
+    cmd_oort_autonomy,
+    cmd_oort_compression,
+    cmd_oort_stability,
+    cmd_bulletproofs_infinite_chain,
+    cmd_bulletproofs_10k_stress,
+    cmd_ml_ensemble_90s,
+    cmd_ml_ensemble_90s_info,
+)
+
 
 def dispatch(args, docstring: str) -> None:
     """Dispatch command based on parsed arguments.
@@ -878,6 +900,44 @@ def dispatch(args, docstring: str) -> None:
     if args.ml_ensemble_train:
         return cmd_ml_ensemble_train(args)
 
+    # D17 depth-first fractal + Heliosphere/Oort commands
+    if args.d17_info:
+        return cmd_d17_info(args)
+    if args.d17_push:
+        return cmd_d17_push(args)
+    if args.d17_depthfirst:
+        return cmd_d17_depthfirst(args)
+    if args.d17_plateau_check:
+        return cmd_d17_plateau_check(args)
+    if args.d17_heliosphere_hybrid:
+        return cmd_d17_heliosphere_hybrid(args)
+    if args.heliosphere_info:
+        return cmd_heliosphere_info(args)
+    if args.heliosphere_zones:
+        return cmd_heliosphere_zones(args)
+    if args.heliosphere_status:
+        return cmd_heliosphere_status(args)
+    if args.oort_info:
+        return cmd_oort_info(args)
+    if args.oort_simulate:
+        return cmd_oort_simulate(args)
+    if args.oort_latency:
+        return cmd_oort_latency(args)
+    if args.oort_autonomy:
+        return cmd_oort_autonomy(args)
+    if args.oort_compression:
+        return cmd_oort_compression(args)
+    if args.oort_stability:
+        return cmd_oort_stability(args)
+    if args.bulletproofs_infinite_chain:
+        return cmd_bulletproofs_infinite_chain(args)
+    if args.bulletproofs_10k_stress:
+        return cmd_bulletproofs_10k_stress(args)
+    if args.ml_ensemble_90s:
+        return cmd_ml_ensemble_90s(args)
+    if args.ml_ensemble_90s_info:
+        return cmd_ml_ensemble_90s_info(args)
+
     # Atacama 200Hz commands
     if args.atacama_200hz:
         from src.cfd_dust_dynamics import atacama_200hz
@@ -899,7 +959,7 @@ def dispatch(args, docstring: str) -> None:
         print("\n=== ATACAMA 200Hz CONFIGURATION ===")
         print(f"Sampling rate: {result.get('sampling_hz', 200)} Hz")
         print(f"Correlation target: {result.get('correlation_target', 0.97)}")
-        print(f"Upgrade from: 100Hz")
+        print("Upgrade from: 100Hz")
         return
     if args.atacama_200hz_predict:
         from src.cfd_dust_dynamics import predict_dust_devil

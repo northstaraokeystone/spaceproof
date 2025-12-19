@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "d17_config": {
+    "recursion_depth": 17,
+    "alpha_floor": 3.92,
+    "alpha_target": 3.90,
+    "alpha_ceiling": 3.96,
+    "uplift": 0.40,
+    "depth_first": true,
+    "non_asymptotic": true,
+    "termination_threshold": 0.00025,
+    "plateau_detected": false,
+    "instability_max": 0.0
+  },
+  "uplift_by_depth": {
+    "1": 0.04,
+    "2": 0.072,
+    "3": 0.0976,
+    "4": 0.1181,
+    "5": 0.1345,
+    "6": 0.1476,
+    "7": 0.1581,
+    "8": 0.1665,
+    "9": 0.1732,
+    "10": 0.1786,
+    "11": 0.1828,
+    "12": 0.1863,
+    "13": 0.189,
+    "14": 0.34,
+    "15": 0.36,
+    "16": 0.38,
+    "17": 0.40
+  },
+  "heliosphere_config": {
+    "heliosphere_radius_au": 120,
+    "termination_shock_au": 94,
+    "heliopause_au": 121,
+    "bow_shock_au": 230
+  },
+  "oort_cloud_config": {
+    "inner_edge_au": 2000,
+    "outer_edge_au": 100000,
+    "simulation_distance_au": 50000,
+    "light_delay_hours_one_way": 6.9,
+    "round_trip_hours": 13.8,
+    "autonomy_target": 0.999,
+    "compression_ratio_target": 0.99,
+    "coordination_interval_days": 365,
+    "body_count_estimate": 1000000000000
+  },
+  "compression_latency_config": {
+    "compression_mitigation": true,
+    "compression_return_threshold": 0.95,
+    "held_coordination": true,
+    "latency_tolerance_hours": 24,
+    "predictive_coordination": true
+  },
+  "bulletproofs_infinite_config": {
+    "infinite_depth": 10000,
+    "chain_resilience_target": 1.0,
+    "aggregation_factor": 100,
+    "proof_size_bytes": 672,
+    "verify_time_ms": 2,
+    "stress_test_enabled": true
+  },
+  "ml_ensemble_90s_config": {
+    "model_count": 7,
+    "model_types": ["lstm", "transformer", "cnn", "xgboost", "gru", "tcn", "wavenet"],
+    "prediction_horizon_s": 90,
+    "accuracy_target": 0.88,
+    "agreement_threshold": 0.75,
+    "retrain_interval_hours": 12
+  }
+}
