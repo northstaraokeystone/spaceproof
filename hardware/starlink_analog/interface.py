@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from src.core import TENANT_ID, dual_hash, emit_receipt
+from spaceproof.core import TENANT_ID, dual_hash, emit_receipt
 
 # Default configuration
 DEFAULT_LATENCY_MS = 500

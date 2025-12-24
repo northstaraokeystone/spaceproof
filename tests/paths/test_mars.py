@@ -14,7 +14,7 @@ Source: AXIOM scalable paths architecture - Mars autonomous habitat
 
 def test_mars_spec_loads():
     """Spec loads with valid structure."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
 
@@ -27,7 +27,7 @@ def test_mars_spec_loads():
 
 def test_mars_stub_ready():
     """Stub status reports ready."""
-    from src.paths.mars import stub_status
+    from spaceproof.paths.mars import stub_status
 
     status = stub_status()
 
@@ -38,7 +38,7 @@ def test_mars_stub_ready():
 
 def test_mars_isru_target():
     """ISRU closure target is 0.85."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -48,7 +48,7 @@ def test_mars_isru_target():
 
 def test_mars_isru_uplift_target():
     """ISRU uplift target is 0.15."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -58,7 +58,7 @@ def test_mars_isru_uplift_target():
 
 def test_mars_sovereignty_defined():
     """Sovereignty threshold is defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -69,7 +69,7 @@ def test_mars_sovereignty_defined():
 
 def test_mars_crew_range():
     """Crew range is defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -79,7 +79,7 @@ def test_mars_crew_range():
 
 def test_mars_decision_rate():
     """Decision rate target is defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -89,7 +89,7 @@ def test_mars_decision_rate():
 
 def test_mars_dome_resources():
     """Dome resources are defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
     config = spec.get("config", {})
@@ -103,7 +103,7 @@ def test_mars_dome_resources():
 
 def test_mars_simulate_dome():
     """Dome simulation returns expected structure."""
-    from src.paths.mars import simulate_dome
+    from spaceproof.paths.mars import simulate_dome
 
     result = simulate_dome(crew=50, duration_days=365)
 
@@ -117,7 +117,7 @@ def test_mars_simulate_dome():
 
 def test_mars_compute_isru_closure():
     """ISRU closure computation works."""
-    from src.paths.mars import compute_isru_closure
+    from spaceproof.paths.mars import compute_isru_closure
 
     resources = {
         "water": (85, 100),
@@ -134,7 +134,7 @@ def test_mars_compute_isru_closure():
 
 def test_mars_compute_sovereignty():
     """Sovereignty computation works."""
-    from src.paths.mars import compute_sovereignty
+    from spaceproof.paths.mars import compute_sovereignty
 
     # High crew, should be sovereign
     is_sovereign = compute_sovereignty(crew=100, bandwidth_mbps=100, latency_s=1200)
@@ -147,7 +147,7 @@ def test_mars_compute_sovereignty():
 
 def test_mars_dependencies():
     """Dependencies are specified."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
 
@@ -157,7 +157,7 @@ def test_mars_dependencies():
 
 def test_mars_receipts_defined():
     """Receipt types are defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("mars")
 
@@ -170,7 +170,7 @@ def test_mars_receipts_defined():
 
 def test_mars_cli_status():
     """CLI status command works."""
-    from src.paths.mars.cli import cmd_mars_status
+    from spaceproof.paths.mars.cli import cmd_mars_status
 
     result = cmd_mars_status()
 

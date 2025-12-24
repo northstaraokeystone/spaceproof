@@ -1,13 +1,28 @@
-# AXIOM Architecture Specification
+# SpaceProof Specification v4.0
+
+**Space-grade proof infrastructure. No receipt, not real.**
+
+Part of ProofChain: SpaceProof | SpendProof | ClaimProof | VoteProof | OriginProof | GreenProof
 
 > **Version:** 4.0.0
 > **Date:** 2025-12-24
 > **Status:** ACTIVE - D20 Production Evolution
-> **Dual-Hash:** Updated via D20 Production Evolution
+> **Dual-Hash:** SHA256:BLAKE3 format
 
 ---
 
-## §0 D20 PRODUCTION EVOLUTION
+## §0 OVERVIEW
+
+SpaceProof is a unified receipts-native proof infrastructure for:
+- Telemetry compression (10x+ at 0.999 recall)
+- Physics law discovery (KAN/MDL witness)
+- Autonomy threshold calculation (sovereignty)
+- Entropy-based anomaly detection (fraud)
+- Cryptographic audit trails (ledger + anchor)
+
+---
+
+## §0.1 D20 PRODUCTION EVOLUTION
 
 ### The Paradigm Inversion
 
@@ -31,9 +46,9 @@ When a DOT secretary sees `qed.py`, they see nothing. When they see `compress.py
 
 | Domain | Path | Purpose |
 |--------|------|---------|
-| galaxy | src/domains/galaxy.py | Galaxy rotation curves |
-| colony | src/domains/colony.py | Mars colony simulation |
-| telemetry | src/domains/telemetry.py | Fleet telemetry (Tesla/Starlink/SpaceX) |
+| galaxy | spaceproof/domains/galaxy.py | Galaxy rotation curves |
+| colony | spaceproof/domains/colony.py | Mars colony simulation |
+| telemetry | spaceproof/domains/telemetry.py | Fleet telemetry (Tesla/Starlink/SpaceX) |
 
 ### Stakeholder Configs (D20)
 
@@ -73,7 +88,7 @@ These three statements govern all that follows.
 
 ### 1.1 Purpose
 
-AXIOM is a compression-based sovereignty calculation and optimization system. It implements the core thesis that **compression = discovery** and that fundamental laws exist within data patterns. The system calculates when autonomous systems achieve sovereignty over external dependencies through decision rate optimization.
+SpaceProof is a compression-based sovereignty calculation and optimization system. It implements the core thesis that **compression = discovery** and that fundamental laws exist within data patterns. The system calculates when autonomous systems achieve sovereignty over external dependencies through decision rate optimization.
 
 ### 1.2 Core Thesis
 
@@ -551,7 +566,7 @@ v0.1    agi_policy     agi_ethics      agi_align         agi_audit
 
 ```bash
 # Core imports
-python -c "from src.core import dual_hash, emit_receipt; print('Core OK')"
+python -c "from spaceproof.core import dual_hash, emit_receipt; print('Core OK')"
 
 # CLI help
 python cli.py --help
@@ -581,7 +596,7 @@ grep -rq "except.*pass\|except:$" src/*.py && echo "FAIL: silent exception"
 pytest tests/ -x -q && grep -rq "emit_receipt" src/*.py && echo "PASS: T+24h"
 
 # T+48h gate
-grep -rq "stoprule" src/*.py && python -c "from src.stoprules import *" && echo "PASS: T+48h"
+grep -rq "stoprule" src/*.py && python -c "from spaceproof.stoprules import *" && echo "PASS: T+48h"
 ```
 
 ---
@@ -630,7 +645,7 @@ grep -rq "stoprule" src/*.py && python -c "from src.stoprules import *" && echo 
 
 ### 11.5 Git Status
 
-- **Branch:** claude/audit-axiom-architecture-ZZ9bY
+- **Branch:** claude/audit-spaceproof-architecture-ZZ9bY
 - **Merge debt:** None (even with main)
 - **Trailing commits:** None
 
@@ -638,6 +653,6 @@ grep -rq "stoprule" src/*.py && python -c "from src.stoprules import *" && echo 
 
 **Document Status:** ACTIVE
 **Last Updated:** 2025-12-24
-**Reviewed By:** AXIOM Architecture Audit Sprint
+**Reviewed By:** SpaceProof Architecture Audit Sprint
 
 *No receipt → not real. Ship at T+48h or kill.*

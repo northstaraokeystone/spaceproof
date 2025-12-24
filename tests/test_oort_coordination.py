@@ -8,7 +8,7 @@ Tests:
 - Autonomy level evaluation
 """
 
-from src.heliosphere_oort_sim import (
+from spaceproof.heliosphere_oort_sim import (
     load_heliosphere_config,
     load_oort_config,
     initialize_heliosphere_zones,

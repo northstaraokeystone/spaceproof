@@ -1,6 +1,6 @@
 """Tests for quantum refinement v2 module."""
 
-from src.quantum_refine_v2 import (
+from spaceproof.quantum_refine_v2 import (
     load_v2_config,
     refine_v2,
     iterative_refinement_v2,
@@ -13,7 +13,7 @@ from src.quantum_refine_v2 import (
     QUANTUM_V2_ITERATIONS,
     QUANTUM_V2_ERROR_CORRECTION_DEPTH,
 )
-from src.quantum_refine import create_entangled_pairs
+from spaceproof.quantum_refine import create_entangled_pairs
 
 
 class TestQuantumV2Config:

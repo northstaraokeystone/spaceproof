@@ -14,7 +14,7 @@ Source: AXIOM scalable paths architecture - Multi-planet expansion
 
 def test_multiplanet_spec_loads():
     """Spec loads with valid structure."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
 
@@ -27,7 +27,7 @@ def test_multiplanet_spec_loads():
 
 def test_multiplanet_stub_ready():
     """Stub status reports ready."""
-    from src.paths.multiplanet import stub_status
+    from spaceproof.paths.multiplanet import stub_status
 
     status = stub_status()
 
@@ -38,7 +38,7 @@ def test_multiplanet_stub_ready():
 
 def test_multiplanet_sequence():
     """Expansion sequence is correct (ordered by increasing autonomy)."""
-    from src.paths.multiplanet import get_sequence, EXPANSION_SEQUENCE
+    from spaceproof.paths.multiplanet import get_sequence, EXPANSION_SEQUENCE
 
     sequence = get_sequence()
 
@@ -48,7 +48,7 @@ def test_multiplanet_sequence():
 
 def test_multiplanet_latency_bounds():
     """All bodies have latency bounds."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
     latency_bounds = spec["config"]["relay_latency_bounds"]
@@ -62,7 +62,7 @@ def test_multiplanet_latency_bounds():
 
 def test_multiplanet_autonomy_increases():
     """Autonomy requirement increases with distance."""
-    from src.paths.multiplanet import AUTONOMY_REQUIREMENT, EXPANSION_SEQUENCE
+    from spaceproof.paths.multiplanet import AUTONOMY_REQUIREMENT, EXPANSION_SEQUENCE
 
     prev_autonomy = 0.0
     for body in EXPANSION_SEQUENCE:
@@ -73,7 +73,7 @@ def test_multiplanet_autonomy_increases():
 
 def test_multiplanet_autonomy_values():
     """Autonomy values match spec."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
     autonomy = spec["config"]["autonomy_requirement"]
@@ -86,7 +86,7 @@ def test_multiplanet_autonomy_values():
 
 def test_multiplanet_bandwidth_budget():
     """Bandwidth budget is defined for all bodies."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
     bandwidth = spec["config"]["bandwidth_budget_mbps"]
@@ -99,7 +99,7 @@ def test_multiplanet_bandwidth_budget():
 
 def test_multiplanet_compression_target():
     """Telemetry compression target is defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
     config = spec["config"]
@@ -109,7 +109,7 @@ def test_multiplanet_compression_target():
 
 def test_multiplanet_get_body_config():
     """Body config returns expected structure."""
-    from src.paths.multiplanet import get_body_config
+    from spaceproof.paths.multiplanet import get_body_config
 
     config = get_body_config("mars")
 
@@ -123,7 +123,7 @@ def test_multiplanet_get_body_config():
 
 def test_multiplanet_latency_budget():
     """Latency budget computation works."""
-    from src.paths.multiplanet import compute_latency_budget
+    from spaceproof.paths.multiplanet import compute_latency_budget
 
     budget = compute_latency_budget("mars")
 
@@ -136,7 +136,7 @@ def test_multiplanet_latency_budget():
 
 def test_multiplanet_autonomy_requirement():
     """Autonomy requirement function works."""
-    from src.paths.multiplanet import compute_autonomy_requirement
+    from spaceproof.paths.multiplanet import compute_autonomy_requirement
 
     autonomy = compute_autonomy_requirement("titan")
 
@@ -145,7 +145,7 @@ def test_multiplanet_autonomy_requirement():
 
 def test_multiplanet_simulate_body():
     """Body simulation returns expected structure."""
-    from src.paths.multiplanet import simulate_body
+    from spaceproof.paths.multiplanet import simulate_body
 
     result = simulate_body("asteroid")
 
@@ -156,7 +156,7 @@ def test_multiplanet_simulate_body():
 
 def test_multiplanet_telemetry_compression():
     """Telemetry compression computation works."""
-    from src.paths.multiplanet import compute_telemetry_compression
+    from spaceproof.paths.multiplanet import compute_telemetry_compression
 
     result = compute_telemetry_compression("mars", data_rate_mbps=1000)
 
@@ -168,7 +168,7 @@ def test_multiplanet_telemetry_compression():
 
 def test_multiplanet_dependencies():
     """Dependencies include mars."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
 
@@ -177,7 +177,7 @@ def test_multiplanet_dependencies():
 
 def test_multiplanet_receipts_defined():
     """Receipt types are defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("multiplanet")
 
@@ -190,7 +190,7 @@ def test_multiplanet_receipts_defined():
 
 def test_multiplanet_cli_status():
     """CLI status command works."""
-    from src.paths.multiplanet.cli import cmd_multiplanet_status
+    from spaceproof.paths.multiplanet.cli import cmd_multiplanet_status
 
     result = cmd_multiplanet_status()
 
@@ -200,7 +200,7 @@ def test_multiplanet_cli_status():
 
 def test_multiplanet_cli_sequence():
     """CLI sequence command works."""
-    from src.paths.multiplanet.cli import cmd_multiplanet_sequence
+    from spaceproof.paths.multiplanet.cli import cmd_multiplanet_sequence
 
     result = cmd_multiplanet_sequence()
 

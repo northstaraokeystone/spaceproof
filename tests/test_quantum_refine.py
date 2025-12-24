@@ -1,6 +1,6 @@
 """Tests for quantum refinement module."""
 
-from src.quantum_refine import (
+from spaceproof.quantum_refine import (
     load_refine_config,
     create_entangled_pairs,
     refine_correlation,

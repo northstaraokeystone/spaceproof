@@ -16,7 +16,7 @@ def cmd_consensus_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Configuration info.
     """
-    from src.lag_consensus import load_consensus_config
+    from spaceproof.lag_consensus import load_consensus_config
 
     config = load_consensus_config()
 
@@ -46,7 +46,7 @@ def cmd_consensus_init(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Initialization result.
     """
-    from src.lag_consensus import initialize_modified_raft
+    from spaceproof.lag_consensus import initialize_modified_raft
 
     nodes = getattr(args, "nodes", 5)
     node_ids = [f"node_{i}" for i in range(nodes)]
@@ -77,7 +77,7 @@ def cmd_consensus_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Simulation result.
     """
-    from src.lag_consensus import modified_raft_consensus
+    from spaceproof.lag_consensus import modified_raft_consensus
 
     nodes = getattr(args, "nodes", 5)
     latency = getattr(args, "latency", 6300)
@@ -110,7 +110,7 @@ def cmd_consensus_election(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Election result.
     """
-    from src.lag_consensus import (
+    from spaceproof.lag_consensus import (
         initialize_modified_raft,
         start_election,
         request_vote,
@@ -168,7 +168,7 @@ def cmd_consensus_status(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Status info.
     """
-    from src.lag_consensus import get_consensus_status
+    from spaceproof.lag_consensus import get_consensus_status
 
     status = get_consensus_status()
 

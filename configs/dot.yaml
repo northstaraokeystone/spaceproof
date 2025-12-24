@@ -1,8 +1,9 @@
-# configs/dot.yaml
+# SpaceProof config for DOT
 # DOT (Department of Transportation) stakeholder configuration
 # D20 Production Evolution
 
 stakeholder: dot
+version: "1.0"
 description: "FMCSA ELD compliance and infrastructure telemetry"
 
 primary_modules:

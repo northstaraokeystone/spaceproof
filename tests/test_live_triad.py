@@ -10,7 +10,7 @@ class TestLiveTriadIngestInit:
 
     def test_init_live_ingest(self):
         """Test live ingest initializes correctly."""
-        from src.swarm.live_triad_ingest import init_live_ingest
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest
 
         ingest = init_live_ingest({})
 
@@ -21,13 +21,13 @@ class TestLiveTriadIngestInit:
 
     def test_entropy_source_is_live_triad(self):
         """Test entropy source is live_triad not synthetic."""
-        from src.swarm.live_triad_ingest import ENTROPY_SOURCE
+        from spaceproof.swarm.live_triad_ingest import ENTROPY_SOURCE
 
         assert ENTROPY_SOURCE == "live_triad"
 
     def test_synthetic_disabled(self):
         """Test synthetic scenarios are disabled."""
-        from src.swarm.live_triad_ingest import SYNTHETIC_SCENARIOS_ENABLED
+        from spaceproof.swarm.live_triad_ingest import SYNTHETIC_SCENARIOS_ENABLED
 
         assert SYNTHETIC_SCENARIOS_ENABLED is False
 
@@ -37,7 +37,7 @@ class TestLiveTriadConnection:
 
     def test_connect_agentproof(self):
         """Test AgentProof ledger connection."""
-        from src.swarm.live_triad_ingest import init_live_ingest, connect_agentproof
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, connect_agentproof
 
         ingest = init_live_ingest({})
         result = connect_agentproof(ingest)
@@ -47,7 +47,7 @@ class TestLiveTriadConnection:
 
     def test_connect_neuron(self):
         """Test NEURON ledger connection."""
-        from src.swarm.live_triad_ingest import init_live_ingest, connect_neuron
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, connect_neuron
 
         ingest = init_live_ingest({})
         result = connect_neuron(ingest)
@@ -57,7 +57,7 @@ class TestLiveTriadConnection:
 
     def test_both_sources_connect(self):
         """Test both sources connect successfully."""
-        from src.swarm.live_triad_ingest import (
+        from spaceproof.swarm.live_triad_ingest import (
             init_live_ingest,
             connect_agentproof,
             connect_neuron,
@@ -77,7 +77,7 @@ class TestLiveTriadIngest:
 
     def test_ingest_receipt(self):
         """Test single receipt ingestion."""
-        from src.swarm.live_triad_ingest import init_live_ingest, ingest_receipt
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, ingest_receipt
 
         ingest = init_live_ingest({})
         receipt = ingest_receipt(ingest, "agentproof_ledger")
@@ -88,7 +88,7 @@ class TestLiveTriadIngest:
 
     def test_batch_ingest(self):
         """Test batch receipt ingestion."""
-        from src.swarm.live_triad_ingest import init_live_ingest, batch_ingest
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, batch_ingest
 
         ingest = init_live_ingest({})
         receipts = batch_ingest(ingest, 50)
@@ -98,7 +98,7 @@ class TestLiveTriadIngest:
 
     def test_buffer_maintains_size(self):
         """Test buffer respects size limit."""
-        from src.swarm.live_triad_ingest import init_live_ingest, batch_ingest
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, batch_ingest
 
         ingest = init_live_ingest({"buffer_size": 100})
         batch_ingest(ingest, 150)
@@ -111,7 +111,7 @@ class TestLiveEntropyCalculation:
 
     def test_calculate_live_entropy(self):
         """Test Shannon entropy calculation from live stream."""
-        from src.swarm.live_triad_ingest import (
+        from spaceproof.swarm.live_triad_ingest import (
             init_live_ingest,
             batch_ingest,
             calculate_live_entropy,
@@ -126,7 +126,7 @@ class TestLiveEntropyCalculation:
 
     def test_entropy_from_empty_buffer(self):
         """Test entropy from empty buffer is zero."""
-        from src.swarm.live_triad_ingest import init_live_ingest, calculate_live_entropy
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, calculate_live_entropy
 
         ingest = init_live_ingest({})
         entropy = calculate_live_entropy(ingest)
@@ -139,7 +139,7 @@ class TestAlphaTracking:
 
     def test_get_current_alpha(self):
         """Test getting current alpha value."""
-        from src.swarm.live_triad_ingest import init_live_ingest, get_current_alpha
+        from spaceproof.swarm.live_triad_ingest import init_live_ingest, get_current_alpha
 
         ingest = init_live_ingest({})
         alpha = get_current_alpha(ingest)
@@ -148,7 +148,7 @@ class TestAlphaTracking:
 
     def test_set_alpha(self):
         """Test setting alpha value."""
-        from src.swarm.live_triad_ingest import (
+        from spaceproof.swarm.live_triad_ingest import (
             init_live_ingest,
             set_alpha,
             get_current_alpha,
@@ -166,7 +166,7 @@ class TestLiveIngestReceipt:
 
     def test_emit_live_ingest_receipt(self):
         """Test live triad ingest receipt is emitted."""
-        from src.swarm.live_triad_ingest import (
+        from spaceproof.swarm.live_triad_ingest import (
             init_live_ingest,
             connect_agentproof,
             connect_neuron,
@@ -191,7 +191,7 @@ class TestIngestStatus:
 
     def test_get_ingest_status(self):
         """Test ingest status returns correct info."""
-        from src.swarm.live_triad_ingest import get_ingest_status
+        from spaceproof.swarm.live_triad_ingest import get_ingest_status
 
         status = get_ingest_status()
 

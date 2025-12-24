@@ -11,7 +11,7 @@
 
 import json
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     multi_scale_fractal,
     compute_fractal_dimension,
     cross_scale_correlation,
@@ -22,7 +22,7 @@ from src.fractal_layers import (
     CROSS_SCALE_CORRELATION_MIN,
     CROSS_SCALE_CORRELATION_MAX,
 )
-from src.quantum_rl_hybrid import (
+from spaceproof.quantum_rl_hybrid import (
     quantum_fractal_hybrid,
     QUANTUM_RETENTION_BOOST,
 )

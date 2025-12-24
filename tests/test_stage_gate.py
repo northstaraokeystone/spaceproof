@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.stage_gate import (
+from spaceproof.stage_gate import (
     evaluate_gate,
     apply_escalation,
     get_allocation,

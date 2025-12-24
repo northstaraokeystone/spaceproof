@@ -14,7 +14,7 @@ SLO Requirements:
 - Combined attack recovery >= 0.90
 """
 
-from src.agi_audit_expanded import (
+from spaceproof.agi_audit_expanded import (
     load_expanded_audit_config,
     simulate_prompt_injection,
     simulate_data_injection,

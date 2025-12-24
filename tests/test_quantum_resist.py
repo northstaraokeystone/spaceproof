@@ -14,7 +14,7 @@ class TestQuantumResistConfig:
 
     def test_quantum_config_loads(self):
         """Test quantum-resistant config loads."""
-        from src.quantum_resist_random import load_quantum_resist_config
+        from spaceproof.quantum_resist_random import load_quantum_resist_config
 
         config = load_quantum_resist_config()
         assert config is not None
@@ -23,7 +23,7 @@ class TestQuantumResistConfig:
 
     def test_quantum_key_size(self):
         """Test key size is 256 bits."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             load_quantum_resist_config,
             QUANTUM_KEY_SIZE_BITS,
         )
@@ -34,7 +34,7 @@ class TestQuantumResistConfig:
 
     def test_spectre_variants_present(self):
         """Test all 3 Spectre variants present."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             load_quantum_resist_config,
             SPECTRE_VARIANTS,
         )
@@ -47,7 +47,7 @@ class TestQuantumResistConfig:
 
     def test_cache_randomization_enabled(self):
         """Test cache randomization is enabled."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             load_quantum_resist_config,
             CACHE_RANDOMIZATION_ENABLED,
         )
@@ -58,7 +58,7 @@ class TestQuantumResistConfig:
 
     def test_branch_defense_enabled(self):
         """Test branch prediction defense is enabled."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             load_quantum_resist_config,
             BRANCH_PREDICTION_DEFENSE,
         )
@@ -69,7 +69,7 @@ class TestQuantumResistConfig:
 
     def test_defense_mechanisms_present(self):
         """Test all 4 defense mechanisms present."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             load_quantum_resist_config,
             DEFENSE_MECHANISMS,
         )
@@ -87,7 +87,7 @@ class TestKeyGeneration:
 
     def test_key_generation(self):
         """Test key generation produces correct size."""
-        from src.quantum_resist_random import generate_quantum_key
+        from spaceproof.quantum_resist_random import generate_quantum_key
 
         key = generate_quantum_key(256)
         assert key is not None
@@ -95,7 +95,7 @@ class TestKeyGeneration:
 
     def test_key_randomness(self):
         """Test keys are different each time."""
-        from src.quantum_resist_random import generate_quantum_key
+        from spaceproof.quantum_resist_random import generate_quantum_key
 
         key1 = generate_quantum_key(256)
         key2 = generate_quantum_key(256)
@@ -107,7 +107,7 @@ class TestSpectreDefense:
 
     def test_spectre_v1_resilience(self):
         """Test Spectre v1 resilience is 1.0."""
-        from src.quantum_resist_random import test_spectre_v1
+        from spaceproof.quantum_resist_random import test_spectre_v1
 
         result = test_spectre_v1(100)
         assert result["resilience"] == 1.0
@@ -115,7 +115,7 @@ class TestSpectreDefense:
 
     def test_spectre_v2_resilience(self):
         """Test Spectre v2 resilience is 1.0."""
-        from src.quantum_resist_random import test_spectre_v2
+        from spaceproof.quantum_resist_random import test_spectre_v2
 
         result = test_spectre_v2(100)
         assert result["resilience"] == 1.0
@@ -123,7 +123,7 @@ class TestSpectreDefense:
 
     def test_spectre_v4_resilience(self):
         """Test Spectre v4 resilience is 1.0."""
-        from src.quantum_resist_random import test_spectre_v4
+        from spaceproof.quantum_resist_random import test_spectre_v4
 
         result = test_spectre_v4(100)
         assert result["resilience"] == 1.0
@@ -131,7 +131,7 @@ class TestSpectreDefense:
 
     def test_spectre_defense_combined(self):
         """Test combined Spectre defense."""
-        from src.quantum_resist_random import test_spectre_defense
+        from spaceproof.quantum_resist_random import test_spectre_defense
 
         result = test_spectre_defense(100)
         assert result["all_passed"] is True
@@ -143,7 +143,7 @@ class TestCacheDefense:
 
     def test_cache_timing_resilience(self):
         """Test cache timing resilience is 1.0."""
-        from src.quantum_resist_random import test_cache_timing
+        from spaceproof.quantum_resist_random import test_cache_timing
 
         result = test_cache_timing(100)
         assert result["resilience"] == 1.0
@@ -151,7 +151,7 @@ class TestCacheDefense:
 
     def test_cache_partition(self):
         """Test cache partitioning."""
-        from src.quantum_resist_random import partition_cache
+        from spaceproof.quantum_resist_random import partition_cache
 
         result = partition_cache(4)
         assert result["partitions"] == 4
@@ -163,7 +163,7 @@ class TestDefenseMechanisms:
 
     def test_speculative_barrier(self):
         """Test speculative barrier insertion."""
-        from src.quantum_resist_random import add_speculative_barrier
+        from spaceproof.quantum_resist_random import add_speculative_barrier
 
         code = ["if x == secret:", "  return data[x]"]
         result = add_speculative_barrier(code)
@@ -171,7 +171,7 @@ class TestDefenseMechanisms:
 
     def test_branch_hardening(self):
         """Test branch prediction hardening."""
-        from src.quantum_resist_random import harden_branch_prediction
+        from spaceproof.quantum_resist_random import harden_branch_prediction
 
         code = ["if x == secret:", "  return data[x]"]
         result = harden_branch_prediction(code)
@@ -179,7 +179,7 @@ class TestDefenseMechanisms:
 
     def test_timing_isolation(self):
         """Test timing isolation wrapper."""
-        from src.quantum_resist_random import isolate_timing
+        from spaceproof.quantum_resist_random import isolate_timing
 
         def dummy_op():
             return 42
@@ -194,7 +194,7 @@ class TestQuantumResistAudit:
 
     def test_quantum_resist_receipt(self):
         """Test quantum resist receipt emitted."""
-        from src.quantum_resist_random import run_quantum_resist_audit
+        from spaceproof.quantum_resist_random import run_quantum_resist_audit
 
         result = run_quantum_resist_audit(iterations=50)
         assert result is not None
@@ -202,7 +202,7 @@ class TestQuantumResistAudit:
 
     def test_overall_resilience(self):
         """Test overall resilience is 1.0."""
-        from src.quantum_resist_random import (
+        from spaceproof.quantum_resist_random import (
             run_quantum_resist_audit,
             QUANTUM_RESILIENCE_TARGET,
         )
@@ -213,7 +213,7 @@ class TestQuantumResistAudit:
 
     def test_all_spectre_passed(self):
         """Test all Spectre variants passed."""
-        from src.quantum_resist_random import run_quantum_resist_audit
+        from spaceproof.quantum_resist_random import run_quantum_resist_audit
 
         result = run_quantum_resist_audit(iterations=50)
         assert result["spectre_results"]["all_passed"] is True
@@ -224,7 +224,7 @@ class TestQuantumResistInfo:
 
     def test_quantum_info(self):
         """Test quantum-resistant info retrieval."""
-        from src.quantum_resist_random import get_quantum_resist_info
+        from spaceproof.quantum_resist_random import get_quantum_resist_info
 
         info = get_quantum_resist_info()
         assert info is not None

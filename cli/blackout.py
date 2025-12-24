@@ -7,10 +7,10 @@ Commands: blackout, blackout_sweep, simulate_timeline, extended_sweep,
 
 import json as json_lib
 
-from src.partition import NODE_BASELINE
-from src.timeline import sovereignty_timeline, ALPHA_DEFAULT
-from src.latency import tau_penalty, effective_alpha
-from src.reroute import (
+from spaceproof.partition import NODE_BASELINE
+from spaceproof.timeline import sovereignty_timeline, ALPHA_DEFAULT
+from spaceproof.latency import tau_penalty, effective_alpha
+from spaceproof.reroute import (
     adaptive_reroute,
     blackout_sim,
     blackout_stress_sweep,
@@ -24,14 +24,14 @@ from src.reroute import (
     MIN_EFF_ALPHA_VALIDATED,
     REROUTING_ALPHA_BOOST_LOCKED,
 )
-from src.blackout import (
+from spaceproof.blackout import (
     generate_retention_curve_data,
     gnn_sensitivity_stub,
     BLACKOUT_SWEEP_MAX_DAYS,
     RETENTION_BASE_FACTOR,
 )
-from src.reasoning import extended_blackout_sweep, extreme_blackout_sweep_200d
-from src.gnn_cache import (
+from spaceproof.reasoning import extended_blackout_sweep, extreme_blackout_sweep_200d
+from spaceproof.gnn_cache import (
     nonlinear_retention,
     predict_overflow,
     quantum_relay_stub,

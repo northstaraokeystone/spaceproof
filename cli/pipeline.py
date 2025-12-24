@@ -3,7 +3,7 @@
 Commands: lr_pilot, post_tune_execute, full_pipeline, pilot_info, pipeline_info
 """
 
-from src.rl_tune import (
+from spaceproof.rl_tune import (
     pilot_lr_narrow,
     run_tuned_sweep,
     load_pilot_spec,
@@ -14,7 +14,7 @@ from src.rl_tune import (
     FULL_TUNED_RUNS,
     RETENTION_TARGET,
 )
-from src.reasoning import execute_full_pipeline, get_pipeline_info
+from spaceproof.reasoning import execute_full_pipeline, get_pipeline_info
 
 from cli.base import print_header
 

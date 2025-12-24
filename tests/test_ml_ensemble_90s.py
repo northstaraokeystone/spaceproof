@@ -9,7 +9,7 @@ Tests:
 - 100x aggregation factor
 """
 
-from src.cfd_dust_dynamics import (
+from spaceproof.cfd_dust_dynamics import (
     load_ml_90s_config,
     initialize_90s_ensemble,
     ml_ensemble_forecast_90s,
@@ -21,7 +21,7 @@ from src.cfd_dust_dynamics import (
     ML_90S_ACCURACY_TARGET,
     ML_90S_MODEL_TYPES,
 )
-from src.bulletproofs_infinite import (
+from spaceproof.bulletproofs_infinite import (
     load_infinite_config,
     generate_infinite_chain_10k,
     verify_infinite_chain,

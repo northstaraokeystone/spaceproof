@@ -19,7 +19,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.provenance_mars import (
+from spaceproof.provenance_mars import (
     ProvenanceState,
     emit_mars_receipt,
     batch_pending,
@@ -33,7 +33,7 @@ from src.provenance_mars import (
     DISPARITY_HALT_THRESHOLD,
     SYNC_WINDOW_HOURS,
 )
-from src.core import StopRule
+from spaceproof.core import StopRule
 
 
 class TestEmitMarsReceipt:

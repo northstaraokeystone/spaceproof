@@ -9,7 +9,7 @@ Tests:
 - Accuracy assessment
 """
 
-from src.cfd_dust_dynamics import (
+from spaceproof.cfd_dust_dynamics import (
     load_ml_ensemble_config,
     initialize_ensemble,
     train_ensemble,

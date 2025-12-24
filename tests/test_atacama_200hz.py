@@ -6,7 +6,7 @@ class TestAtacama200HzConfig:
 
     def test_load_200hz_config(self) -> None:
         """Test loading 200Hz configuration."""
-        from src.cfd_dust_dynamics import load_atacama_200hz_config
+        from spaceproof.cfd_dust_dynamics import load_atacama_200hz_config
 
         config = load_atacama_200hz_config()
         assert config is not None
@@ -17,7 +17,7 @@ class TestAtacama200HzConfig:
 
     def test_200hz_constants(self) -> None:
         """Test 200Hz constants are correctly defined."""
-        from src.cfd_dust_dynamics import (
+        from spaceproof.cfd_dust_dynamics import (
             ATACAMA_200HZ_SAMPLING,
             ATACAMA_200HZ_CORRELATION_TARGET,
         )
@@ -27,7 +27,7 @@ class TestAtacama200HzConfig:
 
     def test_200hz_upgrade_from_100hz(self) -> None:
         """Test that 200Hz is 2x upgrade from 100Hz."""
-        from src.cfd_dust_dynamics import (
+        from spaceproof.cfd_dust_dynamics import (
             ATACAMA_200HZ_SAMPLING,
             ATACAMA_SAMPLING_HZ,
         )
@@ -40,7 +40,7 @@ class TestAtacama200HzSampling:
 
     def test_atacama_200hz(self) -> None:
         """Test 200Hz sampling mode."""
-        from src.cfd_dust_dynamics import atacama_200hz
+        from spaceproof.cfd_dust_dynamics import atacama_200hz
 
         result = atacama_200hz(duration_sec=10.0)
 
@@ -54,7 +54,7 @@ class TestAtacama200HzSampling:
 
     def test_adaptive_sampling_rate(self) -> None:
         """Test adaptive sampling rate selection."""
-        from src.cfd_dust_dynamics import adaptive_sampling_rate
+        from spaceproof.cfd_dust_dynamics import adaptive_sampling_rate
 
         # Test 200Hz mode
         result = adaptive_sampling_rate(target_hz=200)
@@ -73,7 +73,7 @@ class TestDustDevilPrediction:
 
     def test_predict_dust_devil(self) -> None:
         """Test dust devil prediction."""
-        from src.cfd_dust_dynamics import predict_dust_devil
+        from spaceproof.cfd_dust_dynamics import predict_dust_devil
 
         result = predict_dust_devil(
             duration_sec=30.0,
@@ -89,7 +89,7 @@ class TestDustDevilPrediction:
 
     def test_prediction_accuracy(self) -> None:
         """Test prediction accuracy computation."""
-        from src.cfd_dust_dynamics import compute_prediction_accuracy
+        from spaceproof.cfd_dust_dynamics import compute_prediction_accuracy
 
         result = compute_prediction_accuracy(
             predictions=[True, True, False, True, True],
@@ -106,7 +106,7 @@ class TestAtacama200HzCorrelation:
 
     def test_correlation_target(self) -> None:
         """Test correlation reaches target."""
-        from src.cfd_dust_dynamics import atacama_200hz
+        from spaceproof.cfd_dust_dynamics import atacama_200hz
 
         result = atacama_200hz(duration_sec=60.0)
 
@@ -117,7 +117,7 @@ class TestAtacama200HzCorrelation:
 
     def test_correlation_improvement_from_100hz(self) -> None:
         """Test that 200Hz improves correlation over 100Hz."""
-        from src.cfd_dust_dynamics import (
+        from spaceproof.cfd_dust_dynamics import (
             atacama_200hz,
             atacama_les_realtime,
         )
@@ -137,7 +137,7 @@ class TestAtacama200HzInfo:
 
     def test_get_200hz_info(self) -> None:
         """Test 200Hz info retrieval."""
-        from src.cfd_dust_dynamics import get_atacama_200hz_info
+        from spaceproof.cfd_dust_dynamics import get_atacama_200hz_info
 
         info = get_atacama_200hz_info()
 
@@ -154,7 +154,7 @@ class TestAtacama200HzIntegration:
 
     def test_cfd_200hz_integration(self) -> None:
         """Test CFD integration with 200Hz mode."""
-        from src.cfd_dust_dynamics import atacama_200hz
+        from spaceproof.cfd_dust_dynamics import atacama_200hz
 
         result = atacama_200hz(duration_sec=10.0)
 
@@ -165,7 +165,7 @@ class TestAtacama200HzIntegration:
 
     def test_drone_array_200hz(self) -> None:
         """Test drone array operation at 200Hz."""
-        from src.cfd_dust_dynamics import atacama_200hz
+        from spaceproof.cfd_dust_dynamics import atacama_200hz
 
         result = atacama_200hz(duration_sec=10.0)
 

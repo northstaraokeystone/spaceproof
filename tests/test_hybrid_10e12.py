@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 
-from src.hybrid_benchmark import (
+from spaceproof.hybrid_benchmark import (
     benchmark_10e12,
     validate_scale_decay,
     check_release_gate_3_1,
@@ -25,7 +25,7 @@ from src.hybrid_benchmark import (
     SCALE_DECAY_MAX,
     INSTABILITY_MAX,
 )
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     recursive_fractal,
     recursive_fractal_sweep,
     get_recursive_fractal_info,

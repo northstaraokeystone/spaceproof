@@ -9,7 +9,7 @@ BENCHMARK GATE:
     - scale decay: <= 0.02
 """
 
-from src.hybrid_benchmark import (
+from spaceproof.hybrid_benchmark import (
     benchmark_10e12,
     check_release_gate_3_1,
     get_benchmark_info,
@@ -17,7 +17,7 @@ from src.hybrid_benchmark import (
     ALPHA_10E12_TARGET,
     SCALE_DECAY_MAX,
 )
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     recursive_fractal,
     recursive_fractal_sweep,
     get_recursive_fractal_info,

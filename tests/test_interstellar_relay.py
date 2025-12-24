@@ -8,7 +8,7 @@ Tests:
 - Relay stress testing
 """
 
-from src.interstellar_relay import (
+from spaceproof.interstellar_relay import (
     load_relay_config,
     initialize_relay_chain,
     compute_relay_latency,

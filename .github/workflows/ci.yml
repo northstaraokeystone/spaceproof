@@ -1,4 +1,4 @@
-name: AXIOM CI Pipeline
+name: SpaceProof CI Pipeline
 
 on:
   push:
@@ -58,11 +58,11 @@ jobs:
 
       - name: Run flake8
         run: |
-          flake8 src/ real_data/ benchmarks/ axiom/ --max-line-length=120 --ignore=E501,W503,W504,E128,E226,F841,F811,F824
+          flake8 spaceproof/ real_data/ benchmarks/ --max-line-length=120 --ignore=E501,W503,W504,E128,E226,F841,F811,F824
 
       - name: Check black formatting
         run: |
-          black --check --line-length=120 src/ real_data/ benchmarks/ axiom/ || true
+          black --check --line-length=120 spaceproof/ real_data/ benchmarks/ || true
 
   test:
     name: Test
@@ -84,7 +84,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=src --cov=real_data --cov=benchmarks --cov=axiom --cov-report=xml --cov-report=term-missing
+          pytest tests/ -v --cov=spaceproof --cov=real_data --cov=benchmarks --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -112,7 +112,7 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          pytest tests/ --cov=src --cov=real_data --cov=benchmarks --cov=axiom --cov-fail-under=80 || echo "Coverage below target, continuing..."
+          pytest tests/ --cov=spaceproof --cov=real_data --cov=benchmarks --cov-fail-under=80 || echo "Coverage below target, continuing..."
 
   scenarios:
     name: Run Scenarios
@@ -135,7 +135,7 @@ jobs:
       - name: Count available scenarios
         run: |
           python -c "
-          from src.sim import Scenario
+          from spaceproof.sim import Scenario
           scenarios = list(Scenario)
           print(f'Available scenarios: {len(scenarios)}')
           for s in scenarios:
@@ -147,7 +147,7 @@ jobs:
       - name: Run baseline scenario
         run: |
           python -c "
-          from src.sim import Scenario, run_scenario, SimConfig
+          from spaceproof.sim import Scenario, run_scenario, SimConfig
           config = SimConfig(max_cycles=50)
           state = run_scenario(Scenario.SCENARIO_BASELINE, config)
           print(f'Baseline: {state.cycle} cycles completed')
@@ -208,7 +208,7 @@ jobs:
       - name: Validate Landauer calibration
         run: |
           python -c "
-          from axiom.entropy import landauer_mass_equivalent
+          from spaceproof.entropy import landauer_mass_equivalent
           m = landauer_mass_equivalent(1e6)
           print(f'1M bps = {m:.0f} kg')
           assert 51000 < m < 69000, f'Calibration out of range: {m}'
@@ -239,10 +239,10 @@ jobs:
           python -c "
           import json
           from datetime import datetime
-          from src.core import emit_receipt
+          from spaceproof.core import emit_receipt
 
           receipt = emit_receipt('ci_gate', {
-              'tenant_id': 'axiom-ci',
+              'tenant_id': 'spaceproof',
               'commit_hash': '${{ github.sha }}',
               'branch': '${{ github.ref_name }}',
               'workflow_run': '${{ github.run_id }}',
@@ -264,7 +264,7 @@ jobs:
 
       - name: Summary
         run: |
-          echo '## CI Pipeline Summary' >> $GITHUB_STEP_SUMMARY
+          echo '## SpaceProof CI Pipeline Summary' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '| Job | Status |' >> $GITHUB_STEP_SUMMARY
           echo '|-----|--------|' >> $GITHUB_STEP_SUMMARY

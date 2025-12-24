@@ -12,7 +12,7 @@ class TestGapSilenceEmergence:
 
     def test_init_gap_detector(self):
         """Test gap detector initialization."""
-        from src.oracle import init_gap_detector
+        from spaceproof.oracle import init_gap_detector
 
         detector = init_gap_detector()
 
@@ -24,7 +24,7 @@ class TestGapSilenceEmergence:
 
     def test_detect_gap_negligible(self):
         """Test negligible gap detection (< 60 seconds)."""
-        from src.oracle import init_gap_detector, detect_gap
+        from spaceproof.oracle import init_gap_detector, detect_gap
 
         detector = init_gap_detector()
 
@@ -38,7 +38,7 @@ class TestGapSilenceEmergence:
 
     def test_detect_gap_normal(self):
         """Test normal gap detection (60 seconds - 1 hour)."""
-        from src.oracle import init_gap_detector, detect_gap
+        from spaceproof.oracle import init_gap_detector, detect_gap
 
         detector = init_gap_detector()
 
@@ -52,7 +52,7 @@ class TestGapSilenceEmergence:
 
     def test_detect_gap_extended(self):
         """Test extended gap detection (1+ hour)."""
-        from src.oracle import init_gap_detector, detect_gap
+        from spaceproof.oracle import init_gap_detector, detect_gap
 
         detector = init_gap_detector()
 
@@ -66,8 +66,8 @@ class TestGapSilenceEmergence:
 
     def test_classify_gap(self):
         """Test gap classification."""
-        from src.oracle import init_gap_detector
-        from src.oracle.gap_silence_emergence import classify_gap
+        from spaceproof.oracle import init_gap_detector
+        from spaceproof.oracle.gap_silence_emergence import classify_gap
 
         detector = init_gap_detector()
 
@@ -86,7 +86,7 @@ class TestGapSilenceEmergence:
 
     def test_minimal_sync_law(self):
         """Test minimal-sync law selection."""
-        from src.oracle import minimal_sync_law
+        from spaceproof.oracle import minimal_sync_law
 
         laws = [
             {"law_id": "law1", "invariance_score": 0.9},
@@ -109,7 +109,7 @@ class TestGapSilenceEmergence:
 
     def test_trigger_minimal_law_selection(self):
         """Test minimal law selection trigger."""
-        from src.oracle import (
+        from spaceproof.oracle import (
             init_gap_detector,
             init_oracle,
             trigger_minimal_law_selection,
@@ -128,7 +128,7 @@ class TestGapSilenceEmergence:
 
     def test_emit_gap_emergence_receipt(self):
         """Test gap emergence receipt emission."""
-        from src.oracle import init_gap_detector, emit_gap_emergence_receipt
+        from spaceproof.oracle import init_gap_detector, emit_gap_emergence_receipt
 
         detector = init_gap_detector()
         gap = {
@@ -152,19 +152,19 @@ class TestGapSilenceConstants:
 
     def test_normal_threshold(self):
         """Verify normal gap threshold is 60 seconds."""
-        from src.oracle.gap_silence_emergence import LATENCY_SILENCE_THRESHOLD_SECONDS
+        from spaceproof.oracle.gap_silence_emergence import LATENCY_SILENCE_THRESHOLD_SECONDS
 
         assert LATENCY_SILENCE_THRESHOLD_SECONDS == 60
 
     def test_extended_threshold(self):
         """Verify extended gap threshold is 1 hour."""
-        from src.oracle.gap_silence_emergence import EXTENDED_SILENCE_THRESHOLD_SECONDS
+        from spaceproof.oracle.gap_silence_emergence import EXTENDED_SILENCE_THRESHOLD_SECONDS
 
         assert EXTENDED_SILENCE_THRESHOLD_SECONDS == 3600
 
     def test_interstellar_threshold(self):
         """Verify interstellar gap threshold is 4 years."""
-        from src.oracle.gap_silence_emergence import (
+        from spaceproof.oracle.gap_silence_emergence import (
             INTERSTELLAR_SILENCE_THRESHOLD_YEARS,
         )
 
@@ -172,6 +172,6 @@ class TestGapSilenceConstants:
 
     def test_proxima_silence(self):
         """Verify Proxima silence is 8.48 years."""
-        from src.oracle.gap_silence_emergence import PROXIMA_SILENCE_YEARS
+        from spaceproof.oracle.gap_silence_emergence import PROXIMA_SILENCE_YEARS
 
         assert PROXIMA_SILENCE_YEARS == 8.48

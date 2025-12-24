@@ -4,12 +4,12 @@ Commands: entropy_prune, pruning_sweep, extended_250d, verify_chain, pruning_inf
          pruning_v4, pruning_v4_compare, quantum_refine, quantum_refine_info
 """
 
-from src.pruning import (
+from spaceproof.pruning import (
     entropy_prune,
     generate_sample_merkle_tree,
     get_pruning_info,
 )
-from src.gnn_cache import (
+from spaceproof.gnn_cache import (
     nonlinear_retention_with_pruning,
     ENTROPY_ASYMPTOTE_E,
     PRUNING_TARGET_ALPHA,
@@ -17,7 +17,7 @@ from src.gnn_cache import (
     BLACKOUT_PRUNING_TARGET_DAYS,
     OVERFLOW_THRESHOLD_DAYS_PRUNED,
 )
-from src.reasoning import extended_250d_sovereignty
+from spaceproof.reasoning import extended_250d_sovereignty
 
 from cli.base import print_header
 
@@ -234,7 +234,7 @@ def cmd_pruning_v4(args=None):
     Returns:
         dict: Pruning result.
     """
-    from src.pruning_v4 import prune_v4, load_pruning_config
+    from spaceproof.pruning_v4 import prune_v4, load_pruning_config
     import random
 
     config = load_pruning_config()
@@ -281,7 +281,7 @@ def cmd_pruning_v4_compare(args=None):
     Returns:
         dict: Comparison result.
     """
-    from src.pruning_v4 import compare_to_v3
+    from spaceproof.pruning_v4 import compare_to_v3
     import random
 
     # Create test tree
@@ -322,7 +322,7 @@ def cmd_pruning_v4_status(args=None):
     Returns:
         dict: Status info.
     """
-    from src.pruning_v4 import get_pruning_status
+    from spaceproof.pruning_v4 import get_pruning_status
 
     print_header("PRUNING V4 STATUS")
 
@@ -348,7 +348,7 @@ def cmd_quantum_refine(args=None):
     Returns:
         dict: Refinement result.
     """
-    from src.quantum_refine import refine_correlation, load_refine_config
+    from spaceproof.quantum_refine import refine_correlation, load_refine_config
 
     config = load_refine_config()
     iterations = config.get("refinement_iterations", 10)
@@ -377,7 +377,7 @@ def cmd_quantum_refine_info(args=None):
     Returns:
         dict: Configuration info.
     """
-    from src.quantum_refine import get_refine_status
+    from spaceproof.quantum_refine import get_refine_status
 
     print_header("QUANTUM REFINEMENT CONFIGURATION")
 

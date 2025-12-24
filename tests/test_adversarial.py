@@ -14,7 +14,7 @@ SLO Requirements:
 - Alignment classification accuracy
 """
 
-from src.adversarial_audit import (
+from spaceproof.adversarial_audit import (
     load_adversarial_config,
     inject_noise,
     denoise,

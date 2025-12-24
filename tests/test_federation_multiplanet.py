@@ -1,6 +1,6 @@
 """Tests for multi-planet federation module."""
 
-from src.federation_multiplanet import (
+from spaceproof.federation_multiplanet import (
     load_federation_config,
     init_federation,
     add_planet,

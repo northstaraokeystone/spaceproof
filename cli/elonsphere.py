@@ -16,7 +16,7 @@ def cmd_starlink_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Starlink status
     """
-    from src.elon_sphere.starlink_relay import get_starlink_status
+    from spaceproof.elon_sphere.starlink_relay import get_starlink_status
 
     status = get_starlink_status()
 
@@ -39,7 +39,7 @@ def cmd_starlink_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.elon_sphere.starlink_relay import (
+    from spaceproof.elon_sphere.starlink_relay import (
         initialize_starlink_mesh,
         simulate_laser_link,
         analog_to_interstellar,
@@ -87,7 +87,7 @@ def cmd_grok_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Grok status
     """
-    from src.elon_sphere.grok_inference import get_grok_status
+    from spaceproof.elon_sphere.grok_inference import get_grok_status
 
     status = get_grok_status()
 
@@ -110,7 +110,7 @@ def cmd_grok_tune(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with tuning results
     """
-    from src.elon_sphere.grok_inference import (
+    from spaceproof.elon_sphere.grok_inference import (
         initialize_grok_agents,
         latency_tuning_loop,
         ensemble_integration,
@@ -159,7 +159,7 @@ def cmd_xai_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with xAI status
     """
-    from src.elon_sphere.xai_compute import get_xai_status
+    from spaceproof.elon_sphere.xai_compute import get_xai_status
 
     status = get_xai_status()
 
@@ -182,7 +182,7 @@ def cmd_xai_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.elon_sphere.xai_compute import (
+    from spaceproof.elon_sphere.xai_compute import (
         initialize_colossus,
         quantum_sim_batch,
         scale_to_interstellar,
@@ -228,7 +228,7 @@ def cmd_dojo_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Dojo status
     """
-    from src.elon_sphere.dojo_offload import get_dojo_status
+    from spaceproof.elon_sphere.dojo_offload import get_dojo_status
 
     status = get_dojo_status()
 
@@ -251,7 +251,7 @@ def cmd_dojo_offload(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with offload results
     """
-    from src.elon_sphere.dojo_offload import (
+    from spaceproof.elon_sphere.dojo_offload import (
         initialize_dojo_cluster,
         offload_recursion_training,
         fractal_optimization_batch,
@@ -304,7 +304,7 @@ def cmd_federation_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with federation status
     """
-    from src.paths.multiplanet.federation.stub import federation_status
+    from spaceproof.paths.multiplanet.federation.stub import federation_status
 
     status = federation_status()
 
@@ -328,7 +328,7 @@ def cmd_federation_consensus(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with consensus results
     """
-    from src.paths.multiplanet.federation.stub import consensus_with_lag
+    from spaceproof.paths.multiplanet.federation.stub import consensus_with_lag
 
     lag_years = getattr(args, "federation_lag", 4.24)
 

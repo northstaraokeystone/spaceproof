@@ -11,7 +11,7 @@ import json
 
 def cmd_ganymede_info():
     """Show Ganymede configuration."""
-    from src.ganymede_mag_hybrid import get_ganymede_info
+    from spaceproof.ganymede_mag_hybrid import get_ganymede_info
 
     info = get_ganymede_info()
     print(json.dumps(info, indent=2))
@@ -19,7 +19,7 @@ def cmd_ganymede_info():
 
 def cmd_ganymede_config():
     """Show Ganymede configuration from spec."""
-    from src.ganymede_mag_hybrid import load_ganymede_config
+    from spaceproof.ganymede_mag_hybrid import load_ganymede_config
 
     config = load_ganymede_config()
     print(json.dumps(config, indent=2))
@@ -35,7 +35,7 @@ def cmd_ganymede_navigate(
         duration_hrs: Simulation duration in hours
         simulate: Whether to run in simulation mode
     """
-    from src.ganymede_mag_hybrid import simulate_navigation
+    from spaceproof.ganymede_mag_hybrid import simulate_navigation
 
     result = simulate_navigation(mode, duration_hrs)
     print(json.dumps(result, indent=2))
@@ -49,7 +49,7 @@ def cmd_ganymede_field(x: float, y: float, z: float):
         y: Y coordinate in km from Ganymede center
         z: Z coordinate in km from Ganymede center
     """
-    from src.ganymede_mag_hybrid import compute_field_strength
+    from spaceproof.ganymede_mag_hybrid import compute_field_strength
 
     field = compute_field_strength((x, y, z))
     result = {
@@ -61,7 +61,7 @@ def cmd_ganymede_field(x: float, y: float, z: float):
 
 def cmd_ganymede_autonomy(simulate: bool = False):
     """Show Ganymede autonomy metrics."""
-    from src.ganymede_mag_hybrid import simulate_navigation, compute_autonomy
+    from spaceproof.ganymede_mag_hybrid import simulate_navigation, compute_autonomy
 
     nav = simulate_navigation("field_following", 24)
     autonomy = compute_autonomy(nav)
@@ -89,7 +89,7 @@ def cmd_d9_ganymede_hybrid(
         duration_hrs: Simulation duration
         simulate: Whether to run in simulation mode
     """
-    from src.ganymede_mag_hybrid import d9_ganymede_hybrid
+    from spaceproof.ganymede_mag_hybrid import d9_ganymede_hybrid
 
     result = d9_ganymede_hybrid(tree_size, base_alpha, mode, duration_hrs)
     print(json.dumps(result, indent=2))
@@ -105,7 +105,7 @@ def cmd_d9_push(
         base_alpha: Base alpha
         simulate: Whether to run in simulation mode
     """
-    from src.fractal_layers import d9_push
+    from spaceproof.fractal_layers import d9_push
 
     result = d9_push(tree_size, base_alpha, simulate)
     print(json.dumps(result, indent=2))
@@ -113,7 +113,7 @@ def cmd_d9_push(
 
 def cmd_d9_info():
     """Show D9 configuration."""
-    from src.fractal_layers import get_d9_info
+    from spaceproof.fractal_layers import get_d9_info
 
     info = get_d9_info()
     print(json.dumps(info, indent=2))
@@ -121,7 +121,7 @@ def cmd_d9_info():
 
 def cmd_drone_info():
     """Show Atacama drone configuration."""
-    from src.atacama_drone import get_drone_info
+    from spaceproof.atacama_drone import get_drone_info
 
     info = get_drone_info()
     print(json.dumps(info, indent=2))
@@ -129,7 +129,7 @@ def cmd_drone_info():
 
 def cmd_drone_config():
     """Show Atacama drone configuration from spec."""
-    from src.atacama_drone import load_drone_config
+    from spaceproof.atacama_drone import load_drone_config
 
     config = load_drone_config()
     print(json.dumps(config, indent=2))
@@ -145,7 +145,7 @@ def cmd_drone_coverage(
         area_km2: Area to cover
         simulate: Whether to run in simulation mode
     """
-    from src.atacama_drone import simulate_swarm_coverage
+    from spaceproof.atacama_drone import simulate_swarm_coverage
 
     result = simulate_swarm_coverage(n_drones, area_km2)
     print(json.dumps(result, indent=2))
@@ -159,7 +159,7 @@ def cmd_drone_sample(rate_hz: int = 10, duration_s: int = 60, simulate: bool = F
         duration_s: Sampling duration in seconds
         simulate: Whether to run in simulation mode
     """
-    from src.atacama_drone import sample_dust_metrics
+    from spaceproof.atacama_drone import sample_dust_metrics
 
     result = sample_dust_metrics(rate_hz, duration_s)
     print(json.dumps(result, indent=2))
@@ -179,7 +179,7 @@ def cmd_drone_validate(
         duration_s: Sampling duration
         simulate: Whether to run in simulation mode
     """
-    from src.atacama_drone import run_drone_validation
+    from spaceproof.atacama_drone import run_drone_validation
 
     result = run_drone_validation(n_drones, area_km2, duration_s)
     print(json.dumps(result, indent=2))

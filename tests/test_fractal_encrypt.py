@@ -9,7 +9,7 @@ class TestEncryptConfig:
 
     def test_encrypt_config_loads(self):
         """Config valid."""
-        from src.fractal_encrypt_audit import load_encrypt_config
+        from spaceproof.fractal_encrypt_audit import load_encrypt_config
 
         config = load_encrypt_config()
         assert config is not None
@@ -19,14 +19,14 @@ class TestEncryptConfig:
 
     def test_fractal_key_depth(self):
         """Assert depth == 6."""
-        from src.fractal_encrypt_audit import load_encrypt_config, FRACTAL_KEY_DEPTH
+        from spaceproof.fractal_encrypt_audit import load_encrypt_config, FRACTAL_KEY_DEPTH
 
         config = load_encrypt_config()
         assert config.get("key_depth", 0) == FRACTAL_KEY_DEPTH
 
     def test_defense_mechanisms_present(self):
         """All 3 mechanisms in config."""
-        from src.fractal_encrypt_audit import load_encrypt_config
+        from spaceproof.fractal_encrypt_audit import load_encrypt_config
 
         config = load_encrypt_config()
         mechanisms = config.get("defense_mechanisms", [])
@@ -40,7 +40,7 @@ class TestKeyGeneration:
 
     def test_fractal_key_generation(self):
         """Key generates successfully."""
-        from src.fractal_encrypt_audit import generate_fractal_key
+        from spaceproof.fractal_encrypt_audit import generate_fractal_key
 
         key = generate_fractal_key(6)
         assert key is not None
@@ -48,7 +48,7 @@ class TestKeyGeneration:
 
     def test_key_uniqueness(self):
         """Generated keys are unique."""
-        from src.fractal_encrypt_audit import generate_fractal_key
+        from spaceproof.fractal_encrypt_audit import generate_fractal_key
 
         key1 = generate_fractal_key(6)
         key2 = generate_fractal_key(6)
@@ -56,7 +56,7 @@ class TestKeyGeneration:
 
     def test_key_depth_affects_output(self):
         """Different depths produce different patterns."""
-        from src.fractal_encrypt_audit import generate_fractal_key
+        from spaceproof.fractal_encrypt_audit import generate_fractal_key
 
         # Keys are random, but process differs - just check they generate
         key4 = generate_fractal_key(4)
@@ -70,7 +70,7 @@ class TestKeyRotation:
 
     def test_key_rotation(self):
         """Rotation works."""
-        from src.fractal_encrypt_audit import generate_fractal_key, rotate_key
+        from spaceproof.fractal_encrypt_audit import generate_fractal_key, rotate_key
 
         original_key = generate_fractal_key(6)
         rotated_key = rotate_key(original_key, 3600)
@@ -84,14 +84,14 @@ class TestDefenseFlags:
 
     def test_timing_defense_enabled(self):
         """Defense flag true."""
-        from src.fractal_encrypt_audit import load_encrypt_config
+        from spaceproof.fractal_encrypt_audit import load_encrypt_config
 
         config = load_encrypt_config()
         assert config.get("timing_attack_defense", False) is True
 
     def test_power_defense_enabled(self):
         """Defense flag true."""
-        from src.fractal_encrypt_audit import load_encrypt_config
+        from spaceproof.fractal_encrypt_audit import load_encrypt_config
 
         config = load_encrypt_config()
         assert config.get("power_attack_defense", False) is True
@@ -102,7 +102,7 @@ class TestResilience:
 
     def test_side_channel_resilience(self):
         """Assert resilience >= 0.95."""
-        from src.fractal_encrypt_audit import (
+        from spaceproof.fractal_encrypt_audit import (
             test_side_channel_resilience,
         )
 
@@ -113,7 +113,7 @@ class TestResilience:
 
     def test_model_inversion_resilience(self):
         """Assert resilience >= 0.95."""
-        from src.fractal_encrypt_audit import (
+        from spaceproof.fractal_encrypt_audit import (
             test_model_inversion_resilience,
         )
 
@@ -123,7 +123,7 @@ class TestResilience:
 
     def test_combined_resilience(self):
         """Test combined resilience function."""
-        from src.fractal_encrypt_audit import test_resilience
+        from spaceproof.fractal_encrypt_audit import test_resilience
 
         result = test_resilience()
         assert "side_channel" in result
@@ -136,7 +136,7 @@ class TestAudit:
 
     def test_fractal_encrypt_audit(self):
         """Full audit executes."""
-        from src.fractal_encrypt_audit import run_fractal_encrypt_audit
+        from spaceproof.fractal_encrypt_audit import run_fractal_encrypt_audit
 
         result = run_fractal_encrypt_audit(["side_channel", "model_inversion"])
         assert "results" in result
@@ -145,7 +145,7 @@ class TestAudit:
 
     def test_audit_attack_types(self):
         """Correct attack types tested."""
-        from src.fractal_encrypt_audit import run_fractal_encrypt_audit
+        from spaceproof.fractal_encrypt_audit import run_fractal_encrypt_audit
 
         result = run_fractal_encrypt_audit(["side_channel"])
         assert "side_channel" in result["attack_types_tested"]
@@ -157,19 +157,19 @@ class TestConstants:
 
     def test_side_channel_resilience_constant(self):
         """Side-channel resilience target is 0.95."""
-        from src.fractal_encrypt_audit import SIDE_CHANNEL_RESILIENCE
+        from spaceproof.fractal_encrypt_audit import SIDE_CHANNEL_RESILIENCE
 
         assert SIDE_CHANNEL_RESILIENCE == 0.95
 
     def test_model_inversion_resilience_constant(self):
         """Model inversion resilience target is 0.95."""
-        from src.fractal_encrypt_audit import MODEL_INVERSION_RESILIENCE
+        from spaceproof.fractal_encrypt_audit import MODEL_INVERSION_RESILIENCE
 
         assert MODEL_INVERSION_RESILIENCE == 0.95
 
     def test_key_depth_constant(self):
         """Key depth default is 6."""
-        from src.fractal_encrypt_audit import FRACTAL_KEY_DEPTH
+        from spaceproof.fractal_encrypt_audit import FRACTAL_KEY_DEPTH
 
         assert FRACTAL_KEY_DEPTH == 6
 
@@ -179,25 +179,25 @@ class TestKeyDepthRecommendation:
 
     def test_recommend_key_depth_low(self):
         """Low threat gets depth 4."""
-        from src.fractal_encrypt_audit import recommend_key_depth
+        from spaceproof.fractal_encrypt_audit import recommend_key_depth
 
         assert recommend_key_depth("low") == 4
 
     def test_recommend_key_depth_medium(self):
         """Medium threat gets depth 6."""
-        from src.fractal_encrypt_audit import recommend_key_depth
+        from spaceproof.fractal_encrypt_audit import recommend_key_depth
 
         assert recommend_key_depth("medium") == 6
 
     def test_recommend_key_depth_high(self):
         """High threat gets depth 8."""
-        from src.fractal_encrypt_audit import recommend_key_depth
+        from spaceproof.fractal_encrypt_audit import recommend_key_depth
 
         assert recommend_key_depth("high") == 8
 
     def test_recommend_key_depth_critical(self):
         """Critical threat gets depth 10."""
-        from src.fractal_encrypt_audit import recommend_key_depth
+        from spaceproof.fractal_encrypt_audit import recommend_key_depth
 
         assert recommend_key_depth("critical") == 10
 
@@ -207,7 +207,7 @@ class TestEncryptInfo:
 
     def test_get_encrypt_info(self):
         """Info function returns complete info."""
-        from src.fractal_encrypt_audit import get_encrypt_info
+        from spaceproof.fractal_encrypt_audit import get_encrypt_info
 
         info = get_encrypt_info()
         assert "key_depth" in info

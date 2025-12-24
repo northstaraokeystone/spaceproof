@@ -1,8 +1,9 @@
-# configs/xai.yaml
+# SpaceProof config for xAI
 # Elon/xAI stakeholder configuration
 # D20 Production Evolution
 
 stakeholder: xai
+version: "1.0"
 description: "Tesla/SpaceX/xAI telemetry compression and sovereignty"
 
 primary_modules:

@@ -6,7 +6,7 @@ class TestPatternDetector:
 
     def test_init_detector(self):
         """Test detector initialization."""
-        from src.autocatalytic.pattern_detector import init_detector
+        from spaceproof.autocatalytic.pattern_detector import init_detector
 
         detector = init_detector({})
 
@@ -14,7 +14,7 @@ class TestPatternDetector:
 
     def test_scan_receipt_stream(self):
         """Test receipt stream scanning."""
-        from src.autocatalytic.pattern_detector import (
+        from spaceproof.autocatalytic.pattern_detector import (
             init_detector,
             scan_receipt_stream,
         )
@@ -36,8 +36,8 @@ class TestPatternLifecycle:
 
     def test_init_lifecycle(self):
         """Test lifecycle initialization."""
-        from src.autocatalytic.pattern_detector import init_detector
-        from src.autocatalytic.pattern_lifecycle import init_lifecycle
+        from spaceproof.autocatalytic.pattern_detector import init_detector
+        from spaceproof.autocatalytic.pattern_lifecycle import init_lifecycle
 
         detector = init_detector({})
         lifecycle = init_lifecycle(detector)
@@ -46,8 +46,8 @@ class TestPatternLifecycle:
 
     def test_birth_pattern(self):
         """Test pattern birth."""
-        from src.autocatalytic.pattern_detector import init_detector
-        from src.autocatalytic.pattern_lifecycle import init_lifecycle, birth_pattern
+        from spaceproof.autocatalytic.pattern_detector import init_detector
+        from spaceproof.autocatalytic.pattern_lifecycle import init_lifecycle, birth_pattern
 
         detector = init_detector({})
         lifecycle = init_lifecycle(detector)
@@ -65,7 +65,7 @@ class TestCrossPlanetMigration:
 
     def test_init_migration(self):
         """Test migration manager initialization."""
-        from src.autocatalytic.cross_planet_migration import init_migration
+        from spaceproof.autocatalytic.cross_planet_migration import init_migration
 
         manager = init_migration({})
 
@@ -73,7 +73,7 @@ class TestCrossPlanetMigration:
 
     def test_migration_latency_tolerance(self):
         """Test migration latency tolerance."""
-        from src.autocatalytic.cross_planet_migration import (
+        from spaceproof.autocatalytic.cross_planet_migration import (
             MIGRATION_LATENCY_TOLERANCE_MS,
         )
 
@@ -85,7 +85,7 @@ class TestFitnessEvaluator:
 
     def test_compute_pattern_fitness(self):
         """Test pattern fitness computation."""
-        from src.autocatalytic.fitness_evaluator import compute_pattern_fitness
+        from spaceproof.autocatalytic.fitness_evaluator import compute_pattern_fitness
 
         fitness = compute_pattern_fitness(
             entropy_reduction=0.8,
@@ -99,7 +99,7 @@ class TestFitnessEvaluator:
 
     def test_thompson_sampling_select(self):
         """Test Thompson sampling selection."""
-        from src.autocatalytic.fitness_evaluator import thompson_sampling_select
+        from spaceproof.autocatalytic.fitness_evaluator import thompson_sampling_select
 
         patterns = [
             {"pattern_id": "a", "fitness": 0.9},

@@ -15,7 +15,7 @@ class TestZKConfig:
 
     def test_zk_config_loads(self):
         """Test ZK config loads from d13_solar_spec.json."""
-        from src.zk_proof_audit import load_zk_config
+        from spaceproof.zk_proof_audit import load_zk_config
 
         config = load_zk_config()
         assert config is not None
@@ -23,7 +23,7 @@ class TestZKConfig:
 
     def test_zk_proof_system(self):
         """Test ZK proof system is Groth16."""
-        from src.zk_proof_audit import load_zk_config, ZK_PROOF_SYSTEM
+        from spaceproof.zk_proof_audit import load_zk_config, ZK_PROOF_SYSTEM
 
         config = load_zk_config()
         assert config["proof_system"] == "groth16"
@@ -31,7 +31,7 @@ class TestZKConfig:
 
     def test_zk_circuit_size(self):
         """Test ZK circuit size is 2^20."""
-        from src.zk_proof_audit import load_zk_config, ZK_CIRCUIT_SIZE
+        from spaceproof.zk_proof_audit import load_zk_config, ZK_CIRCUIT_SIZE
 
         config = load_zk_config()
         assert config["circuit_size"] == 2**20
@@ -39,7 +39,7 @@ class TestZKConfig:
 
     def test_zk_resilience_target(self):
         """Test ZK resilience target is 100%."""
-        from src.zk_proof_audit import load_zk_config, ZK_RESILIENCE_TARGET
+        from spaceproof.zk_proof_audit import load_zk_config, ZK_RESILIENCE_TARGET
 
         config = load_zk_config()
         assert config["resilience_target"] == 1.0
@@ -47,7 +47,7 @@ class TestZKConfig:
 
     def test_zk_proof_time(self):
         """Test ZK proof time is reasonable."""
-        from src.zk_proof_audit import load_zk_config
+        from spaceproof.zk_proof_audit import load_zk_config
 
         config = load_zk_config()
         # Proof time should be < 1 second
@@ -55,7 +55,7 @@ class TestZKConfig:
 
     def test_zk_verify_time(self):
         """Test ZK verify time is reasonable."""
-        from src.zk_proof_audit import load_zk_config
+        from spaceproof.zk_proof_audit import load_zk_config
 
         config = load_zk_config()
         # Verify time should be < 100 ms
@@ -67,7 +67,7 @@ class TestZKInfo:
 
     def test_get_zk_info(self):
         """Test ZK info retrieval."""
-        from src.zk_proof_audit import get_zk_info
+        from spaceproof.zk_proof_audit import get_zk_info
 
         info = get_zk_info()
         assert info is not None
@@ -77,7 +77,7 @@ class TestZKInfo:
 
     def test_zk_attestation_claims(self):
         """Test ZK attestation claims are present."""
-        from src.zk_proof_audit import get_zk_info
+        from spaceproof.zk_proof_audit import get_zk_info
 
         info = get_zk_info()
         claims = info.get("attestation_claims", [])
@@ -90,7 +90,7 @@ class TestTrustedSetup:
 
     def test_setup_trusted_params(self):
         """Test trusted setup function."""
-        from src.zk_proof_audit import setup_trusted_params, ZK_CIRCUIT_SIZE
+        from spaceproof.zk_proof_audit import setup_trusted_params, ZK_CIRCUIT_SIZE
 
         result = setup_trusted_params(ZK_CIRCUIT_SIZE)
         assert result is not None
@@ -99,7 +99,7 @@ class TestTrustedSetup:
 
     def test_setup_generates_keys(self):
         """Test trusted setup generates proving and verification keys."""
-        from src.zk_proof_audit import setup_trusted_params
+        from spaceproof.zk_proof_audit import setup_trusted_params
 
         result = setup_trusted_params(2**10)  # Smaller for speed
         assert "proving_key_hash" in result
@@ -109,7 +109,7 @@ class TestTrustedSetup:
 
     def test_setup_toxic_waste_destroyed(self):
         """Test toxic waste is destroyed."""
-        from src.zk_proof_audit import setup_trusted_params
+        from spaceproof.zk_proof_audit import setup_trusted_params
 
         result = setup_trusted_params(2**10)
         assert result["toxic_waste_destroyed"] is True
@@ -120,7 +120,7 @@ class TestCircuitGeneration:
 
     def test_generate_attestation_circuit(self):
         """Test attestation circuit generation."""
-        from src.zk_proof_audit import generate_attestation_circuit
+        from spaceproof.zk_proof_audit import generate_attestation_circuit
 
         circuit = generate_attestation_circuit()
         assert circuit is not None
@@ -129,7 +129,7 @@ class TestCircuitGeneration:
 
     def test_circuit_constraint_count(self):
         """Test circuit has constraints."""
-        from src.zk_proof_audit import generate_attestation_circuit
+        from spaceproof.zk_proof_audit import generate_attestation_circuit
 
         circuit = generate_attestation_circuit()
         # Circuit should have constraints - may be list, dict or int
@@ -143,7 +143,7 @@ class TestCircuitGeneration:
 
     def test_circuit_claims(self):
         """Test circuit has expected claims."""
-        from src.zk_proof_audit import generate_attestation_circuit
+        from spaceproof.zk_proof_audit import generate_attestation_circuit
 
         circuit = generate_attestation_circuit()
         claims = circuit["claims"]
@@ -156,7 +156,7 @@ class TestProofGeneration:
 
     def test_generate_proof(self):
         """Test proof generation."""
-        from src.zk_proof_audit import generate_attestation_circuit, generate_proof
+        from spaceproof.zk_proof_audit import generate_attestation_circuit, generate_proof
 
         circuit = generate_attestation_circuit()
         witness = {
@@ -176,7 +176,7 @@ class TestProofGeneration:
 
     def test_proof_format(self):
         """Test proof has valid format."""
-        from src.zk_proof_audit import generate_attestation_circuit, generate_proof
+        from spaceproof.zk_proof_audit import generate_attestation_circuit, generate_proof
 
         circuit = generate_attestation_circuit()
         witness = {
@@ -194,7 +194,7 @@ class TestProofGeneration:
 
     def test_proof_size(self):
         """Test proof size is compact."""
-        from src.zk_proof_audit import generate_attestation_circuit, generate_proof
+        from spaceproof.zk_proof_audit import generate_attestation_circuit, generate_proof
 
         circuit = generate_attestation_circuit()
         witness = {
@@ -211,7 +211,7 @@ class TestProofVerification:
 
     def test_verify_proof(self):
         """Test proof verification."""
-        from src.zk_proof_audit import (
+        from spaceproof.zk_proof_audit import (
             generate_attestation_circuit,
             generate_proof,
             verify_proof,
@@ -230,7 +230,7 @@ class TestProofVerification:
 
     def test_verify_invalid_proof_fails(self):
         """Test invalid proof fails verification."""
-        from src.zk_proof_audit import verify_proof
+        from spaceproof.zk_proof_audit import verify_proof
 
         fake_proof = {
             "proof_a": "invalid",
@@ -247,7 +247,7 @@ class TestAttestation:
 
     def test_create_attestation(self):
         """Test attestation creation."""
-        from src.zk_proof_audit import create_attestation
+        from spaceproof.zk_proof_audit import create_attestation
 
         attestation = create_attestation(
             enclave_id="test_enclave",
@@ -261,7 +261,7 @@ class TestAttestation:
 
     def test_attestation_has_proof(self):
         """Test attestation includes proof."""
-        from src.zk_proof_audit import create_attestation
+        from spaceproof.zk_proof_audit import create_attestation
 
         attestation = create_attestation("enclave", "code", "config")
         assert "proof" in attestation
@@ -271,7 +271,7 @@ class TestAttestation:
 
     def test_attestation_has_public_inputs(self):
         """Test attestation has public inputs."""
-        from src.zk_proof_audit import create_attestation
+        from spaceproof.zk_proof_audit import create_attestation
 
         attestation = create_attestation("enclave", "code", "config")
         assert "public_inputs" in attestation
@@ -282,7 +282,7 @@ class TestAttestation:
 
     def test_verify_attestation(self):
         """Test attestation verification."""
-        from src.zk_proof_audit import create_attestation, verify_attestation
+        from spaceproof.zk_proof_audit import create_attestation, verify_attestation
 
         attestation = create_attestation("enclave", "code", "config")
         result = verify_attestation(attestation)
@@ -298,7 +298,7 @@ class TestZKAudit:
 
     def test_run_zk_audit(self):
         """Test ZK audit function."""
-        from src.zk_proof_audit import run_zk_audit
+        from spaceproof.zk_proof_audit import run_zk_audit
 
         result = run_zk_audit(attestation_count=3)
         assert result is not None
@@ -307,7 +307,7 @@ class TestZKAudit:
 
     def test_zk_audit_100_percent_verification(self):
         """Test ZK audit achieves 100% verification."""
-        from src.zk_proof_audit import run_zk_audit
+        from spaceproof.zk_proof_audit import run_zk_audit
 
         result = run_zk_audit(attestation_count=5)
         assert result["verification_rate"] == 1.0
@@ -315,7 +315,7 @@ class TestZKAudit:
 
     def test_zk_audit_resilience_target_met(self):
         """Test ZK audit meets 100% resilience target."""
-        from src.zk_proof_audit import run_zk_audit
+        from spaceproof.zk_proof_audit import run_zk_audit
 
         result = run_zk_audit(attestation_count=5)
         assert result["resilience"] == 1.0
@@ -323,7 +323,7 @@ class TestZKAudit:
 
     def test_zk_audit_overall_validated(self):
         """Test ZK audit overall validation."""
-        from src.zk_proof_audit import run_zk_audit
+        from spaceproof.zk_proof_audit import run_zk_audit
 
         result = run_zk_audit(attestation_count=5)
         assert result["overall_validated"] is True
@@ -334,7 +334,7 @@ class TestZKBenchmark:
 
     def test_benchmark_proof_system(self):
         """Test proof system benchmark."""
-        from src.zk_proof_audit import benchmark_proof_system
+        from spaceproof.zk_proof_audit import benchmark_proof_system
 
         result = benchmark_proof_system(iterations=3)
         assert result is not None
@@ -343,7 +343,7 @@ class TestZKBenchmark:
 
     def test_benchmark_throughput(self):
         """Test benchmark includes throughput."""
-        from src.zk_proof_audit import benchmark_proof_system
+        from spaceproof.zk_proof_audit import benchmark_proof_system
 
         result = benchmark_proof_system(iterations=3)
         assert "throughput_proofs_per_sec" in result
@@ -357,7 +357,7 @@ class TestZKComparison:
 
     def test_compare_to_traditional(self):
         """Test comparison to traditional attestation."""
-        from src.zk_proof_audit import compare_to_traditional, create_attestation
+        from spaceproof.zk_proof_audit import compare_to_traditional, create_attestation
 
         attestation = create_attestation("test", "test", "test")
         result = compare_to_traditional(attestation)
@@ -368,7 +368,7 @@ class TestZKComparison:
 
     def test_zk_privacy_advantage(self):
         """Test ZK has privacy advantage."""
-        from src.zk_proof_audit import compare_to_traditional, create_attestation
+        from spaceproof.zk_proof_audit import compare_to_traditional, create_attestation
 
         attestation = create_attestation("test", "test", "test")
         result = compare_to_traditional(attestation)
@@ -380,7 +380,7 @@ class TestZKComparison:
 
     def test_zk_resilience_advantage(self):
         """Test ZK has smaller proof size."""
-        from src.zk_proof_audit import compare_to_traditional, create_attestation
+        from spaceproof.zk_proof_audit import compare_to_traditional, create_attestation
 
         attestation = create_attestation("test", "test", "test")
         result = compare_to_traditional(attestation)

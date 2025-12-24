@@ -10,7 +10,7 @@ class TestInstantIncorporator:
 
     def test_init_incorporator(self):
         """Test incorporator initialization."""
-        from src.oracle import init_incorporator
+        from spaceproof.oracle import init_incorporator
 
         incorporator = init_incorporator()
 
@@ -21,7 +21,7 @@ class TestInstantIncorporator:
 
     def test_on_receipt_arrival(self):
         """Test receipt incorporation."""
-        from src.oracle import init_oracle, init_incorporator, on_receipt_arrival
+        from spaceproof.oracle import init_oracle, init_incorporator, on_receipt_arrival
 
         oracle = init_oracle({})
         oracle.history = []
@@ -42,8 +42,8 @@ class TestInstantIncorporator:
 
     def test_incorporation_latency(self):
         """Test incorporation latency constraint (<100ms)."""
-        from src.oracle import init_oracle, init_incorporator, on_receipt_arrival
-        from src.oracle.instant_incorporator import INCORPORATION_LATENCY_MAX_MS
+        from spaceproof.oracle import init_oracle, init_incorporator, on_receipt_arrival
+        from spaceproof.oracle.instant_incorporator import INCORPORATION_LATENCY_MAX_MS
 
         assert INCORPORATION_LATENCY_MAX_MS == 100
 
@@ -64,8 +64,8 @@ class TestInstantIncorporator:
 
     def test_update_compression(self):
         """Test compression update on new receipt."""
-        from src.oracle import init_oracle, init_incorporator
-        from src.oracle.instant_incorporator import update_compression
+        from spaceproof.oracle import init_oracle, init_incorporator
+        from spaceproof.oracle.instant_incorporator import update_compression
 
         oracle = init_oracle({})
         oracle.history = [{"receipt_type": "a"} for _ in range(10)]
@@ -79,8 +79,8 @@ class TestInstantIncorporator:
 
     def test_check_law_survival(self):
         """Test law survival check on new receipt."""
-        from src.oracle import init_oracle, init_incorporator
-        from src.oracle.instant_incorporator import check_law_survival
+        from spaceproof.oracle import init_oracle, init_incorporator
+        from spaceproof.oracle.instant_incorporator import check_law_survival
 
         oracle = init_oracle({})
         oracle.laws = [
@@ -96,7 +96,7 @@ class TestInstantIncorporator:
 
     def test_emit_incorporation_receipt(self):
         """Test incorporation receipt emission."""
-        from src.oracle import init_incorporator, emit_incorporation_receipt
+        from spaceproof.oracle import init_incorporator, emit_incorporation_receipt
 
         incorporator = init_incorporator()
         incorporator.last_incorporation_latency_ms = 50.0
@@ -110,7 +110,7 @@ class TestInstantIncorporator:
 
     def test_no_batch_processing(self):
         """Verify batch processing is disabled."""
-        from src.oracle.instant_incorporator import BATCH_PROCESSING_ENABLED
+        from spaceproof.oracle.instant_incorporator import BATCH_PROCESSING_ENABLED
 
         assert BATCH_PROCESSING_ENABLED is False
 
@@ -120,12 +120,12 @@ class TestIncorporatorConstants:
 
     def test_max_latency(self):
         """Verify max latency is 100ms."""
-        from src.oracle.instant_incorporator import INCORPORATION_LATENCY_MAX_MS
+        from spaceproof.oracle.instant_incorporator import INCORPORATION_LATENCY_MAX_MS
 
         assert INCORPORATION_LATENCY_MAX_MS == 100
 
     def test_batch_processing_disabled(self):
         """Verify batch processing is disabled."""
-        from src.oracle.instant_incorporator import BATCH_PROCESSING_ENABLED
+        from spaceproof.oracle.instant_incorporator import BATCH_PROCESSING_ENABLED
 
         assert BATCH_PROCESSING_ENABLED is False

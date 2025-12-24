@@ -6,13 +6,13 @@ class TestPLONKConstants:
 
     def test_plonk_circuit_size(self) -> None:
         """Test PLONK circuit size constant."""
-        from src.plonk_zk_upgrade import PLONK_CIRCUIT_SIZE
+        from spaceproof.plonk_zk_upgrade import PLONK_CIRCUIT_SIZE
 
         assert PLONK_CIRCUIT_SIZE == 2**22
 
     def test_plonk_timing_constants(self) -> None:
         """Test PLONK timing constants."""
-        from src.plonk_zk_upgrade import (
+        from spaceproof.plonk_zk_upgrade import (
             PLONK_PROOF_TIME_MS,
             PLONK_VERIFY_TIME_MS,
         )
@@ -22,7 +22,7 @@ class TestPLONKConstants:
 
     def test_plonk_feature_constants(self) -> None:
         """Test PLONK feature constants."""
-        from src.plonk_zk_upgrade import (
+        from spaceproof.plonk_zk_upgrade import (
             PLONK_UNIVERSAL_SETUP,
             PLONK_RECURSION_CAPABLE,
             PLONK_PRIVACY_PRESERVING,
@@ -34,7 +34,7 @@ class TestPLONKConstants:
 
     def test_plonk_resilience_target(self) -> None:
         """Test PLONK resilience target."""
-        from src.plonk_zk_upgrade import PLONK_RESILIENCE_TARGET
+        from spaceproof.plonk_zk_upgrade import PLONK_RESILIENCE_TARGET
 
         assert PLONK_RESILIENCE_TARGET == 1.0
 
@@ -44,7 +44,7 @@ class TestPLONKConfig:
 
     def test_load_plonk_config(self) -> None:
         """Test loading PLONK config from spec."""
-        from src.plonk_zk_upgrade import load_plonk_config
+        from spaceproof.plonk_zk_upgrade import load_plonk_config
 
         config = load_plonk_config()
         assert config is not None
@@ -55,7 +55,7 @@ class TestPLONKConfig:
 
     def test_get_plonk_info(self) -> None:
         """Test PLONK info retrieval."""
-        from src.plonk_zk_upgrade import get_plonk_info
+        from spaceproof.plonk_zk_upgrade import get_plonk_info
 
         info = get_plonk_info()
         assert info is not None
@@ -73,7 +73,7 @@ class TestUniversalSetup:
 
     def test_universal_setup_basic(self) -> None:
         """Test basic universal setup."""
-        from src.plonk_zk_upgrade import universal_setup
+        from spaceproof.plonk_zk_upgrade import universal_setup
 
         result = universal_setup(participants=10)
 
@@ -86,7 +86,7 @@ class TestUniversalSetup:
 
     def test_universal_setup_keys(self) -> None:
         """Test universal setup key generation."""
-        from src.plonk_zk_upgrade import universal_setup
+        from spaceproof.plonk_zk_upgrade import universal_setup
 
         result = universal_setup(participants=10)
 
@@ -97,7 +97,7 @@ class TestUniversalSetup:
 
     def test_universal_setup_toxic_waste(self) -> None:
         """Test toxic waste destruction."""
-        from src.plonk_zk_upgrade import universal_setup
+        from spaceproof.plonk_zk_upgrade import universal_setup
 
         result = universal_setup(participants=10)
 
@@ -106,7 +106,7 @@ class TestUniversalSetup:
 
     def test_universal_setup_complete(self) -> None:
         """Test universal setup completion status."""
-        from src.plonk_zk_upgrade import universal_setup
+        from spaceproof.plonk_zk_upgrade import universal_setup
 
         result = universal_setup(participants=10)
 
@@ -121,7 +121,7 @@ class TestPLONKCircuit:
 
     def test_generate_plonk_circuit(self) -> None:
         """Test PLONK circuit generation."""
-        from src.plonk_zk_upgrade import generate_plonk_circuit
+        from spaceproof.plonk_zk_upgrade import generate_plonk_circuit
 
         circuit = generate_plonk_circuit()
 
@@ -133,7 +133,7 @@ class TestPLONKCircuit:
 
     def test_circuit_claims(self) -> None:
         """Test circuit attestation claims."""
-        from src.plonk_zk_upgrade import generate_plonk_circuit
+        from spaceproof.plonk_zk_upgrade import generate_plonk_circuit
 
         circuit = generate_plonk_circuit()
 
@@ -149,7 +149,7 @@ class TestPLONKProof:
 
     def test_generate_plonk_proof(self) -> None:
         """Test PLONK proof generation."""
-        from src.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
+        from spaceproof.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
 
         circuit = generate_plonk_circuit()
         witness = {
@@ -175,7 +175,7 @@ class TestPLONKProof:
 
     def test_plonk_proof_size(self) -> None:
         """Test PLONK proof size."""
-        from src.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
+        from spaceproof.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
 
         circuit = generate_plonk_circuit()
         witness = {
@@ -197,7 +197,7 @@ class TestPLONKProof:
 
     def test_verify_plonk_proof(self) -> None:
         """Test PLONK proof verification."""
-        from src.plonk_zk_upgrade import verify_plonk
+        from spaceproof.plonk_zk_upgrade import verify_plonk
 
         result = verify_plonk()
 
@@ -209,7 +209,7 @@ class TestPLONKProof:
 
     def test_verify_plonk_timing(self) -> None:
         """Test PLONK verification timing."""
-        from src.plonk_zk_upgrade import verify_plonk
+        from spaceproof.plonk_zk_upgrade import verify_plonk
 
         result = verify_plonk()
 
@@ -223,7 +223,7 @@ class TestRecursiveProof:
 
     def test_recursive_proof_basic(self) -> None:
         """Test basic recursive proof generation."""
-        from src.plonk_zk_upgrade import recursive_proof
+        from spaceproof.plonk_zk_upgrade import recursive_proof
 
         proofs = [
             {"proof_a": "a1", "proof_b": "b1"},
@@ -241,7 +241,7 @@ class TestRecursiveProof:
 
     def test_recursive_proof_compression(self) -> None:
         """Test recursive proof compression ratio."""
-        from src.plonk_zk_upgrade import recursive_proof
+        from spaceproof.plonk_zk_upgrade import recursive_proof
 
         proofs = [{"proof_a": f"a{i}", "proof_b": f"b{i}"} for i in range(5)]
 
@@ -253,7 +253,7 @@ class TestRecursiveProof:
 
     def test_recursive_proof_components(self) -> None:
         """Test recursive proof components."""
-        from src.plonk_zk_upgrade import recursive_proof
+        from spaceproof.plonk_zk_upgrade import recursive_proof
 
         proofs = [{"proof_a": "a1", "proof_b": "b1"}]
 
@@ -268,7 +268,7 @@ class TestPLONKAttestation:
 
     def test_create_plonk_attestation(self) -> None:
         """Test PLONK attestation creation."""
-        from src.plonk_zk_upgrade import create_plonk_attestation
+        from spaceproof.plonk_zk_upgrade import create_plonk_attestation
 
         attestation = create_plonk_attestation(
             enclave_id="test_enclave",
@@ -286,7 +286,7 @@ class TestPLONKAttestation:
 
     def test_attestation_public_inputs(self) -> None:
         """Test attestation public inputs."""
-        from src.plonk_zk_upgrade import create_plonk_attestation
+        from spaceproof.plonk_zk_upgrade import create_plonk_attestation
 
         attestation = create_plonk_attestation(
             enclave_id="test_enclave",
@@ -302,7 +302,7 @@ class TestPLONKAttestation:
 
     def test_attestation_metadata(self) -> None:
         """Test attestation metadata."""
-        from src.plonk_zk_upgrade import create_plonk_attestation
+        from spaceproof.plonk_zk_upgrade import create_plonk_attestation
 
         attestation = create_plonk_attestation(
             enclave_id="test_enclave",
@@ -319,7 +319,7 @@ class TestPLONKAttestation:
 
     def test_verify_plonk_attestation(self) -> None:
         """Test PLONK attestation verification."""
-        from src.plonk_zk_upgrade import (
+        from spaceproof.plonk_zk_upgrade import (
             create_plonk_attestation,
             verify_plonk_attestation,
         )
@@ -342,7 +342,7 @@ class TestPLONKBenchmark:
 
     def test_benchmark_plonk(self) -> None:
         """Test PLONK benchmark."""
-        from src.plonk_zk_upgrade import benchmark_plonk
+        from spaceproof.plonk_zk_upgrade import benchmark_plonk
 
         result = benchmark_plonk(iterations=5)
 
@@ -354,7 +354,7 @@ class TestPLONKBenchmark:
 
     def test_benchmark_proof_time(self) -> None:
         """Test benchmark proof time stats."""
-        from src.plonk_zk_upgrade import benchmark_plonk
+        from spaceproof.plonk_zk_upgrade import benchmark_plonk
 
         result = benchmark_plonk(iterations=5)
 
@@ -366,7 +366,7 @@ class TestPLONKBenchmark:
 
     def test_benchmark_verify_time(self) -> None:
         """Test benchmark verify time stats."""
-        from src.plonk_zk_upgrade import benchmark_plonk
+        from spaceproof.plonk_zk_upgrade import benchmark_plonk
 
         result = benchmark_plonk(iterations=5)
 
@@ -378,7 +378,7 @@ class TestPLONKBenchmark:
 
     def test_benchmark_throughput(self) -> None:
         """Test benchmark throughput metrics."""
-        from src.plonk_zk_upgrade import benchmark_plonk
+        from spaceproof.plonk_zk_upgrade import benchmark_plonk
 
         result = benchmark_plonk(iterations=5)
 
@@ -391,7 +391,7 @@ class TestPLONKComparison:
 
     def test_compare_to_groth16(self) -> None:
         """Test PLONK vs Groth16 comparison."""
-        from src.plonk_zk_upgrade import compare_to_groth16
+        from spaceproof.plonk_zk_upgrade import compare_to_groth16
 
         result = compare_to_groth16()
 
@@ -403,7 +403,7 @@ class TestPLONKComparison:
 
     def test_comparison_plonk_section(self) -> None:
         """Test comparison PLONK section."""
-        from src.plonk_zk_upgrade import compare_to_groth16
+        from spaceproof.plonk_zk_upgrade import compare_to_groth16
 
         result = compare_to_groth16()
 
@@ -416,7 +416,7 @@ class TestPLONKComparison:
 
     def test_comparison_groth16_section(self) -> None:
         """Test comparison Groth16 section."""
-        from src.plonk_zk_upgrade import compare_to_groth16
+        from spaceproof.plonk_zk_upgrade import compare_to_groth16
 
         result = compare_to_groth16()
 
@@ -428,7 +428,7 @@ class TestPLONKComparison:
 
     def test_comparison_speedup(self) -> None:
         """Test comparison speedup metrics."""
-        from src.plonk_zk_upgrade import compare_to_groth16
+        from spaceproof.plonk_zk_upgrade import compare_to_groth16
 
         result = compare_to_groth16()
 
@@ -443,7 +443,7 @@ class TestPLONKAudit:
 
     def test_run_plonk_audit(self) -> None:
         """Test full PLONK audit."""
-        from src.plonk_zk_upgrade import run_plonk_audit
+        from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
         result = run_plonk_audit(attestation_count=3)
 
@@ -455,7 +455,7 @@ class TestPLONKAudit:
 
     def test_audit_verification_rate(self) -> None:
         """Test audit verification rate."""
-        from src.plonk_zk_upgrade import run_plonk_audit
+        from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
         result = run_plonk_audit(attestation_count=5)
 
@@ -466,7 +466,7 @@ class TestPLONKAudit:
 
     def test_audit_resilience(self) -> None:
         """Test audit resilience metrics."""
-        from src.plonk_zk_upgrade import run_plonk_audit
+        from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
         result = run_plonk_audit(attestation_count=5)
 
@@ -476,7 +476,7 @@ class TestPLONKAudit:
 
     def test_audit_recursive_proof(self) -> None:
         """Test audit includes recursive proof."""
-        from src.plonk_zk_upgrade import run_plonk_audit
+        from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
         result = run_plonk_audit(attestation_count=3)
 
@@ -485,7 +485,7 @@ class TestPLONKAudit:
 
     def test_audit_overall_validation(self) -> None:
         """Test audit overall validation."""
-        from src.plonk_zk_upgrade import run_plonk_audit
+        from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
         result = run_plonk_audit(attestation_count=5)
 
@@ -498,7 +498,7 @@ class TestAGIPLONKIntegration:
 
     def test_integrate_plonk(self) -> None:
         """Test PLONK integration into AGI path."""
-        from src.paths.agi.core import integrate_plonk
+        from spaceproof.paths.agi.core import integrate_plonk
 
         result = integrate_plonk()
 
@@ -509,7 +509,7 @@ class TestAGIPLONKIntegration:
 
     def test_run_plonk_stress_test(self) -> None:
         """Test PLONK stress test."""
-        from src.paths.agi.core import run_plonk_stress_test
+        from spaceproof.paths.agi.core import run_plonk_stress_test
 
         result = run_plonk_stress_test(iterations=5)
 
@@ -519,7 +519,7 @@ class TestAGIPLONKIntegration:
 
     def test_compare_zk_systems(self) -> None:
         """Test ZK systems comparison."""
-        from src.paths.agi.core import compare_zk_systems
+        from spaceproof.paths.agi.core import compare_zk_systems
 
         result = compare_zk_systems()
 
@@ -531,7 +531,7 @@ class TestAGIPLONKIntegration:
 
     def test_measure_plonk_overhead(self) -> None:
         """Test PLONK overhead measurement."""
-        from src.paths.agi.core import measure_plonk_overhead
+        from spaceproof.paths.agi.core import measure_plonk_overhead
 
         result = measure_plonk_overhead()
 
@@ -542,7 +542,7 @@ class TestAGIPLONKIntegration:
 
     def test_compute_plonk_alignment(self) -> None:
         """Test PLONK alignment score computation."""
-        from src.paths.agi.core import compute_plonk_alignment
+        from spaceproof.paths.agi.core import compute_plonk_alignment
 
         result = compute_plonk_alignment()
 

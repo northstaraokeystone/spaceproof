@@ -7,7 +7,7 @@ Tests:
 - D18+interstellar+quantum hybrid integration
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d18_spec,
     get_d18_uplift,
     identify_topological_holes,

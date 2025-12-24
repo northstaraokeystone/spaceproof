@@ -3,7 +3,7 @@
 Commands: fractal_push, alpha_boost, fractal_info_hybrid
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     multi_scale_fractal,
     get_fractal_hybrid_spec,
     get_fractal_layers_info,
@@ -12,7 +12,7 @@ from src.fractal_layers import (
     FRACTAL_DIM_MIN,
     FRACTAL_DIM_MAX,
 )
-from src.quantum_rl_hybrid import (
+from spaceproof.quantum_rl_hybrid import (
     quantum_fractal_hybrid,
     QUANTUM_RETENTION_BOOST,
 )

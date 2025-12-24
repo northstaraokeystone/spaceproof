@@ -6,7 +6,7 @@ class TestKANSwarm:
 
     def test_init_swarm_kan(self):
         """Test KAN initialization."""
-        from src.witness.kan_swarm import init_swarm_kan
+        from spaceproof.witness.kan_swarm import init_swarm_kan
 
         kan = init_swarm_kan({})
 
@@ -15,7 +15,7 @@ class TestKANSwarm:
 
     def test_extract_law(self):
         """Test law extraction."""
-        from src.witness.kan_swarm import init_swarm_kan, extract_law
+        from spaceproof.witness.kan_swarm import init_swarm_kan, extract_law
 
         kan = init_swarm_kan({})
         law = extract_law(kan)
@@ -30,8 +30,8 @@ class TestLawDiscovery:
 
     def test_init_law_discovery(self):
         """Test law discovery initialization."""
-        from src.witness.kan_swarm import init_swarm_kan
-        from src.witness.law_discovery import init_law_discovery
+        from spaceproof.witness.kan_swarm import init_swarm_kan
+        from spaceproof.witness.law_discovery import init_law_discovery
 
         kan = init_swarm_kan({})
         ld = init_law_discovery(kan)
@@ -40,7 +40,7 @@ class TestLawDiscovery:
 
     def test_law_discovery_threshold(self):
         """Test law discovery threshold."""
-        from src.witness.law_discovery import LAW_DISCOVERY_THRESHOLD
+        from spaceproof.witness.law_discovery import LAW_DISCOVERY_THRESHOLD
 
         assert LAW_DISCOVERY_THRESHOLD == 0.85
 
@@ -50,7 +50,7 @@ class TestGovernanceSynthesis:
 
     def test_synthesize_protocol(self):
         """Test protocol synthesis from law."""
-        from src.witness.governance_synthesis import synthesize_protocol
+        from spaceproof.witness.governance_synthesis import synthesize_protocol
 
         law = {
             "law_id": "test_law",

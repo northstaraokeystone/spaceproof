@@ -5,7 +5,7 @@ import json
 
 def cmd_swarm_info(args) -> None:
     """Show swarm testnet configuration."""
-    from src.swarm_testnet import load_swarm_config
+    from spaceproof.swarm_testnet import load_swarm_config
 
     config = load_swarm_config()
     print("\n=== SWARM TESTNET CONFIGURATION ===")
@@ -18,7 +18,7 @@ def cmd_swarm_info(args) -> None:
 
 def cmd_swarm_init(args) -> None:
     """Initialize swarm testnet."""
-    from src.swarm_testnet import init_swarm
+    from spaceproof.swarm_testnet import init_swarm
 
     node_count = getattr(args, "swarm_nodes", 100)
 
@@ -33,7 +33,7 @@ def cmd_swarm_init(args) -> None:
 
 def cmd_swarm_deploy(args) -> None:
     """Deploy full swarm."""
-    from src.swarm_testnet import deploy_full_swarm
+    from spaceproof.swarm_testnet import deploy_full_swarm
 
     result = deploy_full_swarm()
     print("\n=== FULL SWARM DEPLOYED ===")
@@ -46,7 +46,7 @@ def cmd_swarm_deploy(args) -> None:
 
 def cmd_swarm_mesh(args) -> None:
     """Create swarm mesh topology."""
-    from src.swarm_testnet import create_mesh_topology
+    from spaceproof.swarm_testnet import create_mesh_topology
 
     result = create_mesh_topology()
     print("\n=== MESH TOPOLOGY CREATED ===")
@@ -59,7 +59,7 @@ def cmd_swarm_mesh(args) -> None:
 
 def cmd_swarm_consensus(args) -> None:
     """Run swarm consensus."""
-    from src.swarm_testnet import run_swarm_consensus
+    from spaceproof.swarm_testnet import run_swarm_consensus
 
     result = run_swarm_consensus()
     print("\n=== SWARM CONSENSUS ===")
@@ -73,7 +73,7 @@ def cmd_swarm_consensus(args) -> None:
 
 def cmd_swarm_failure(args) -> None:
     """Inject failure into swarm node."""
-    from src.swarm_testnet import inject_failure
+    from spaceproof.swarm_testnet import inject_failure
 
     node_id = getattr(args, "swarm_node_id", "swarm_orbital_000")
 
@@ -91,7 +91,7 @@ def cmd_swarm_failure(args) -> None:
 
 def cmd_swarm_recovery(args) -> None:
     """Measure swarm recovery time."""
-    from src.swarm_testnet import measure_recovery_time
+    from spaceproof.swarm_testnet import measure_recovery_time
 
     result = measure_recovery_time()
     print("\n=== RECOVERY TIME MEASUREMENT ===")
@@ -105,7 +105,7 @@ def cmd_swarm_recovery(args) -> None:
 
 def cmd_swarm_stress(args) -> None:
     """Run swarm stress test."""
-    from src.swarm_testnet import stress_test_swarm
+    from spaceproof.swarm_testnet import stress_test_swarm
 
     cycles = getattr(args, "swarm_stress_cycles", 100)
 
@@ -122,7 +122,7 @@ def cmd_swarm_stress(args) -> None:
 
 def cmd_swarm_status(args) -> None:
     """Show swarm status."""
-    from src.swarm_testnet import get_swarm_status
+    from spaceproof.swarm_testnet import get_swarm_status
 
     status = get_swarm_status()
     print("\n=== SWARM STATUS ===")
@@ -131,7 +131,7 @@ def cmd_swarm_status(args) -> None:
 
 def cmd_testnet_info(args) -> None:
     """Show testnet configuration."""
-    from src.testnet_parallel import load_testnet_config
+    from spaceproof.testnet_parallel import load_testnet_config
 
     config = load_testnet_config()
     print("\n=== TESTNET CONFIGURATION ===")
@@ -143,7 +143,7 @@ def cmd_testnet_info(args) -> None:
 
 def cmd_testnet_init(args) -> None:
     """Initialize testnets."""
-    from src.testnet_parallel import init_ethereum_testnet, init_solana_testnet
+    from spaceproof.testnet_parallel import init_ethereum_testnet, init_solana_testnet
 
     eth = init_ethereum_testnet()
     sol = init_solana_testnet()
@@ -161,7 +161,7 @@ def cmd_testnet_init(args) -> None:
 
 def cmd_testnet_bridge(args) -> None:
     """Create testnet bridge."""
-    from src.testnet_parallel import create_bridge
+    from spaceproof.testnet_parallel import create_bridge
 
     result = create_bridge()
     print("\n=== BRIDGE CREATED ===")
@@ -173,7 +173,7 @@ def cmd_testnet_bridge(args) -> None:
 
 def cmd_testnet_cross_chain(args) -> None:
     """Send cross-chain transaction."""
-    from src.testnet_parallel import send_cross_chain, validate_cross_chain
+    from spaceproof.testnet_parallel import send_cross_chain, validate_cross_chain
 
     from_chain = getattr(args, "from_chain", "ethereum")
     to_chain = getattr(args, "to_chain", "solana")
@@ -197,7 +197,7 @@ def cmd_testnet_cross_chain(args) -> None:
 
 def cmd_testnet_stress(args) -> None:
     """Run testnet bridge stress test."""
-    from src.testnet_parallel import stress_test_bridge
+    from spaceproof.testnet_parallel import stress_test_bridge
 
     transactions = getattr(args, "testnet_transactions", 100)
 
@@ -214,7 +214,7 @@ def cmd_testnet_stress(args) -> None:
 
 def cmd_testnet_status(args) -> None:
     """Show testnet status."""
-    from src.testnet_parallel import get_testnet_status
+    from spaceproof.testnet_parallel import get_testnet_status
 
     status = get_testnet_status()
     print("\n=== TESTNET STATUS ===")

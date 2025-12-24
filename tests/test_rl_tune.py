@@ -37,7 +37,7 @@ import os
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.rl_tune import (
+from spaceproof.rl_tune import (
     RLTuner,
     rl_auto_tune,
     load_rl_tune_spec,
@@ -57,25 +57,25 @@ from src.rl_tune import (
     PRUNE_AGGRESSIVENESS_MIN,
     PRUNE_AGGRESSIVENESS_MAX,
 )
-from src.adaptive import (
+from spaceproof.adaptive import (
     compute_adaptive_depth,
     scale_lr_to_depth,
     adaptive_prune_factor,
     get_dynamic_config,
 )
-from src.gnn_cache import apply_dynamic_config, get_current_config, reset_dynamic_config
-from src.pruning import (
+from spaceproof.gnn_cache import apply_dynamic_config, get_current_config, reset_dynamic_config
+from spaceproof.pruning import (
     apply_dynamic_aggressiveness,
     get_current_aggressiveness,
     reset_dynamic_aggressiveness,
 )
-from src.reasoning import (
+from spaceproof.reasoning import (
     sovereignty_timeline_dynamic,
     continued_ablation_loop,
     validate_no_static_configs,
     get_rl_integration_status,
 )
-from src.core import StopRule
+from spaceproof.core import StopRule
 
 
 class TestRLTunerInit:

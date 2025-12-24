@@ -5,7 +5,7 @@ Commands for NREL perovskite efficiency validation.
 
 import json
 
-from src.nrel_validation import (
+from spaceproof.nrel_validation import (
     load_nrel_config,
     validate_efficiency,
     project_degradation,

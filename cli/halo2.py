@@ -16,7 +16,7 @@ def cmd_halo2_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Halo2 info
     """
-    from src.halo2_recursive import load_halo2_config
+    from spaceproof.halo2_recursive import load_halo2_config
 
     config = load_halo2_config()
 
@@ -51,7 +51,7 @@ def cmd_halo2_prove(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with proof
     """
-    from src.halo2_recursive import generate_halo2_circuit, generate_halo2_proof
+    from spaceproof.halo2_recursive import generate_halo2_circuit, generate_halo2_proof
 
     circuit = generate_halo2_circuit()
 
@@ -90,7 +90,7 @@ def cmd_halo2_verify(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with verification result
     """
-    from src.halo2_recursive import (
+    from spaceproof.halo2_recursive import (
         generate_halo2_circuit,
         generate_halo2_proof,
         verify_halo2_proof,
@@ -128,7 +128,7 @@ def cmd_halo2_recursive(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with recursive proof
     """
-    from src.halo2_recursive import generate_recursive_proof, verify_recursive_proof
+    from spaceproof.halo2_recursive import generate_recursive_proof, verify_recursive_proof
 
     depth = getattr(args, "halo2_recursive_depth", 5)
 
@@ -166,7 +166,7 @@ def cmd_halo2_attestation(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with attestation
     """
-    from src.halo2_recursive import create_halo2_attestation
+    from spaceproof.halo2_recursive import create_halo2_attestation
 
     enclave_id = getattr(args, "enclave_id", "test_enclave")
     code_hash = getattr(args, "code_hash", "test_code_hash")
@@ -214,7 +214,7 @@ def cmd_halo2_audit(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with audit results
     """
-    from src.halo2_recursive import run_halo2_audit
+    from spaceproof.halo2_recursive import run_halo2_audit
 
     count = getattr(args, "halo2_attestation_count", 5)
     result = run_halo2_audit(attestation_count=count)
@@ -258,7 +258,7 @@ def cmd_halo2_benchmark(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with benchmark results
     """
-    from src.halo2_recursive import benchmark_halo2
+    from spaceproof.halo2_recursive import benchmark_halo2
 
     iterations = getattr(args, "halo2_iterations", 10)
     result = benchmark_halo2(iterations=iterations)
@@ -297,7 +297,7 @@ def cmd_halo2_compare(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with comparison results
     """
-    from src.halo2_recursive import compare_to_plonk
+    from spaceproof.halo2_recursive import compare_to_plonk
 
     result = compare_to_plonk()
 
@@ -344,7 +344,7 @@ def cmd_halo2_infinite_chain(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with infinite chain results
     """
-    from src.paths.agi.core import infinite_attestation_chain
+    from spaceproof.paths.agi.core import infinite_attestation_chain
 
     depth = getattr(args, "halo2_chain_depth", 10)
 

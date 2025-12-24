@@ -21,7 +21,7 @@ import sys
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.entropy import (
+from spaceproof.entropy import (
     calculate_latency_pressure,
     is_delay_tolerant,
     apply_latency_selection,

@@ -17,7 +17,7 @@ SLO Requirements:
 - NREL scaling factor == 3.33
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d7_spec,
     get_d7_uplift,
     d7_recursive_fractal,
@@ -29,7 +29,7 @@ from src.fractal_layers import (
     D7_UPLIFT,
     D7_TREE_MIN,
 )
-from src.europa_ice_hybrid import (
+from spaceproof.europa_ice_hybrid import (
     load_europa_config,
     simulate_drilling,
     compute_autonomy,
@@ -41,7 +41,7 @@ from src.europa_ice_hybrid import (
     EUROPA_LATENCY_MAX_MIN,
     EUROPA_ICE_THICKNESS_KM,
 )
-from src.nrel_validation import (
+from spaceproof.nrel_validation import (
     load_nrel_config,
     validate_efficiency,
     project_degradation,

@@ -3,14 +3,14 @@
 Commands: hybrid_boost_info
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_fractal_hybrid_spec,
     FRACTAL_SCALES,
     FRACTAL_UPLIFT,
     FRACTAL_DIM_MIN,
     FRACTAL_DIM_MAX,
 )
-from src.quantum_rl_hybrid import (
+from spaceproof.quantum_rl_hybrid import (
     QUANTUM_RETENTION_BOOST,
     ENTANGLED_PENALTY_FACTOR,
 )

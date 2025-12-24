@@ -7,7 +7,7 @@ Tests:
 - Tesla Dojo offload
 """
 
-from src.elon_sphere.starlink_relay import (
+from spaceproof.elon_sphere.starlink_relay import (
     load_starlink_config,
     initialize_starlink_mesh,
     simulate_laser_link,
@@ -17,7 +17,7 @@ from src.elon_sphere.starlink_relay import (
     STARLINK_LASER_GBPS,
 )
 
-from src.elon_sphere.grok_inference import (
+from spaceproof.elon_sphere.grok_inference import (
     load_grok_config,
     initialize_grok_agents,
     parallel_inference,
@@ -27,7 +27,7 @@ from src.elon_sphere.grok_inference import (
     GROK_PARALLEL_AGENTS,
 )
 
-from src.elon_sphere.xai_compute import (
+from spaceproof.elon_sphere.xai_compute import (
     load_xai_config,
     initialize_colossus,
     quantum_sim_batch,
@@ -36,7 +36,7 @@ from src.elon_sphere.xai_compute import (
     XAI_COLOSSUS_SCALE,
 )
 
-from src.elon_sphere.dojo_offload import (
+from spaceproof.elon_sphere.dojo_offload import (
     load_dojo_config,
     initialize_dojo_cluster,
     offload_recursion_training,

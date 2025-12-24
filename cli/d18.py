@@ -16,7 +16,7 @@ def cmd_d18_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D18 info
     """
-    from src.fractal_layers import get_d18_info
+    from spaceproof.fractal_layers import get_d18_info
 
     info = get_d18_info()
 
@@ -69,7 +69,7 @@ def cmd_d18_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D18 push results
     """
-    from src.fractal_layers import d18_push
+    from spaceproof.fractal_layers import d18_push
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -108,7 +108,7 @@ def cmd_d18_pruning(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with pruning metrics
     """
-    from src.fractal_layers import pruning_v3
+    from spaceproof.fractal_layers import pruning_v3
 
     tree_size = getattr(args, "tree_size", 10**9)
     tree = {"size": tree_size, "depth": 18}
@@ -137,7 +137,7 @@ def cmd_d18_compression(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with compression metrics
     """
-    from src.fractal_layers import compute_compression
+    from spaceproof.fractal_layers import compute_compression
 
     depth = getattr(args, "depth", 18)
 
@@ -163,7 +163,7 @@ def cmd_d18_interstellar_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.fractal_layers import d18_interstellar_hybrid
+    from spaceproof.fractal_layers import d18_interstellar_hybrid
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)

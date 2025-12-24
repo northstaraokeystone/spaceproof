@@ -9,7 +9,7 @@ Tests:
 - Stability assessment
 """
 
-from src.kuiper_12body_chaos import (
+from spaceproof.kuiper_12body_chaos import (
     load_kuiper_config,
     initialize_kuiper_bodies,
     compute_kuiper_forces,

@@ -5,7 +5,7 @@ Commands for Atacama Mars dust analog validation.
 
 import json
 
-from src.atacama_validation import (
+from spaceproof.atacama_validation import (
     run_atacama_validation,
     get_atacama_info,
 )

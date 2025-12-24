@@ -79,8 +79,8 @@ def capture_receipts():
 @pytest.fixture
 def clear_cache():
     """Clear cached specs before each test."""
-    from src.rl_tune import clear_sweep_spec_cache
-    from src.adaptive_depth import clear_spec_cache
+    from spaceproof.rl_tune import clear_sweep_spec_cache
+    from spaceproof.adaptive_depth import clear_spec_cache
 
     clear_sweep_spec_cache()
     clear_spec_cache()
@@ -103,14 +103,14 @@ class TestSpecLoads:
 
     def test_spec_loads_valid_json(self, suppress_receipts, clear_cache):
         """Verify spec loads as valid JSON."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         assert isinstance(spec, dict), "Spec should be a dict"
 
     def test_spec_contains_required_fields(self, suppress_receipts, clear_cache):
         """Verify spec contains all required fields."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         required_fields = [
@@ -133,7 +133,7 @@ class TestSpecHasDualHash:
 
     def test_receipt_contains_payload_hash(self, capture_receipts, clear_cache):
         """Verify sweep_spec_receipt contains payload_hash."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         cap = capture_receipts()
         with cap:
@@ -158,7 +158,7 @@ class TestSweepRunsValue:
 
     def test_sweep_runs_equals_500(self, suppress_receipts, clear_cache):
         """Verify sweep_runs is exactly 500."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         assert spec["sweep_runs"] == 500, (
@@ -167,7 +167,7 @@ class TestSweepRunsValue:
 
     def test_constant_matches_spec(self, suppress_receipts, clear_cache):
         """Verify RL_SWEEP_RUNS constant matches spec."""
-        from src.rl_tune import RL_SWEEP_RUNS, load_sweep_spec
+        from spaceproof.rl_tune import RL_SWEEP_RUNS, load_sweep_spec
 
         spec = load_sweep_spec()
         assert RL_SWEEP_RUNS == spec["sweep_runs"], "Constant should match spec"
@@ -181,21 +181,21 @@ class TestLRRangeValid:
 
     def test_lr_min_value(self, suppress_receipts, clear_cache):
         """Verify lr_min is 0.001."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         assert spec["lr_min"] == 0.001, f"lr_min should be 0.001, got {spec['lr_min']}"
 
     def test_lr_max_value(self, suppress_receipts, clear_cache):
         """Verify lr_max is 0.01."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         assert spec["lr_max"] == 0.01, f"lr_max should be 0.01, got {spec['lr_max']}"
 
     def test_lr_min_less_than_max(self, suppress_receipts, clear_cache):
         """Verify lr_min < lr_max."""
-        from src.rl_tune import load_sweep_spec
+        from spaceproof.rl_tune import load_sweep_spec
 
         spec = load_sweep_spec()
         assert spec["lr_min"] < spec["lr_max"], "lr_min should be < lr_max"
@@ -209,7 +209,7 @@ class TestSeedDeterminism:
 
     def test_same_seed_same_results(self, suppress_receipts, clear_cache):
         """Verify same seed produces same results."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result1 = run_500_sweep(runs=50, seed=42, early_stopping=False)
         result2 = run_500_sweep(runs=50, seed=42, early_stopping=False)
@@ -220,7 +220,7 @@ class TestSeedDeterminism:
 
     def test_different_seed_different_results(self, suppress_receipts, clear_cache):
         """Verify different seeds can produce different results."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result1 = run_500_sweep(runs=100, seed=42, early_stopping=False)
         result2 = run_500_sweep(runs=100, seed=123, early_stopping=False)
@@ -239,7 +239,7 @@ class TestStateDimension:
 
     def test_build_state_returns_4_tuple(self, suppress_receipts):
         """Verify build_state returns 4-element tuple."""
-        from src.rl_tune import build_state
+        from spaceproof.rl_tune import build_state
 
         state = build_state(retention=1.01, tree_size=int(1e6), entropy=0.5, depth=6)
 
@@ -248,7 +248,7 @@ class TestStateDimension:
 
     def test_state_components_correct(self, suppress_receipts):
         """Verify state components are in correct order."""
-        from src.rl_tune import build_state
+        from spaceproof.rl_tune import build_state
 
         retention, tree_size, entropy, depth = 1.05, int(1e9), 0.7, 8
         state = build_state(retention, tree_size, entropy, depth)
@@ -267,7 +267,7 @@ class TestActionLayersBounded:
 
     def test_layers_delta_in_valid_set(self, suppress_receipts):
         """Verify layers_delta is in {-1, 0, +1}."""
-        from src.rl_tune import sample_action
+        from spaceproof.rl_tune import sample_action
         import random
 
         random.seed(42)
@@ -289,7 +289,7 @@ class TestActionLRInRange:
 
     def test_lr_within_bounds(self, suppress_receipts):
         """Verify sampled LR is within bounds."""
-        from src.rl_tune import sample_action, RL_LR_MIN, RL_LR_MAX
+        from spaceproof.rl_tune import sample_action, RL_LR_MIN, RL_LR_MAX
         import random
 
         random.seed(42)
@@ -310,7 +310,7 @@ class TestRewardComputation:
 
     def test_reward_basic_computation(self, suppress_receipts):
         """Verify reward formula: alpha - 0.1*cost - penalty."""
-        from src.rl_tune import compute_reward_500
+        from spaceproof.rl_tune import compute_reward_500
 
         # No instability
         reward = compute_reward_500(eff_alpha=2.85, compute_cost=0.5, stability=0.0)
@@ -323,7 +323,7 @@ class TestRewardComputation:
 
     def test_reward_with_cost(self, suppress_receipts):
         """Verify compute cost penalty is applied."""
-        from src.rl_tune import compute_reward_500
+        from spaceproof.rl_tune import compute_reward_500
 
         reward_low_cost = compute_reward_500(
             eff_alpha=2.85, compute_cost=0.1, stability=0.0
@@ -345,7 +345,7 @@ class TestInstabilityPenalty:
 
     def test_penalty_applied_for_instability(self, suppress_receipts):
         """Verify instability penalty (-1.0) is applied for large drops."""
-        from src.rl_tune import compute_reward_500
+        from spaceproof.rl_tune import compute_reward_500
 
         # Stable (no penalty)
         reward_stable = compute_reward_500(
@@ -372,14 +372,14 @@ class TestEarlyStopAtTarget:
 
     def test_early_stop_check_true(self, suppress_receipts):
         """Verify early_stop_check returns True at target."""
-        from src.rl_tune import early_stop_check
+        from spaceproof.rl_tune import early_stop_check
 
         assert early_stop_check(1.05) is True, "Should stop at 1.05"
         assert early_stop_check(1.06) is True, "Should stop above 1.05"
 
     def test_early_stop_check_false(self, suppress_receipts):
         """Verify early_stop_check returns False below target."""
-        from src.rl_tune import early_stop_check
+        from spaceproof.rl_tune import early_stop_check
 
         assert early_stop_check(1.04) is False, "Should not stop below 1.05"
         assert early_stop_check(1.01) is False, "Should not stop at baseline"
@@ -388,7 +388,7 @@ class TestEarlyStopAtTarget:
         self, suppress_receipts, clear_cache
     ):
         """Verify sweep stops early when target achieved."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result = run_500_sweep(runs=500, seed=42, early_stopping=True)
 
@@ -407,7 +407,7 @@ class TestProgress100Runs:
 
     def test_100_runs_exceeds_baseline(self, suppress_receipts, clear_cache):
         """Verify 100 runs produces retention > 1.01."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result = run_500_sweep(runs=100, seed=42, early_stopping=False)
 
@@ -424,7 +424,7 @@ class TestProgress300Runs:
 
     def test_300_runs_exceeds_103(self, suppress_receipts, clear_cache):
         """Verify 300 runs produces retention > 1.03."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result = run_500_sweep(runs=300, seed=42, early_stopping=False)
 
@@ -441,7 +441,7 @@ class TestTarget500Runs:
 
     def test_500_runs_achieves_target(self, suppress_receipts, clear_cache):
         """Verify 500 runs achieves 1.05 retention target."""
-        from src.rl_tune import run_500_sweep, RETENTION_TARGET
+        from spaceproof.rl_tune import run_500_sweep, RETENTION_TARGET
 
         result = run_500_sweep(runs=500, seed=42, early_stopping=False)
 
@@ -452,7 +452,7 @@ class TestTarget500Runs:
 
     def test_target_achieved_flag_set(self, suppress_receipts, clear_cache):
         """Verify target_achieved flag is set when target reached."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         result = run_500_sweep(runs=500, seed=42, early_stopping=False)
 
@@ -468,7 +468,7 @@ class TestReceiptsEmitted:
 
     def test_rl_500_sweep_receipt_emitted(self, capture_receipts, clear_cache):
         """Verify rl_500_sweep_receipt is emitted."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         cap = capture_receipts()
         with cap:
@@ -489,7 +489,7 @@ class TestReceiptsEmitted:
         self, capture_receipts, clear_cache
     ):
         """Verify retention_105_receipt emitted when target achieved."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         cap = capture_receipts()
         with cap:
@@ -506,7 +506,7 @@ class TestReceiptsEmitted:
 
     def test_receipt_has_valid_payload_hash(self, capture_receipts, clear_cache):
         """Verify receipts have valid dual-hash payload_hash."""
-        from src.rl_tune import run_500_sweep
+        from spaceproof.rl_tune import run_500_sweep
 
         cap = capture_receipts()
         with cap:

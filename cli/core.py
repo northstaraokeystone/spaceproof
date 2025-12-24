@@ -5,13 +5,13 @@ Baseline commands: baseline, bootstrap, curve, full
 
 import os
 
-from src.validate import (
+from spaceproof.validate import (
     test_null_hypothesis,
     test_baseline,
     bootstrap_threshold,
     generate_falsifiable_prediction,
 )
-from src.plot_curve import (
+from spaceproof.plot_curve import (
     generate_curve_data,
     find_knee,
     plot_sovereignty_curve,

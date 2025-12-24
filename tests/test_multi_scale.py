@@ -21,7 +21,7 @@ class TestMultiScaleSpecLoading:
 
     def test_multi_scale_spec_loads(self):
         """Test that multi_scale_spec.json loads successfully."""
-        from src.multi_scale_sweep import load_multi_scale_spec
+        from spaceproof.multi_scale_sweep import load_multi_scale_spec
 
         # Capture output to suppress receipt prints
         f = io.StringIO()
@@ -34,7 +34,7 @@ class TestMultiScaleSpecLoading:
 
     def test_scales_count(self):
         """Test that scales sweep has exactly 3 entries."""
-        from src.multi_scale_sweep import load_multi_scale_spec
+        from spaceproof.multi_scale_sweep import load_multi_scale_spec
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -45,7 +45,7 @@ class TestMultiScaleSpecLoading:
 
     def test_target_scale(self):
         """Test that target scale is 10^9."""
-        from src.multi_scale_sweep import load_multi_scale_spec
+        from spaceproof.multi_scale_sweep import load_multi_scale_spec
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -56,7 +56,7 @@ class TestMultiScaleSpecLoading:
 
     def test_degradation_tolerance(self):
         """Test that degradation tolerance is 0.01 (1%)."""
-        from src.multi_scale_sweep import load_multi_scale_spec
+        from spaceproof.multi_scale_sweep import load_multi_scale_spec
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -67,7 +67,7 @@ class TestMultiScaleSpecLoading:
 
     def test_gate_threshold(self):
         """Test that gate threshold is 3.06."""
-        from src.multi_scale_sweep import load_multi_scale_spec
+        from spaceproof.multi_scale_sweep import load_multi_scale_spec
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -82,7 +82,7 @@ class TestAlphaAtScale:
 
     def test_alpha_at_1e6(self):
         """Test that alpha at 10^6 >= 3.070 (baseline)."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(1_000_000)
         alpha = result["alpha"]
@@ -91,7 +91,7 @@ class TestAlphaAtScale:
 
     def test_alpha_at_1e8(self):
         """Test that alpha at 10^8 >= 3.065 (intermediate)."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(100_000_000)
         alpha = result["alpha"]
@@ -100,7 +100,7 @@ class TestAlphaAtScale:
 
     def test_alpha_at_1e9(self):
         """Test that alpha at 10^9 >= 3.06 (target)."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(1_000_000_000)
         alpha = result["alpha"]
@@ -113,7 +113,7 @@ class TestInstabilityAtScale:
 
     def test_instability_at_1e6(self):
         """Test that instability at 10^6 == 0.00."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(1_000_000)
         instability = result["instability"]
@@ -122,7 +122,7 @@ class TestInstabilityAtScale:
 
     def test_instability_at_1e8(self):
         """Test that instability at 10^8 == 0.00."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(100_000_000)
         instability = result["instability"]
@@ -131,7 +131,7 @@ class TestInstabilityAtScale:
 
     def test_instability_at_1e9(self):
         """Test that instability at 10^9 == 0.00."""
-        from src.multi_scale_sweep import compute_alpha_at_scale
+        from spaceproof.multi_scale_sweep import compute_alpha_at_scale
 
         result = compute_alpha_at_scale(1_000_000_000)
         instability = result["instability"]
@@ -144,7 +144,7 @@ class TestDegradationAndScalability:
 
     def test_degradation_under_tolerance(self):
         """Test that degradation from 10^6 to 10^9 < 1%."""
-        from src.multi_scale_sweep import run_scale_sweep, check_degradation
+        from spaceproof.multi_scale_sweep import run_scale_sweep, check_degradation
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -157,7 +157,7 @@ class TestDegradationAndScalability:
 
     def test_no_degradation_cliff(self):
         """Test that no single scale shows > 0.5% drop from previous."""
-        from src.multi_scale_sweep import run_scale_sweep, TREE_SCALES
+        from spaceproof.multi_scale_sweep import run_scale_sweep, TREE_SCALES
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -178,7 +178,7 @@ class TestDegradationAndScalability:
 
     def test_scalability_gate_passes(self):
         """Test that scalability gate passes for all scales."""
-        from src.multi_scale_sweep import run_scale_sweep, scalability_gate
+        from spaceproof.multi_scale_sweep import run_scale_sweep, scalability_gate
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -191,7 +191,7 @@ class TestDegradationAndScalability:
 
     def test_ready_for_31_push(self):
         """Test that 3.1 push readiness is achieved."""
-        from src.multi_scale_sweep import run_scale_sweep, scalability_gate
+        from spaceproof.multi_scale_sweep import run_scale_sweep, scalability_gate
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -206,7 +206,7 @@ class TestGateAndIntegration:
 
     def test_receipts_emitted(self):
         """Test that multi_scale_10e9 and scalability_gate receipts are emitted."""
-        from src.multi_scale_sweep import run_multi_scale_validation
+        from spaceproof.multi_scale_sweep import run_multi_scale_validation
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -224,7 +224,7 @@ class TestGateAndIntegration:
 
     def test_scale_adjusted_correlation(self):
         """Test that correlation decreases slightly at larger scales."""
-        from src.fractal_layers import (
+        from spaceproof.fractal_layers import (
             scale_adjusted_correlation,
             FRACTAL_BASE_CORRELATION,
         )
@@ -244,7 +244,7 @@ class TestGateAndIntegration:
 
     def test_full_integration_no_isolated(self):
         """Test that full integration works (no isolated tests needed)."""
-        from src.multi_scale_sweep import run_multi_scale_validation
+        from spaceproof.multi_scale_sweep import run_multi_scale_validation
 
         f = io.StringIO()
         with redirect_stdout(f):
@@ -267,7 +267,7 @@ class TestQuantumFractalHybrid:
 
     def test_quantum_fractal_hybrid_at_scale(self):
         """Test quantum_fractal_hybrid_at_scale function."""
-        from src.quantum_rl_hybrid import quantum_fractal_hybrid_at_scale
+        from spaceproof.quantum_rl_hybrid import quantum_fractal_hybrid_at_scale
 
         state = {"retention": 1.01, "alpha": 3.070, "instability": 0.0}
         fractal_result = {"correlation": 0.85}
@@ -290,7 +290,7 @@ class TestQuantumFractalHybrid:
 
     def test_get_31_push_readiness(self):
         """Test that get_31_push_readiness returns proper status."""
-        from src.reasoning import get_31_push_readiness
+        from spaceproof.reasoning import get_31_push_readiness
 
         f = io.StringIO()
         with redirect_stdout(f):

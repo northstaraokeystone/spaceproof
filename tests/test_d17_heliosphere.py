@@ -7,7 +7,7 @@ Tests:
 - D17+Heliosphere hybrid integration
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d17_spec,
     get_d17_uplift,
     depth_first_traversal,

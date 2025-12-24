@@ -1,6 +1,6 @@
 """Tests for Mars HIL proof module."""
 
-from src.live_relay_hil import (
+from spaceproof.live_relay_hil import (
     load_hil_config,
     mars_hil_proof,
 )

@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.calibration import (
+from spaceproof.calibration import (
     estimate_alpha,
     estimate_alpha_from_lists,
     fsd_to_alpha_proxy,

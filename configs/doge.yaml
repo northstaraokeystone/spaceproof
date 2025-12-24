@@ -1,8 +1,9 @@
-# configs/doge.yaml
+# SpaceProof config for DOGE
 # DOGE (Department of Government Efficiency) stakeholder configuration
 # D20 Production Evolution
 
 stakeholder: doge
+version: "1.0"
 description: "Improper payments detection and audit trail"
 
 primary_modules:

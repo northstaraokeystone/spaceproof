@@ -16,7 +16,7 @@ def cmd_d14_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D14 info
     """
-    from src.fractal_layers import get_d14_info
+    from spaceproof.fractal_layers import get_d14_info
 
     info = get_d14_info()
 
@@ -56,7 +56,7 @@ def cmd_d14_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D14 push results
     """
-    from src.fractal_layers import d14_push, D14_TREE_MIN
+    from spaceproof.fractal_layers import d14_push, D14_TREE_MIN
 
     tree_size = getattr(args, "tree_size", D14_TREE_MIN)
     base_alpha = getattr(args, "base_alpha", 3.41)
@@ -101,7 +101,7 @@ def cmd_d14_interstellar_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.interstellar_backbone import d14_interstellar_hybrid
+    from spaceproof.interstellar_backbone import d14_interstellar_hybrid
 
     tree_size = getattr(args, "tree_size", 10**12)
     base_alpha = getattr(args, "base_alpha", 3.41)

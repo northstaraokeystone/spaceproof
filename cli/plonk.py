@@ -16,7 +16,7 @@ def cmd_plonk_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with PLONK info
     """
-    from src.plonk_zk_upgrade import get_plonk_info
+    from spaceproof.plonk_zk_upgrade import get_plonk_info
 
     info = get_plonk_info()
 
@@ -53,7 +53,7 @@ def cmd_plonk_setup(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with setup results
     """
-    from src.plonk_zk_upgrade import universal_setup, PLONK_TRUSTED_SETUP_PARTICIPANTS
+    from spaceproof.plonk_zk_upgrade import universal_setup, PLONK_TRUSTED_SETUP_PARTICIPANTS
 
     participants = getattr(args, "participants", PLONK_TRUSTED_SETUP_PARTICIPANTS)
     result = universal_setup(participants)
@@ -87,7 +87,7 @@ def cmd_plonk_prove(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with proof
     """
-    from src.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
+    from spaceproof.plonk_zk_upgrade import generate_plonk_circuit, generate_plonk_proof
     import secrets
 
     circuit = generate_plonk_circuit()
@@ -132,7 +132,7 @@ def cmd_plonk_verify(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with verification result
     """
-    from src.plonk_zk_upgrade import verify_plonk
+    from spaceproof.plonk_zk_upgrade import verify_plonk
 
     result = verify_plonk()
 
@@ -153,7 +153,7 @@ def cmd_plonk_recursive(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with recursive proof
     """
-    from src.plonk_zk_upgrade import (
+    from spaceproof.plonk_zk_upgrade import (
         create_plonk_attestation,
         recursive_proof,
     )
@@ -203,7 +203,7 @@ def cmd_plonk_attestation(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with attestation
     """
-    from src.plonk_zk_upgrade import create_plonk_attestation
+    from spaceproof.plonk_zk_upgrade import create_plonk_attestation
 
     enclave_id = getattr(args, "enclave_id", "test_enclave")
     code_hash = getattr(args, "code_hash", "test_code_hash")
@@ -250,7 +250,7 @@ def cmd_plonk_audit(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with audit results
     """
-    from src.plonk_zk_upgrade import run_plonk_audit
+    from spaceproof.plonk_zk_upgrade import run_plonk_audit
 
     count = getattr(args, "count", 5)
     result = run_plonk_audit(attestation_count=count)
@@ -294,7 +294,7 @@ def cmd_plonk_benchmark(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with benchmark results
     """
-    from src.plonk_zk_upgrade import benchmark_plonk
+    from spaceproof.plonk_zk_upgrade import benchmark_plonk
 
     iterations = getattr(args, "iterations", 10)
     result = benchmark_plonk(iterations)
@@ -331,7 +331,7 @@ def cmd_plonk_compare(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with comparison results
     """
-    from src.plonk_zk_upgrade import compare_to_groth16
+    from spaceproof.plonk_zk_upgrade import compare_to_groth16
 
     result = compare_to_groth16()
 

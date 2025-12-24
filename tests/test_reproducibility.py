@@ -20,7 +20,7 @@ from real_data.sparc import (
     SPARC_TOTAL_GALAXIES,
     validate_reproducibility,
 )
-from src.entropy import (
+from spaceproof.entropy import (
     landauer_mass_equivalent,
     MOXIE_EFFICIENCY_VARIANCE_PCT,
     BASELINE_MASS_KG,

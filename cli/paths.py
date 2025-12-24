@@ -16,7 +16,7 @@ Source: AXIOM scalable paths architecture
 import json
 from typing import Dict, Any, Optional
 
-from src.paths import (
+from spaceproof.paths import (
     REGISTERED_PATHS,
     list_paths,
     get_path,
@@ -24,14 +24,14 @@ from src.paths import (
     get_all_path_status,
     PathStopRule,
 )
-from src.registry import (
+from spaceproof.registry import (
     discover_paths,
     validate_registry,
     route_to_path,
     get_path_commands,
     get_registry_info,
 )
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     d4_push,
     get_d4_info,
     D4_TREE_MIN,

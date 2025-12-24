@@ -16,7 +16,7 @@ def cmd_d17_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D17 info
     """
-    from src.fractal_layers import get_d17_info
+    from spaceproof.fractal_layers import get_d17_info
 
     info = get_d17_info()
 
@@ -75,7 +75,7 @@ def cmd_d17_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D17 push results
     """
-    from src.fractal_layers import d17_push
+    from spaceproof.fractal_layers import d17_push
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -115,7 +115,7 @@ def cmd_d17_depthfirst(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with depth-first metrics
     """
-    from src.fractal_layers import depth_first_traversal, get_d17_spec
+    from spaceproof.fractal_layers import depth_first_traversal, get_d17_spec
 
     spec = get_d17_spec()
     d17_config = spec.get("d17_config", {})
@@ -144,7 +144,7 @@ def cmd_d17_plateau_check(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with plateau check results
     """
-    from src.fractal_layers import (
+    from spaceproof.fractal_layers import (
         check_asymptotic_ceiling,
         get_d17_uplift,
         get_scale_factor,
@@ -191,7 +191,7 @@ def cmd_d17_heliosphere_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.fractal_layers import d17_heliosphere_hybrid
+    from spaceproof.fractal_layers import d17_heliosphere_hybrid
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -243,7 +243,7 @@ def cmd_heliosphere_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Heliosphere info
     """
-    from src.heliosphere_oort_sim import load_heliosphere_config
+    from spaceproof.heliosphere_oort_sim import load_heliosphere_config
 
     config = load_heliosphere_config()
 
@@ -265,7 +265,7 @@ def cmd_heliosphere_zones(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with zone info
     """
-    from src.heliosphere_oort_sim import initialize_heliosphere_zones
+    from spaceproof.heliosphere_oort_sim import initialize_heliosphere_zones
 
     zones = initialize_heliosphere_zones()
 
@@ -290,7 +290,7 @@ def cmd_heliosphere_status(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with status
     """
-    from src.heliosphere_oort_sim import get_heliosphere_status
+    from spaceproof.heliosphere_oort_sim import get_heliosphere_status
 
     status = get_heliosphere_status()
 
@@ -312,7 +312,7 @@ def cmd_oort_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Oort config
     """
-    from src.heliosphere_oort_sim import load_oort_config
+    from spaceproof.heliosphere_oort_sim import load_oort_config
 
     config = load_oort_config()
 
@@ -342,7 +342,7 @@ def cmd_oort_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.heliosphere_oort_sim import simulate_oort_coordination
+    from spaceproof.heliosphere_oort_sim import simulate_oort_coordination
 
     au = getattr(args, "oort_au", 50000)
 
@@ -377,7 +377,7 @@ def cmd_oort_latency(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with latency metrics
     """
-    from src.heliosphere_oort_sim import stress_test_latency
+    from spaceproof.heliosphere_oort_sim import stress_test_latency
 
     au = getattr(args, "oort_au", 50000)
 
@@ -403,7 +403,7 @@ def cmd_oort_autonomy(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with autonomy info
     """
-    from src.heliosphere_oort_sim import simulate_oort_coordination
+    from spaceproof.heliosphere_oort_sim import simulate_oort_coordination
 
     au = getattr(args, "oort_au", 50000)
     result = simulate_oort_coordination(au=au, duration_days=365)
@@ -432,7 +432,7 @@ def cmd_oort_compression(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with compression info
     """
-    from src.heliosphere_oort_sim import get_compression_status, compression_held_return
+    from spaceproof.heliosphere_oort_sim import get_compression_status, compression_held_return
 
     status = get_compression_status()
 
@@ -463,7 +463,7 @@ def cmd_oort_stability(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with stability info
     """
-    from src.heliosphere_oort_sim import (
+    from spaceproof.heliosphere_oort_sim import (
         simulate_oort_coordination,
         compute_oort_stability,
     )
@@ -495,7 +495,7 @@ def cmd_bulletproofs_infinite_chain(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with chain test results
     """
-    from src.bulletproofs_infinite import infinite_chain_test
+    from spaceproof.bulletproofs_infinite import infinite_chain_test
 
     depth = getattr(args, "bulletproofs_depth", 10000)
 
@@ -525,7 +525,7 @@ def cmd_bulletproofs_10k_stress(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with stress test results
     """
-    from src.bulletproofs_infinite import stress_test_10k
+    from spaceproof.bulletproofs_infinite import stress_test_10k
 
     iterations = getattr(args, "iterations", 3)  # Reduced for CLI
 
@@ -555,7 +555,7 @@ def cmd_ml_ensemble_90s(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with forecast results
     """
-    from src.cfd_dust_dynamics import ml_ensemble_forecast_90s
+    from spaceproof.cfd_dust_dynamics import ml_ensemble_forecast_90s
 
     result = ml_ensemble_forecast_90s(horizon_s=90)
 
@@ -591,7 +591,7 @@ def cmd_ml_ensemble_90s_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with ML 90s info
     """
-    from src.cfd_dust_dynamics import get_ml_90s_info
+    from spaceproof.cfd_dust_dynamics import get_ml_90s_info
 
     info = get_ml_90s_info()
 

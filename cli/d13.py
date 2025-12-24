@@ -16,7 +16,7 @@ def cmd_d13_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D13 info
     """
-    from src.fractal_layers import get_d13_info
+    from spaceproof.fractal_layers import get_d13_info
 
     info = get_d13_info()
 
@@ -57,7 +57,7 @@ def cmd_d13_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with push results
     """
-    from src.fractal_layers import d13_push, D13_TREE_MIN
+    from spaceproof.fractal_layers import d13_push, D13_TREE_MIN
 
     simulate = getattr(args, "simulate", False)
     tree_size = getattr(args, "tree_size", D13_TREE_MIN)
@@ -91,7 +91,7 @@ def cmd_d13_solar_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.solar_orbital_hub import d13_solar_hybrid
+    from spaceproof.solar_orbital_hub import d13_solar_hybrid
 
     simulate = getattr(args, "simulate", False)
     tree_size = getattr(args, "tree_size", 10**12)

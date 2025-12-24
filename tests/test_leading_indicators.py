@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.leading_indicators import (
+from spaceproof.leading_indicators import (
     measure_sim_fidelity,
     measure_fleet_learning_rate,
     measure_tau_velocity,
@@ -26,7 +26,7 @@ from src.leading_indicators import (
     FLEET_LEARNING_ALPHA_TARGET,
     TAU_VELOCITY_TARGET,
 )
-from src.calibration import CalibrationOutput
+from spaceproof.calibration import CalibrationOutput
 
 
 class TestMeasureSimFidelity:

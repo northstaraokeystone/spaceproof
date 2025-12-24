@@ -16,7 +16,7 @@ def cmd_solar_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Solar hub info
     """
-    from src.solar_orbital_hub import get_solar_hub_info
+    from spaceproof.solar_orbital_hub import get_solar_hub_info
 
     info = get_solar_hub_info()
 
@@ -55,7 +55,7 @@ def cmd_solar_positions(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with orbital positions
     """
-    from src.solar_orbital_hub import compute_orbital_positions
+    from spaceproof.solar_orbital_hub import compute_orbital_positions
 
     timestamp = getattr(args, "timestamp", 0.0)
     result = compute_orbital_positions(timestamp)
@@ -83,7 +83,7 @@ def cmd_solar_windows(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with communication windows
     """
-    from src.solar_orbital_hub import compute_communication_windows
+    from spaceproof.solar_orbital_hub import compute_communication_windows
 
     duration = getattr(args, "duration", 365)
     result = compute_communication_windows(duration_days=duration)
@@ -112,7 +112,7 @@ def cmd_solar_transfer(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with transfer results
     """
-    from src.solar_orbital_hub import simulate_resource_transfer
+    from spaceproof.solar_orbital_hub import simulate_resource_transfer
 
     from_planet = getattr(args, "from_planet", "mars")
     to_planet = getattr(args, "to_planet", "venus")
@@ -146,7 +146,7 @@ def cmd_solar_sync(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with sync results
     """
-    from src.solar_orbital_hub import orbital_rl_step
+    from spaceproof.solar_orbital_hub import orbital_rl_step
 
     state = {
         "efficiency": getattr(args, "efficiency", 0.85),
@@ -184,7 +184,7 @@ def cmd_solar_autonomy(args: Namespace) -> Dict[str, Any]:
     Returns:
         Float autonomy value and dict with details
     """
-    from src.solar_orbital_hub import compute_hub_autonomy, SOLAR_HUB_AUTONOMY_TARGET
+    from spaceproof.solar_orbital_hub import compute_hub_autonomy, SOLAR_HUB_AUTONOMY_TARGET
 
     autonomy = compute_hub_autonomy()
 
@@ -205,7 +205,7 @@ def cmd_solar_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.solar_orbital_hub import simulate_hub_operations
+    from spaceproof.solar_orbital_hub import simulate_hub_operations
 
     duration = getattr(args, "duration", 365)
     result = simulate_hub_operations(duration_days=duration)

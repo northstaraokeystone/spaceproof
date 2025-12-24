@@ -6,7 +6,7 @@ class TestChaoticNBodyConfig:
 
     def test_load_chaos_config(self) -> None:
         """Test loading chaos configuration."""
-        from src.chaotic_nbody_sim import load_chaos_config
+        from spaceproof.chaotic_nbody_sim import load_chaos_config
 
         config = load_chaos_config()
         assert config is not None
@@ -19,7 +19,7 @@ class TestChaoticNBodyConfig:
 
     def test_chaos_constants(self) -> None:
         """Test chaos constants are correctly defined."""
-        from src.chaotic_nbody_sim import (
+        from spaceproof.chaotic_nbody_sim import (
             NBODY_COUNT,
             LYAPUNOV_EXPONENT_THRESHOLD,
             CHAOTIC_STABILITY_TARGET,
@@ -37,7 +37,7 @@ class TestBodyInitialization:
 
     def test_initialize_bodies(self) -> None:
         """Test body initialization."""
-        from src.chaotic_nbody_sim import initialize_bodies
+        from spaceproof.chaotic_nbody_sim import initialize_bodies
 
         bodies = initialize_bodies()
         assert bodies is not None
@@ -51,7 +51,7 @@ class TestBodyInitialization:
 
     def test_body_mass_distribution(self) -> None:
         """Test that bodies have realistic mass distribution."""
-        from src.chaotic_nbody_sim import initialize_bodies
+        from spaceproof.chaotic_nbody_sim import initialize_bodies
 
         bodies = initialize_bodies()
         masses = [b["mass"] for b in bodies]
@@ -61,7 +61,7 @@ class TestBodyInitialization:
 
     def test_body_positions(self) -> None:
         """Test that bodies have 3D positions."""
-        from src.chaotic_nbody_sim import initialize_bodies
+        from spaceproof.chaotic_nbody_sim import initialize_bodies
 
         bodies = initialize_bodies()
 
@@ -76,7 +76,7 @@ class TestGravitationalForces:
 
     def test_compute_forces(self) -> None:
         """Test gravitational force computation."""
-        from src.chaotic_nbody_sim import (
+        from spaceproof.chaotic_nbody_sim import (
             initialize_bodies,
             compute_gravitational_forces,
         )
@@ -92,7 +92,7 @@ class TestGravitationalForces:
 
     def test_force_symmetry(self) -> None:
         """Test that forces are symmetric (Newton's third law)."""
-        from src.chaotic_nbody_sim import (
+        from spaceproof.chaotic_nbody_sim import (
             initialize_bodies,
             compute_gravitational_forces,
         )
@@ -115,7 +115,7 @@ class TestSymplecticIntegration:
 
     def test_symplectic_integrate(self) -> None:
         """Test symplectic integration step."""
-        from src.chaotic_nbody_sim import (
+        from spaceproof.chaotic_nbody_sim import (
             initialize_bodies,
             symplectic_integrate,
         )
@@ -130,7 +130,7 @@ class TestSymplecticIntegration:
 
     def test_energy_conservation(self) -> None:
         """Test that symplectic integration conserves energy."""
-        from src.chaotic_nbody_sim import (
+        from spaceproof.chaotic_nbody_sim import (
             initialize_bodies,
             symplectic_integrate,
             compute_total_energy,
@@ -156,7 +156,7 @@ class TestLyapunovExponent:
 
     def test_compute_lyapunov(self) -> None:
         """Test Lyapunov exponent computation."""
-        from src.chaotic_nbody_sim import compute_lyapunov_exponent
+        from spaceproof.chaotic_nbody_sim import compute_lyapunov_exponent
 
         result = compute_lyapunov_exponent(iterations=100)
 
@@ -168,7 +168,7 @@ class TestLyapunovExponent:
 
     def test_lyapunov_stability_check(self) -> None:
         """Test stability determination from Lyapunov exponent."""
-        from src.chaotic_nbody_sim import check_stability
+        from spaceproof.chaotic_nbody_sim import check_stability
 
         result = check_stability()
 
@@ -183,7 +183,7 @@ class TestSimulation:
 
     def test_simulate_chaos(self) -> None:
         """Test full chaos simulation."""
-        from src.chaotic_nbody_sim import simulate_chaos
+        from spaceproof.chaotic_nbody_sim import simulate_chaos
 
         result = simulate_chaos(iterations=100, dt=0.001, simulate=True)
 
@@ -198,7 +198,7 @@ class TestSimulation:
 
     def test_simulate_chaos_execute(self) -> None:
         """Test chaos simulation in execute mode."""
-        from src.chaotic_nbody_sim import simulate_chaos
+        from spaceproof.chaotic_nbody_sim import simulate_chaos
 
         result = simulate_chaos(iterations=100, dt=0.001, simulate=False)
 
@@ -208,7 +208,7 @@ class TestSimulation:
 
     def test_monte_carlo_stability(self) -> None:
         """Test Monte Carlo stability analysis."""
-        from src.chaotic_nbody_sim import run_monte_carlo_stability
+        from spaceproof.chaotic_nbody_sim import run_monte_carlo_stability
 
         result = run_monte_carlo_stability(runs=10, simulate=True)
 
@@ -226,7 +226,7 @@ class TestBackboneIntegration:
 
     def test_compute_backbone_tolerance(self) -> None:
         """Test backbone chaos tolerance computation."""
-        from src.chaotic_nbody_sim import compute_backbone_chaos_tolerance
+        from spaceproof.chaotic_nbody_sim import compute_backbone_chaos_tolerance
 
         result = compute_backbone_chaos_tolerance()
 
@@ -238,7 +238,7 @@ class TestBackboneIntegration:
 
     def test_tolerance_range(self) -> None:
         """Test that tolerance is in valid range."""
-        from src.chaotic_nbody_sim import compute_backbone_chaos_tolerance
+        from spaceproof.chaotic_nbody_sim import compute_backbone_chaos_tolerance
 
         result = compute_backbone_chaos_tolerance()
 

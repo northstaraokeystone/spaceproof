@@ -16,7 +16,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.sim import (
+from spaceproof.sim import (
     SimConfig,
     Scenario,
     initialize_sim,
@@ -26,7 +26,7 @@ from src.sim import (
     validate_constraints,
     emit_simulation_summary,
 )
-from src.support import SupportLevel
+from spaceproof.support import SupportLevel
 
 
 class TestInitializeSim:
@@ -109,7 +109,7 @@ class TestScenarioHelper:
 
     def test_helper_scenario_runs(self):
         """SCENARIO_HELPER should run without errors."""
-        from src.helper import HelperConfig
+        from spaceproof.helper import HelperConfig
 
         config = SimConfig(
             max_cycles=50,
@@ -284,7 +284,7 @@ class TestIntegration:
 
     def test_gap_to_helper_pipeline(self):
         """Gaps should flow through harvest → hypothesize → gate → actuate."""
-        from src.helper import HelperConfig
+        from spaceproof.helper import HelperConfig
 
         config = SimConfig(
             max_cycles=60,

@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.validate import test_null_hypothesis
+from spaceproof.validate import test_null_hypothesis
 
 
 def test_null_hypothesis_passes():

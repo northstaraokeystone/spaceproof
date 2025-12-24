@@ -1,8 +1,9 @@
-# configs/defense.yaml
+# SpaceProof config for Defense
 # Defense stakeholder configuration
 # D20 Production Evolution
 
 stakeholder: defense
+version: "1.0"
 description: "Fire-control telemetry with decision lineage"
 
 primary_modules:

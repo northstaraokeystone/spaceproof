@@ -3,7 +3,7 @@
 Commands: multi_scale_sweep, scalability_gate_test, scale_info
 """
 
-from src.multi_scale_sweep import (
+from spaceproof.multi_scale_sweep import (
     run_scale_sweep,
     check_degradation,
     scalability_gate,
@@ -14,10 +14,10 @@ from src.multi_scale_sweep import (
     DEGRADATION_TOLERANCE,
     SCALABILITY_GATE_THRESHOLD,
 )
-from src.reasoning import (
+from spaceproof.reasoning import (
     get_31_push_readiness,
 )
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_fractal_layers_info,
     validate_scale_physics,
 )

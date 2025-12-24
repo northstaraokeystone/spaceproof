@@ -20,7 +20,7 @@ import os
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.pruning import (
+from spaceproof.pruning import (
     ENTROPY_ASYMPTOTE_E,
     PRUNING_TARGET_ALPHA,
     BLACKOUT_PRUNING_TARGET_DAYS,
@@ -42,9 +42,9 @@ from src.pruning import (
     load_entropy_pruning_spec,
     get_pruning_info,
 )
-from src.gnn_cache import nonlinear_retention_with_pruning, CACHE_DEPTH_BASELINE
-from src.reasoning import extended_250d_sovereignty, validate_pruning_slos
-from src.core import StopRule
+from spaceproof.gnn_cache import nonlinear_retention_with_pruning, CACHE_DEPTH_BASELINE
+from spaceproof.reasoning import extended_250d_sovereignty, validate_pruning_slos
+from spaceproof.core import StopRule
 
 
 class TestPhysicsConstants:

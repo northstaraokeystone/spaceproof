@@ -1,6 +1,6 @@
 """Tests for Mars relay node module."""
 
-from src.mars_relay_node import (
+from spaceproof.mars_relay_node import (
     load_mars_config,
     deploy_node,
     deploy_mesh,

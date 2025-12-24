@@ -11,7 +11,7 @@ import json
 
 def cmd_d9_info():
     """Show D9 configuration."""
-    from src.fractal_layers import get_d9_info
+    from spaceproof.fractal_layers import get_d9_info
 
     info = get_d9_info()
     print(json.dumps(info, indent=2))
@@ -27,7 +27,7 @@ def cmd_d9_push(
         base_alpha: Base alpha
         simulate: Whether to run in simulation mode
     """
-    from src.fractal_layers import d9_push
+    from spaceproof.fractal_layers import d9_push
 
     result = d9_push(tree_size, base_alpha, simulate)
     print(json.dumps(result, indent=2))
@@ -49,7 +49,7 @@ def cmd_d9_ganymede_hybrid(
         duration_hrs: Simulation duration
         simulate: Whether to run in simulation mode
     """
-    from src.ganymede_mag_hybrid import d9_ganymede_hybrid
+    from spaceproof.ganymede_mag_hybrid import d9_ganymede_hybrid
 
     result = d9_ganymede_hybrid(tree_size, base_alpha, mode, duration_hrs)
     print(json.dumps(result, indent=2))

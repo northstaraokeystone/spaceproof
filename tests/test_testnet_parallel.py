@@ -1,6 +1,6 @@
 """Tests for parallel testnet module."""
 
-from src.testnet_parallel import (
+from spaceproof.testnet_parallel import (
     load_testnet_config,
     init_ethereum_testnet,
     init_solana_testnet,
