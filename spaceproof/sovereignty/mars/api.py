@@ -6,7 +6,7 @@ Usage:
     from spaceproof.sovereignty.mars import calculate_mars_sovereignty
 
     result = calculate_mars_sovereignty(
-        config_path="configs/mars_nominal.yaml",
+        config_path="config/mars/mars_nominal.yaml",
         monte_carlo=True,
         iterations=1000
     )
