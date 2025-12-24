@@ -11,6 +11,17 @@ primary_modules:
   - ledger
   - anchor
 
+# xAI entropy constants (MUST PRESERVE)
+entropy:
+  coherence_threshold: 0.7      # tau >= 0.7 for "alive" patterns
+  delta_healthy: 0.1            # delta > 0.1: system thriving
+  delta_warning: 0.0            # 0 < delta <= 0.1: stable but not growing
+  delta_critical: -0.1          # delta <= -0.1: system dying
+  compression_baseline_min: 0.3  # Normal structured data lower bound
+  compression_baseline_max: 0.7  # Normal structured data upper bound
+  fraud_signal: 0.3             # < 0.3: too compressible = suspicious
+  random_signal: 0.7            # > 0.7: incompressible = noise
+
 compression:
   target_ratio: 50  # Higher for fire-control
   min_recall: 0.9999  # Four nines required
