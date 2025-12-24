@@ -16,7 +16,7 @@ def cmd_relay_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with relay config
     """
-    from src.interstellar_relay import load_relay_config
+    from spaceproof.interstellar_relay import load_relay_config
 
     config = load_relay_config()
 
@@ -46,7 +46,7 @@ def cmd_relay_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.interstellar_relay import simulate_proxima_coordination
+    from spaceproof.interstellar_relay import simulate_proxima_coordination
 
     duration_days = getattr(args, "relay_duration", 365)
 
@@ -86,7 +86,7 @@ def cmd_relay_latency(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with latency metrics
     """
-    from src.interstellar_relay import compute_relay_latency
+    from spaceproof.interstellar_relay import compute_relay_latency
 
     distance_ly = getattr(args, "relay_distance", 4.24)
     nodes = getattr(args, "relay_nodes", 10)
@@ -115,7 +115,7 @@ def cmd_relay_nodes(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with node list
     """
-    from src.interstellar_relay import initialize_relay_chain, load_relay_config
+    from spaceproof.interstellar_relay import initialize_relay_chain, load_relay_config
 
     config = load_relay_config()
     nodes = getattr(args, "relay_nodes", config["relay_node_count"])
@@ -147,7 +147,7 @@ def cmd_relay_stress(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with stress test results
     """
-    from src.interstellar_relay import stress_test_relay
+    from spaceproof.interstellar_relay import stress_test_relay
 
     iterations = getattr(args, "relay_iterations", 100)
 

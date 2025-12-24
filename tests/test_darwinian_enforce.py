@@ -15,7 +15,7 @@ import sys
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.darwinian_enforce import (
+from spaceproof.darwinian_enforce import (
     load_spec,
     score_compression,
     classify_fitness,
@@ -33,7 +33,7 @@ from src.darwinian_enforce import (
     DARWINIAN_GENERATIONS_PER_CYCLE,
     MAX_SURVIVAL_CYCLES,
 )
-from src.core import StopRule
+from spaceproof.core import StopRule
 
 
 class TestSpecLoading:

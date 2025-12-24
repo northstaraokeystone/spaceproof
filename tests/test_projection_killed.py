@@ -12,25 +12,25 @@ class TestProjectionKilled:
 
     def test_projection_enabled_false(self):
         """Verify PROJECTION_ENABLED is False."""
-        from src.depths.d19_swarm_intelligence import PROJECTION_ENABLED
+        from spaceproof.depths.d19_swarm_intelligence import PROJECTION_ENABLED
 
         assert PROJECTION_ENABLED is False
 
     def test_simulation_enabled_false(self):
         """Verify SIMULATION_ENABLED is False."""
-        from src.depths.d19_swarm_intelligence import SIMULATION_ENABLED
+        from spaceproof.depths.d19_swarm_intelligence import SIMULATION_ENABLED
 
         assert SIMULATION_ENABLED is False
 
     def test_preemptive_weave_enabled_false(self):
         """Verify PREEMPTIVE_WEAVE_ENABLED is False."""
-        from src.depths.d19_swarm_intelligence import PREEMPTIVE_WEAVE_ENABLED
+        from spaceproof.depths.d19_swarm_intelligence import PREEMPTIVE_WEAVE_ENABLED
 
         assert PREEMPTIVE_WEAVE_ENABLED is False
 
     def test_oracle_mode_live_history(self):
         """Verify ORACLE_MODE is live_history_only."""
-        from src.depths.d19_swarm_intelligence import ORACLE_MODE
+        from spaceproof.depths.d19_swarm_intelligence import ORACLE_MODE
 
         assert ORACLE_MODE == "live_history_only"
 
@@ -64,7 +64,7 @@ class TestProjectionKilled:
 
     def test_verify_projection_killed_function(self):
         """Test the verify_projection_killed function."""
-        from src.depths.d19_swarm_intelligence import verify_projection_killed
+        from spaceproof.depths.d19_swarm_intelligence import verify_projection_killed
 
         result = verify_projection_killed()
 
@@ -82,13 +82,13 @@ class TestKilledConstants:
 
     def test_future_projection_mode_killed(self):
         """Verify FUTURE_PROJECTION_MODE is killed (None)."""
-        from src.depths.d19_swarm_intelligence import FUTURE_PROJECTION_MODE_KILLED
+        from spaceproof.depths.d19_swarm_intelligence import FUTURE_PROJECTION_MODE_KILLED
 
         assert FUTURE_PROJECTION_MODE_KILLED is None
 
     def test_preemptive_amplify_threshold_killed(self):
         """Verify PREEMPTIVE_AMPLIFY_THRESHOLD is killed (None)."""
-        from src.depths.d19_swarm_intelligence import (
+        from spaceproof.depths.d19_swarm_intelligence import (
             PREEMPTIVE_AMPLIFY_THRESHOLD_KILLED,
         )
 
@@ -96,13 +96,13 @@ class TestKilledConstants:
 
     def test_preemptive_starve_threshold_killed(self):
         """Verify PREEMPTIVE_STARVE_THRESHOLD is killed (None)."""
-        from src.depths.d19_swarm_intelligence import PREEMPTIVE_STARVE_THRESHOLD_KILLED
+        from spaceproof.depths.d19_swarm_intelligence import PREEMPTIVE_STARVE_THRESHOLD_KILLED
 
         assert PREEMPTIVE_STARVE_THRESHOLD_KILLED is None
 
     def test_weave_horizon_killed(self):
         """Verify WEAVE_HORIZON is killed (None)."""
-        from src.depths.d19_swarm_intelligence import WEAVE_HORIZON_KILLED
+        from spaceproof.depths.d19_swarm_intelligence import WEAVE_HORIZON_KILLED
 
         assert WEAVE_HORIZON_KILLED is None
 
@@ -130,7 +130,7 @@ class TestOraclePackageExists:
 
     def test_oracle_imports(self):
         """Verify oracle package imports work."""
-        from src.oracle import (
+        from spaceproof.oracle import (
             LiveHistoryOracle,
             CausalSubgraphExtractor,
             InstantIncorporator,

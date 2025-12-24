@@ -9,7 +9,7 @@ class TestCausalSubgraphExtractor:
 
     def test_init_extractor(self):
         """Test extractor initialization."""
-        from src.oracle import init_extractor
+        from spaceproof.oracle import init_extractor
 
         history = [{"receipt_type": "test", "ts": "2024-01-01T00:00:00Z"}]
         extractor = init_extractor(history)
@@ -20,7 +20,7 @@ class TestCausalSubgraphExtractor:
 
     def test_build_causal_graph(self):
         """Test causal graph construction."""
-        from src.oracle import build_causal_graph
+        from spaceproof.oracle import build_causal_graph
 
         receipts = [
             {
@@ -50,7 +50,7 @@ class TestCausalSubgraphExtractor:
 
     def test_find_maximal_subgraphs(self):
         """Test maximal subgraph finding."""
-        from src.oracle import init_extractor, find_maximal_subgraphs
+        from spaceproof.oracle import init_extractor, find_maximal_subgraphs
 
         history = [
             {
@@ -80,7 +80,7 @@ class TestCausalSubgraphExtractor:
 
     def test_subgraph_to_law(self):
         """Test subgraph to law conversion."""
-        from src.oracle import init_extractor, find_maximal_subgraphs, subgraph_to_law
+        from spaceproof.oracle import init_extractor, find_maximal_subgraphs, subgraph_to_law
 
         history = [
             {
@@ -110,7 +110,7 @@ class TestCausalSubgraphExtractor:
 
     def test_validate_causal_invariance(self):
         """Test causal invariance validation."""
-        from src.oracle import validate_causal_invariance
+        from spaceproof.oracle import validate_causal_invariance
 
         history = [
             {"receipt_type": "a", "ts": "2024-01-01T00:00:00Z"},
@@ -139,7 +139,7 @@ class TestCausalSubgraphExtractor:
 
     def test_emit_subgraph_receipt(self):
         """Test subgraph receipt emission."""
-        from src.oracle import init_extractor, emit_subgraph_receipt
+        from spaceproof.oracle import init_extractor, emit_subgraph_receipt
 
         history = [{"receipt_type": "test", "ts": "2024-01-01T00:00:00Z"}]
         extractor = init_extractor(history)

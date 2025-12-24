@@ -1,6 +1,6 @@
 """Tests for pruning v4 module."""
 
-from src.pruning_v4 import (
+from spaceproof.pruning_v4 import (
     load_pruning_config,
     prune_v4,
     identify_holes_v4,

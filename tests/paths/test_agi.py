@@ -15,7 +15,7 @@ Source: AXIOM scalable paths architecture - AGI ethics modeling
 
 def test_agi_spec_loads():
     """Spec loads with valid structure."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
 
@@ -28,7 +28,7 @@ def test_agi_spec_loads():
 
 def test_agi_stub_ready():
     """Stub status reports ready."""
-    from src.paths.agi import stub_status
+    from spaceproof.paths.agi import stub_status
 
     status = stub_status()
 
@@ -39,7 +39,7 @@ def test_agi_stub_ready():
 
 def test_agi_policy_depth():
     """Policy depth is 3."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
     config = spec.get("config", {})
@@ -49,7 +49,7 @@ def test_agi_policy_depth():
 
 def test_agi_ethics_dimensions():
     """Four ethics dimensions are defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
     config = spec.get("config", {})
@@ -64,7 +64,7 @@ def test_agi_ethics_dimensions():
 
 def test_agi_alignment_metric():
     """Alignment metric is compression_as_alignment."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
     config = spec.get("config", {})
@@ -74,7 +74,7 @@ def test_agi_alignment_metric():
 
 def test_agi_fractal_scaling():
     """Fractal scaling is enabled."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
     config = spec.get("config", {})
@@ -84,7 +84,7 @@ def test_agi_fractal_scaling():
 
 def test_agi_audit_requirement():
     """Audit requirement is receipts_native."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
     config = spec.get("config", {})
@@ -94,7 +94,7 @@ def test_agi_audit_requirement():
 
 def test_agi_key_insight():
     """Key insight is defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
 
@@ -104,7 +104,7 @@ def test_agi_key_insight():
 
 def test_agi_fractal_policy():
     """Fractal policy generation works."""
-    from src.paths.agi import fractal_policy
+    from spaceproof.paths.agi import fractal_policy
 
     policy = fractal_policy(depth=3)
 
@@ -117,7 +117,7 @@ def test_agi_fractal_policy():
 
 def test_agi_policy_complexity():
     """Policy complexity increases with depth."""
-    from src.paths.agi import fractal_policy
+    from spaceproof.paths.agi import fractal_policy
 
     policy_d1 = fractal_policy(depth=1)
     policy_d2 = fractal_policy(depth=2)
@@ -129,7 +129,7 @@ def test_agi_policy_complexity():
 
 def test_agi_evaluate_ethics():
     """Ethics evaluation works."""
-    from src.paths.agi import evaluate_ethics
+    from spaceproof.paths.agi import evaluate_ethics
 
     action = {"type": "test_action", "description": "Test"}
     result = evaluate_ethics(action)
@@ -143,7 +143,7 @@ def test_agi_evaluate_ethics():
 
 def test_agi_compute_alignment():
     """Alignment computation works."""
-    from src.paths.agi import compute_alignment
+    from spaceproof.paths.agi import compute_alignment
 
     receipts = [
         {"type": "action", "data": "test1"},
@@ -158,7 +158,7 @@ def test_agi_compute_alignment():
 
 def test_agi_alignment_empty():
     """Alignment of empty receipts is 0."""
-    from src.paths.agi import compute_alignment
+    from spaceproof.paths.agi import compute_alignment
 
     alignment = compute_alignment([])
 
@@ -167,7 +167,7 @@ def test_agi_alignment_empty():
 
 def test_agi_audit_decision():
     """Decision audit works."""
-    from src.paths.agi import audit_decision
+    from spaceproof.paths.agi import audit_decision
 
     decision = {"type": "test_decision", "action": "test"}
     result = audit_decision(decision)
@@ -181,7 +181,7 @@ def test_agi_audit_decision():
 
 def test_agi_dependencies():
     """Dependencies include fractal_layers."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
 
@@ -190,7 +190,7 @@ def test_agi_dependencies():
 
 def test_agi_receipts_defined():
     """Receipt types are defined."""
-    from src.paths import load_path_spec
+    from spaceproof.paths import load_path_spec
 
     spec = load_path_spec("agi")
 
@@ -203,7 +203,7 @@ def test_agi_receipts_defined():
 
 def test_agi_cli_status():
     """CLI status command works."""
-    from src.paths.agi.cli import cmd_agi_status
+    from spaceproof.paths.agi.cli import cmd_agi_status
 
     result = cmd_agi_status()
 
@@ -213,7 +213,7 @@ def test_agi_cli_status():
 
 def test_agi_cli_policy():
     """CLI policy command works."""
-    from src.paths.agi.cli import cmd_agi_policy
+    from spaceproof.paths.agi.cli import cmd_agi_policy
 
     result = cmd_agi_policy({"depth": 2})
 

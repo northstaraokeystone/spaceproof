@@ -3,7 +3,7 @@
 Extracted from cli.py to keep main entry point under 600 lines.
 """
 
-from src.rl_tune import RL_LR_MIN, RL_LR_MAX
+from spaceproof.rl_tune import RL_LR_MIN, RL_LR_MAX
 
 # Import all command handlers
 from cli import (
@@ -922,7 +922,7 @@ def dispatch(args, docstring: str) -> None:
 
     # Atacama real-time commands
     if args.atacama_realtime:
-        from src.cfd_dust_dynamics import atacama_les_realtime
+        from spaceproof.cfd_dust_dynamics import atacama_les_realtime
         import json
 
         result = atacama_les_realtime(
@@ -937,7 +937,7 @@ def dispatch(args, docstring: str) -> None:
         print(f"Target met: {result.get('target_met', False)}")
         return
     if args.atacama_dust_devil:
-        from src.cfd_dust_dynamics import track_dust_devil
+        from spaceproof.cfd_dust_dynamics import track_dust_devil
         import json
 
         result = track_dust_devil(duration_sec=args.atacama_realtime_duration)
@@ -949,7 +949,7 @@ def dispatch(args, docstring: str) -> None:
         print(f"Max height: {result.get('max_height_m', 0):.1f} m")
         return
     if args.atacama_correlation:
-        from src.cfd_dust_dynamics import compute_realtime_correlation
+        from spaceproof.cfd_dust_dynamics import compute_realtime_correlation
 
         result = compute_realtime_correlation()
         print("\n=== ATACAMA CORRELATION ===")
@@ -958,7 +958,7 @@ def dispatch(args, docstring: str) -> None:
         print(f"Target met: {result.get('target_met', False)}")
         return
     if args.atacama_full_validation:
-        from src.cfd_dust_dynamics import run_atacama_validation
+        from spaceproof.cfd_dust_dynamics import run_atacama_validation
         import json
 
         result = run_atacama_validation()
@@ -1371,7 +1371,7 @@ def dispatch(args, docstring: str) -> None:
 
     # Atacama 200Hz commands
     if args.atacama_200hz:
-        from src.cfd_dust_dynamics import atacama_200hz
+        from spaceproof.cfd_dust_dynamics import atacama_200hz
 
         result = atacama_200hz(
             duration_sec=args.atacama_200hz_duration,
@@ -1384,7 +1384,7 @@ def dispatch(args, docstring: str) -> None:
         print(f"Target met: {result.get('target_met', False)}")
         return
     if args.atacama_200hz_info:
-        from src.cfd_dust_dynamics import get_atacama_200hz_info
+        from spaceproof.cfd_dust_dynamics import get_atacama_200hz_info
 
         result = get_atacama_200hz_info()
         print("\n=== ATACAMA 200Hz CONFIGURATION ===")
@@ -1393,7 +1393,7 @@ def dispatch(args, docstring: str) -> None:
         print("Upgrade from: 100Hz")
         return
     if args.atacama_200hz_predict:
-        from src.cfd_dust_dynamics import predict_dust_devil
+        from spaceproof.cfd_dust_dynamics import predict_dust_devil
 
         result = predict_dust_devil(
             duration_sec=args.atacama_200hz_duration,
@@ -1408,14 +1408,14 @@ def dispatch(args, docstring: str) -> None:
 
     # Expanded AGI audit commands
     if args.audit_expanded:
-        from src.agi_audit_expanded import run_expanded_audit
+        from spaceproof.agi_audit_expanded import run_expanded_audit
         import json
 
         result = run_expanded_audit(attack_type="all", iterations=args.audit_iterations)
         print(json.dumps(result, indent=2))
         return
     if args.audit_injection:
-        from src.agi_audit_expanded import run_expanded_audit
+        from spaceproof.agi_audit_expanded import run_expanded_audit
         import json
 
         result = run_expanded_audit(
@@ -1424,7 +1424,7 @@ def dispatch(args, docstring: str) -> None:
         print(json.dumps(result, indent=2))
         return
     if args.audit_poisoning:
-        from src.agi_audit_expanded import run_expanded_audit
+        from spaceproof.agi_audit_expanded import run_expanded_audit
         import json
 
         result = run_expanded_audit(

@@ -11,7 +11,7 @@ Source: PHASE 2.7 VALIDATE criteria from Grok Dec 16, 2025
 
 import pytest
 
-from src.compounding import (
+from spaceproof.compounding import (
     GROWTH_EXPONENT_ALPHA,
     TAU_THRESHOLD_SOVEREIGNTY_S,
     BASE_ITERATION_SPEEDUP,
@@ -30,7 +30,7 @@ from src.compounding import (
     emit_validation_receipt,
     emit_sovereignty_projection_receipt,
 )
-from src.entropy_shannon import (
+from spaceproof.entropy_shannon import (
     TAU_BASE_CURRENT_S,
     STARLINK_MARS_BANDWIDTH_EXPECTED_MBPS,
 )

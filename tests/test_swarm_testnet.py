@@ -1,6 +1,6 @@
 """Tests for swarm testnet module."""
 
-from src.swarm_testnet import (
+from spaceproof.swarm_testnet import (
     load_swarm_config,
     init_swarm,
     deploy_full_swarm,

@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.support import (
+from spaceproof.support import (
     SupportLevel,
     SupportCoverage,
     classify_receipt,

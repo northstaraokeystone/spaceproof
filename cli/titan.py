@@ -5,11 +5,11 @@ Commands for D6 + Titan methane harvesting operations.
 
 import json
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d6_info,
     d6_push,
 )
-from src.titan_methane_hybrid import (
+from spaceproof.titan_methane_hybrid import (
     load_titan_config,
     simulate_harvest,
     compute_autonomy,
@@ -17,7 +17,7 @@ from src.titan_methane_hybrid import (
     get_titan_info,
     TITAN_AUTONOMY_REQUIREMENT,
 )
-from src.perovskite_efficiency import (
+from spaceproof.perovskite_efficiency import (
     project_efficiency,
     get_perovskite_info,
 )

@@ -8,7 +8,7 @@ Tests:
 - Federation status
 """
 
-from src.paths.multiplanet.federation.stub import (
+from spaceproof.paths.multiplanet.federation.stub import (
     load_federation_config,
     initialize_federation,
     consensus_with_lag,

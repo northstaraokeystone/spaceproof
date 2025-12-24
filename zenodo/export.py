@@ -6,7 +6,7 @@ THE ZENODO INSIGHT:
     Anyone can verify the claims at any time.
 
 Archive Contents:
-    - src/ (frozen code)
+    - spaceproof/ (frozen code)
     - receipts.jsonl (with merkle root)
     - data/synthetic/ (seeded runs, deterministic)
     - data/real/ (hashes only, not full datasets)
@@ -14,7 +14,7 @@ Archive Contents:
     - LICENSE
     - zenodo.json (metadata)
 
-Source: AXIOM Validation Lock v1
+Source: SpaceProof D20 Production Evolution
 """
 
 import json
@@ -29,22 +29,22 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core import dual_hash, emit_receipt, merkle
+from spaceproof.core import dual_hash, emit_receipt, merkle
 
 
 # === CONSTANTS ===
 
-TENANT_ID = "axiom-zenodo"
+TENANT_ID = "spaceproof"
 ZENODO_API = "https://zenodo.org/api"
 
 # Files to include in archive
 ARCHIVE_INCLUDE = [
-    "src/",
+    "spaceproof/",
     "real_data/",
     "benchmarks/",
-    "axiom/",
     "tests/",
     "scripts/",
+    "configs/",
     "receipts.jsonl",
     "ledger_schema.json",
     "spec.md",
@@ -103,14 +103,14 @@ def freeze_receipts(receipts_path: str = "receipts.jsonl") -> str:
 
 def generate_metadata(
     version: str,
-    title: str = "AXIOM Compression System",
+    title: str = "SpaceProof System",
     description: str = None,
     creators: List[Dict] = None,
 ) -> Dict:
     """Generate Zenodo metadata JSON.
 
     Args:
-        version: Semantic version string (e.g., "1.1.0")
+        version: Semantic version string (e.g., "4.0.0")
         title: Archive title
         description: Archive description
         creators: List of {"name": str, "affiliation": str}
@@ -119,14 +119,15 @@ def generate_metadata(
         Zenodo metadata dict
     """
     if description is None:
-        description = """AXIOM (Autonomous eXecution of Information-theoretic Optimization Methods)
+        description = """SpaceProof - Space-grade proof infrastructure.
 
-A physics compression framework demonstrating that physical laws are nature's compression algorithms.
+Part of ProofChain: SpaceProof | SpendProof | ClaimProof | VoteProof | OriginProof | GreenProof
 
 Key Features:
+- Telemetry compression (10x+ at 0.999 recall)
 - KAN-based symbolic regression for physics discovery
-- Real-data validation on SPARC galaxy rotation curves
-- Landauer-calibrated bits/kg equivalence for Mars sovereignty
+- Sovereignty threshold calculation for Mars crew sizing
+- Entropy-based anomaly detection for fraud
 - Receipt-based provenance for every calculation
 
 This archive contains frozen code, receipts, and deterministic synthetic data
@@ -134,7 +135,7 @@ for full reproducibility of all claims.
 """
 
     if creators is None:
-        creators = [{"name": "AXIOM Contributors", "affiliation": "AXIOM Project"}]
+        creators = [{"name": "SpaceProof Contributors", "affiliation": "SpaceProof Project"}]
 
     metadata = {
         "upload_type": "software",
@@ -145,17 +146,20 @@ for full reproducibility of all claims.
         "access_right": "open",
         "license": "MIT",
         "keywords": [
+            "spaceproof",
             "compression",
             "physics",
             "symbolic regression",
             "KAN",
             "Kolmogorov-Arnold Networks",
-            "Mars autonomy",
+            "Mars sovereignty",
             "information theory",
+            "fraud detection",
+            "proofchain",
         ],
         "related_identifiers": [
             {
-                "identifier": "https://github.com/axiom-project/axiom",
+                "identifier": "https://github.com/northstaraokeystone/spaceproof",
                 "relation": "isSupplementTo",
                 "scheme": "url",
             }
@@ -193,13 +197,13 @@ def create_archive(
         - zenodo.json (metadata)
     """
     if output_path is None:
-        output_path = f"axiom-{version}.tar.gz"
+        output_path = f"spaceproof-{version}.tar.gz"
 
     # Create temp directory for archive staging
     staging_dir = Path(f".zenodo_staging_{version}")
     staging_dir.mkdir(exist_ok=True)
 
-    archive_root = staging_dir / f"axiom-{version}"
+    archive_root = staging_dir / f"spaceproof-{version}"
     archive_root.mkdir(exist_ok=True)
 
     # Get project root
@@ -242,7 +246,7 @@ def create_archive(
 
             # Generate seeded synthetic galaxies
             try:
-                from axiom.cosmos import generate_synthetic_dataset
+                from spaceproof.domains.galaxy import generate_synthetic_dataset
                 import numpy as np
 
                 np.random.seed(42)  # Deterministic seed
@@ -314,7 +318,7 @@ def create_archive(
 
         # Create tarball
         with tarfile.open(output_path, "w:gz") as tar:
-            tar.add(archive_root, arcname=f"axiom-{version}")
+            tar.add(archive_root, arcname=f"spaceproof-{version}")
 
         # Emit zenodo receipt
         emit_receipt(
@@ -365,7 +369,7 @@ def validate_archive(archive_path: str) -> Dict:
             results["files"] = tar.getnames()
 
             for name in results["files"]:
-                if "/src/" in name or name.endswith("/src"):
+                if "/spaceproof/" in name or name.endswith("/spaceproof"):
                     results["has_src"] = True
                 if "receipts.jsonl" in name:
                     results["has_receipts"] = True
@@ -385,8 +389,8 @@ def main():
     """CLI entry point for archive creation."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Create AXIOM Zenodo archive")
-    parser.add_argument("version", help="Semantic version (e.g., 1.1.0)")
+    parser = argparse.ArgumentParser(description="Create SpaceProof Zenodo archive")
+    parser.add_argument("version", help="Semantic version (e.g., 4.0.0)")
     parser.add_argument("--output", "-o", help="Output file path")
     parser.add_argument(
         "--no-receipts", action="store_true", help="Exclude receipts.jsonl"
@@ -400,7 +404,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"Creating AXIOM archive v{args.version}...")
+    print(f"Creating SpaceProof archive v{args.version}...")
 
     archive_path = create_archive(
         version=args.version,

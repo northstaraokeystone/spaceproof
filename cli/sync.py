@@ -5,7 +5,7 @@ Commands for unified RL coordination between Titan and Europa.
 
 import json
 
-from src.multi_planet_sync import (
+from spaceproof.multi_planet_sync import (
     load_sync_config,
     run_sync,
     run_sync_cycle,

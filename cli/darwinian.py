@@ -4,14 +4,14 @@ AXIOM v2: The receipt chain is a Darwinian replicator.
 """
 
 import json
-from src.darwinian_enforce import (
+from spaceproof.darwinian_enforce import (
     load_spec,
     run_selection_cycle,
     get_active_laws,
     get_darwinian_info,
     reset_darwinian_state,
 )
-from src.entropy import (
+from spaceproof.entropy import (
     calculate_latency_pressure,
     apply_latency_selection,
     evolve_under_latency,

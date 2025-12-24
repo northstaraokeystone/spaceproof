@@ -6,7 +6,7 @@ class TestEntropyEngine:
 
     def test_init_entropy_engine(self):
         """Test entropy engine initialization."""
-        from src.swarm.entropy_engine import init_entropy_engine
+        from spaceproof.swarm.entropy_engine import init_entropy_engine
 
         engine = init_entropy_engine({})
 
@@ -15,7 +15,7 @@ class TestEntropyEngine:
 
     def test_measure_local_entropy(self):
         """Test local entropy measurement."""
-        from src.swarm.entropy_engine import measure_local_entropy
+        from spaceproof.swarm.entropy_engine import measure_local_entropy
 
         receipts = [
             {"receipt_type": "type_a"},
@@ -29,7 +29,7 @@ class TestEntropyEngine:
 
     def test_measure_swarm_coherence(self):
         """Test swarm coherence measurement."""
-        from src.swarm.entropy_engine import (
+        from spaceproof.swarm.entropy_engine import (
             init_entropy_engine,
             measure_swarm_coherence,
         )
@@ -41,7 +41,7 @@ class TestEntropyEngine:
 
     def test_simulate_coordination(self):
         """Test coordination simulation."""
-        from src.swarm.entropy_engine import init_entropy_engine, simulate_coordination
+        from spaceproof.swarm.entropy_engine import init_entropy_engine, simulate_coordination
 
         engine = init_entropy_engine({})
         result = simulate_coordination(engine, "consensus")
@@ -56,12 +56,12 @@ class TestEntropyConstants:
 
     def test_node_count(self):
         """Test node count is 100."""
-        from src.swarm.entropy_engine import NODE_COUNT
+        from spaceproof.swarm.entropy_engine import NODE_COUNT
 
         assert NODE_COUNT == 100
 
     def test_convergence_target(self):
         """Test convergence target is 0.95."""
-        from src.swarm.entropy_engine import CONVERGENCE_TARGET
+        from spaceproof.swarm.entropy_engine import CONVERGENCE_TARGET
 
         assert CONVERGENCE_TARGET == 0.95

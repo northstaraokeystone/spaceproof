@@ -24,7 +24,7 @@ from contextlib import redirect_stdout
 # Add src to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.reroute import (
+from spaceproof.reroute import (
     adaptive_reroute,
     compute_cgr_paths,
     predict_degradation,
@@ -42,15 +42,15 @@ from src.reroute import (
     ML_MODEL_TYPE,
     ALGO_TYPE,
 )
-from src.partition import partition_sim, stress_sweep, NODE_BASELINE, BASE_ALPHA
-from src.reasoning import blackout_sweep, project_with_reroute, sovereignty_timeline
-from src.mitigation import (
+from spaceproof.partition import partition_sim, stress_sweep, NODE_BASELINE, BASE_ALPHA
+from spaceproof.reasoning import blackout_sweep, project_with_reroute, sovereignty_timeline
+from spaceproof.mitigation import (
     compute_reroute_mitigation,
     compute_blackout_factor,
     compute_mitigation_score,
     REROUTE_ALPHA_BOOST as MITIGATION_REROUTE_BOOST,
 )
-from src.core import StopRule
+from spaceproof.core import StopRule
 
 
 class TestRerouteAlphaBoost:

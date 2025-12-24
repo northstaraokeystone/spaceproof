@@ -5,7 +5,7 @@ Commands for fractal encryption defense audits.
 
 import json
 
-from src.fractal_encrypt_audit import (
+from spaceproof.fractal_encrypt_audit import (
     generate_fractal_key,
     run_fractal_encrypt_audit,
     test_side_channel_resilience,

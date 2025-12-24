@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.build_rate import (
+from spaceproof.build_rate import (
     compute_build_rate,
     autonomy_to_level,
     propulsion_to_level,

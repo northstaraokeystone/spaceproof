@@ -5,11 +5,11 @@ Commands for D7 + Europa ice drilling operations.
 
 import json
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d7_info,
     d7_push,
 )
-from src.europa_ice_hybrid import (
+from spaceproof.europa_ice_hybrid import (
     load_europa_config,
     simulate_drilling,
     compute_autonomy,

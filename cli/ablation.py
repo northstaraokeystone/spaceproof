@@ -5,12 +5,12 @@ Commands: ablate, ablation_sweep, ceiling_track, formula_check, isolate_layers
 
 import math
 
-from src.gnn_cache import (
+from spaceproof.gnn_cache import (
     nonlinear_retention_with_pruning,
     CACHE_DEPTH_BASELINE,
 )
-from src.reasoning import ablation_sweep, get_layer_contributions
-from src.alpha_compute import (
+from spaceproof.reasoning import ablation_sweep, get_layer_contributions
+from spaceproof.alpha_compute import (
     alpha_calc,
     ceiling_gap,
     get_ablation_expected,

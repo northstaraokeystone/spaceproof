@@ -16,7 +16,7 @@ def cmd_interstellar_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with interstellar info
     """
-    from src.interstellar_backbone import get_interstellar_info
+    from spaceproof.interstellar_backbone import get_interstellar_info
 
     info = get_interstellar_info()
 
@@ -46,7 +46,7 @@ def cmd_interstellar_bodies(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with bodies list
     """
-    from src.interstellar_backbone import (
+    from spaceproof.interstellar_backbone import (
         get_all_bodies,
         INTERSTELLAR_JOVIAN_BODIES,
         INTERSTELLAR_INNER_BODIES,
@@ -78,7 +78,7 @@ def cmd_interstellar_positions(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with positions
     """
-    from src.interstellar_backbone import compute_body_positions
+    from spaceproof.interstellar_backbone import compute_body_positions
 
     timestamp = getattr(args, "timestamp", 0.0)
     positions = compute_body_positions(timestamp)
@@ -115,7 +115,7 @@ def cmd_interstellar_windows(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with windows
     """
-    from src.interstellar_backbone import compute_interstellar_windows
+    from spaceproof.interstellar_backbone import compute_interstellar_windows
 
     timestamp = getattr(args, "timestamp", 0.0)
     windows = compute_interstellar_windows(timestamp=timestamp)
@@ -148,7 +148,7 @@ def cmd_interstellar_sync(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with sync results
     """
-    from src.interstellar_backbone import simulate_backbone_operations
+    from spaceproof.interstellar_backbone import simulate_backbone_operations
 
     duration_days = getattr(args, "duration_days", 60)
     result = simulate_backbone_operations(duration_days)
@@ -174,7 +174,7 @@ def cmd_interstellar_autonomy(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with autonomy metrics
     """
-    from src.interstellar_backbone import compute_backbone_autonomy
+    from spaceproof.interstellar_backbone import compute_backbone_autonomy
 
     result = compute_backbone_autonomy()
 
@@ -200,7 +200,7 @@ def cmd_interstellar_failover(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with failover results
     """
-    from src.interstellar_backbone import emergency_failover
+    from spaceproof.interstellar_backbone import emergency_failover
 
     body = getattr(args, "body", "europa")
     result = emergency_failover(body)

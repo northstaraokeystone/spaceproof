@@ -10,7 +10,7 @@ class TestLiveHistoryOracle:
 
     def test_init_oracle(self):
         """Test oracle initialization."""
-        from src.oracle import init_oracle
+        from spaceproof.oracle import init_oracle
 
         oracle = init_oracle({})
 
@@ -20,7 +20,7 @@ class TestLiveHistoryOracle:
 
     def test_load_chain_history(self):
         """Test loading chain history."""
-        from src.oracle import load_chain_history
+        from spaceproof.oracle import load_chain_history
 
         history = load_chain_history()
 
@@ -32,7 +32,7 @@ class TestLiveHistoryOracle:
 
     def test_compute_history_compression(self):
         """Test compression calculation on history."""
-        from src.oracle import compute_history_compression
+        from spaceproof.oracle import compute_history_compression
 
         # Empty history
         assert compute_history_compression([]) == 0.0
@@ -50,7 +50,7 @@ class TestLiveHistoryOracle:
 
     def test_extract_laws_from_history(self):
         """Test law extraction from history."""
-        from src.oracle import extract_laws_from_history
+        from spaceproof.oracle import extract_laws_from_history
 
         # Empty history
         laws = extract_laws_from_history([])
@@ -67,7 +67,7 @@ class TestLiveHistoryOracle:
 
     def test_oracle_query(self):
         """Test oracle query functionality."""
-        from src.oracle import init_oracle, oracle_query, extract_laws_from_history
+        from spaceproof.oracle import init_oracle, oracle_query, extract_laws_from_history
 
         oracle = init_oracle({})
         oracle.history = [{"receipt_type": "test"}]
@@ -82,7 +82,7 @@ class TestLiveHistoryOracle:
 
     def test_emit_oracle_receipt(self):
         """Test oracle receipt emission."""
-        from src.oracle import init_oracle, emit_oracle_receipt
+        from spaceproof.oracle import init_oracle, emit_oracle_receipt
 
         oracle = init_oracle({})
         laws = [{"law_id": "test_law"}]
@@ -98,7 +98,7 @@ class TestLiveHistoryOracle:
 
     def test_get_oracle_status(self):
         """Test oracle status."""
-        from src.oracle import get_oracle_status
+        from spaceproof.oracle import get_oracle_status
 
         status = get_oracle_status()
 
@@ -113,24 +113,24 @@ class TestOracleConstants:
 
     def test_projection_disabled(self):
         """Verify projection is disabled."""
-        from src.oracle.live_history_oracle import PROJECTION_ENABLED
+        from spaceproof.oracle.live_history_oracle import PROJECTION_ENABLED
 
         assert PROJECTION_ENABLED is False
 
     def test_simulation_disabled(self):
         """Verify simulation is disabled."""
-        from src.oracle.live_history_oracle import SIMULATION_ENABLED
+        from spaceproof.oracle.live_history_oracle import SIMULATION_ENABLED
 
         assert SIMULATION_ENABLED is False
 
     def test_oracle_mode(self):
         """Verify oracle mode is live history only."""
-        from src.oracle.live_history_oracle import ORACLE_MODE
+        from spaceproof.oracle.live_history_oracle import ORACLE_MODE
 
         assert ORACLE_MODE == "live_history_only"
 
     def test_compression_source(self):
         """Verify compression source is chain history only."""
-        from src.oracle.live_history_oracle import COMPRESSION_SOURCE
+        from spaceproof.oracle.live_history_oracle import COMPRESSION_SOURCE
 
         assert COMPRESSION_SOURCE == "chain_history_only"

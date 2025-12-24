@@ -16,7 +16,7 @@ def cmd_chaos_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with chaos config
     """
-    from src.chaotic_nbody_sim import load_chaos_config
+    from spaceproof.chaotic_nbody_sim import load_chaos_config
 
     config = load_chaos_config()
 
@@ -49,7 +49,7 @@ def cmd_chaos_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.chaotic_nbody_sim import simulate_chaos, NBODY_COUNT
+    from spaceproof.chaotic_nbody_sim import simulate_chaos, NBODY_COUNT
 
     bodies = getattr(args, "chaos_bodies", NBODY_COUNT)
     duration_years = getattr(args, "chaos_duration_years", 1.0)
@@ -86,7 +86,7 @@ def cmd_chaos_stability(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with stability results
     """
-    from src.chaotic_nbody_sim import check_stability
+    from spaceproof.chaotic_nbody_sim import check_stability
 
     result = check_stability()
 
@@ -114,7 +114,7 @@ def cmd_chaos_monte_carlo(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Monte Carlo results
     """
-    from src.chaotic_nbody_sim import run_monte_carlo_stability
+    from spaceproof.chaotic_nbody_sim import run_monte_carlo_stability
 
     runs = getattr(args, "chaos_monte_carlo_runs", 100)
     simulate = getattr(args, "simulate", False)
@@ -151,7 +151,7 @@ def cmd_chaos_backbone_tolerance(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with tolerance results
     """
-    from src.chaotic_nbody_sim import compute_backbone_chaos_tolerance
+    from spaceproof.chaotic_nbody_sim import compute_backbone_chaos_tolerance
 
     result = compute_backbone_chaos_tolerance()
 
@@ -179,7 +179,7 @@ def cmd_chaos_lyapunov(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Lyapunov analysis
     """
-    from src.chaotic_nbody_sim import compute_lyapunov_exponent
+    from spaceproof.chaotic_nbody_sim import compute_lyapunov_exponent
 
     iterations = getattr(args, "chaos_iterations", 1000)
 

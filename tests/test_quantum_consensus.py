@@ -6,7 +6,7 @@ class TestQuantumConsensus:
 
     def test_init_quantum_consensus(self):
         """Test quantum consensus initialization."""
-        from src.quantum_entangled_consensus import init_quantum_consensus
+        from spaceproof.quantum_entangled_consensus import init_quantum_consensus
 
         qc = init_quantum_consensus({})
 
@@ -14,7 +14,7 @@ class TestQuantumConsensus:
 
     def test_establish_entanglement(self):
         """Test entanglement establishment."""
-        from src.quantum_entangled_consensus import (
+        from spaceproof.quantum_entangled_consensus import (
             init_quantum_consensus,
             establish_entanglement,
         )
@@ -29,7 +29,7 @@ class TestQuantumConsensus:
 
     def test_achieve_consensus(self):
         """Test consensus achievement."""
-        from src.quantum_entangled_consensus import (
+        from spaceproof.quantum_entangled_consensus import (
             init_quantum_consensus,
             establish_entanglement,
             achieve_quantum_consensus,
@@ -54,13 +54,13 @@ class TestQuantumConsensusConstants:
 
     def test_correlation_target(self):
         """Test correlation target is 0.9999."""
-        from src.quantum_entangled_consensus import CORRELATION_TARGET
+        from spaceproof.quantum_entangled_consensus import CORRELATION_TARGET
 
         assert CORRELATION_TARGET == 0.9999
 
     def test_decoherence_threshold(self):
         """Test decoherence threshold is 0.001."""
-        from src.quantum_entangled_consensus import DECOHERENCE_THRESHOLD
+        from spaceproof.quantum_entangled_consensus import DECOHERENCE_THRESHOLD
 
         assert DECOHERENCE_THRESHOLD == 0.001
 
@@ -70,8 +70,8 @@ class TestByzantineDetection:
 
     def test_init_byzantine_detector(self):
         """Test Byzantine detector initialization."""
-        from src.quantum_entangled_consensus import init_quantum_consensus
-        from src.quantum_decoherence_byzantine import init_byzantine_detector
+        from spaceproof.quantum_entangled_consensus import init_quantum_consensus
+        from spaceproof.quantum_decoherence_byzantine import init_byzantine_detector
 
         qc = init_quantum_consensus({})
         bd = init_byzantine_detector(qc)
@@ -80,7 +80,7 @@ class TestByzantineDetection:
 
     def test_byzantine_types(self):
         """Test Byzantine behavior types."""
-        from src.quantum_decoherence_byzantine import BYZANTINE_TYPES
+        from spaceproof.quantum_decoherence_byzantine import BYZANTINE_TYPES
 
         assert "crash" in BYZANTINE_TYPES
         assert "omission" in BYZANTINE_TYPES

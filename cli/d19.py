@@ -22,7 +22,7 @@ def cmd_d19_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D19 info
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, get_d19_status
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, get_d19_status
 
     config = load_d19_config()
     status = get_d19_status()
@@ -100,7 +100,7 @@ def cmd_d19_run(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D19 results
     """
-    from src.depths.d19_swarm_intelligence import run_d19
+    from spaceproof.depths.d19_swarm_intelligence import run_d19
 
     print("\n=== D19 SWARM INTELLIGENCE EXECUTION ===")
     print("Running all 5 gates...\n")
@@ -138,7 +138,7 @@ def cmd_d19_gate_1(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Gate 1 results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
 
     config = load_d19_config()
     result = run_gate_1(config)
@@ -161,7 +161,7 @@ def cmd_d19_gate_2(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Gate 2 results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
 
     config = load_d19_config()
     result = run_gate_2(config)
@@ -187,7 +187,7 @@ def cmd_d19_gate_1_2(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with combined results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_1_2_parallel
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_1_2_parallel
 
     config = load_d19_config()
     result = run_gate_1_2_parallel(config)
@@ -220,7 +220,7 @@ def cmd_d19_gate_3(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Gate 3 results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
 
     config = load_d19_config()
     result = run_gate_3(config)
@@ -246,7 +246,7 @@ def cmd_d19_gate_4(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Gate 4 results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
 
     config = load_d19_config()
     result = run_gate_4(config)
@@ -273,7 +273,7 @@ def cmd_d19_gate_5(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Gate 5 results
     """
-    from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
+    from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
 
     config = load_d19_config()
     result = run_gate_5(config)
@@ -338,7 +338,7 @@ def cmd_d19_run_live_only(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D19 live-only results
     """
-    from src.depths.d19_swarm_intelligence import (
+    from spaceproof.depths.d19_swarm_intelligence import (
         run_d19_live_only,
         SYNTHETIC_SCENARIOS_ENABLED,
     )
@@ -412,7 +412,7 @@ def cmd_d19_live_stream_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_live_stream
+    from spaceproof.depths.d19_swarm_intelligence import test_live_stream
 
     print("\n=== LIVE STREAM TEST ===")
     print("Testing AgentProof + NEURON ingest...\n")
@@ -443,7 +443,7 @@ def cmd_d19_alpha_threshold_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_alpha_threshold
+    from spaceproof.depths.d19_swarm_intelligence import test_alpha_threshold
 
     print("\n=== ALPHA THRESHOLD TEST ===")
     print("Testing law discovery trigger on α > 1.20...\n")
@@ -517,7 +517,7 @@ def cmd_d19_run_preemptive(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D19.2 preemptive weave results
     """
-    from src.depths.d19_swarm_intelligence import (
+    from spaceproof.depths.d19_swarm_intelligence import (
         run_d19_preemptive,
         SIMULATION_ENABLED,
         REACTIVE_MODE_ENABLED,
@@ -606,7 +606,7 @@ def cmd_d19_project_future_paths(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_future_projection
+    from spaceproof.depths.d19_swarm_intelligence import test_future_projection
 
     print("\n=== FUTURE PATH PROJECTION TEST ===")
     print("Testing light-speed constrained path projection...\n")
@@ -633,7 +633,7 @@ def cmd_d19_preemptive_weave_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_preemptive_weave
+    from spaceproof.depths.d19_swarm_intelligence import test_preemptive_weave
 
     print("\n=== PREEMPTIVE WEAVE TEST ===")
     print("Testing pre-amplify/starve based on projected compression...\n")
@@ -660,7 +660,7 @@ def cmd_d19_proxima_weave_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_proxima_weave
+    from spaceproof.depths.d19_swarm_intelligence import test_proxima_weave
 
     print("\n=== PROXIMA WEAVE TEST ===")
     print("Testing 8.48yr delay nullification for Proxima Centauri...\n")
@@ -731,7 +731,7 @@ def cmd_d19_run_oracle_mode(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D19.3 oracle mode results
     """
-    from src.depths.d19_swarm_intelligence import (
+    from spaceproof.depths.d19_swarm_intelligence import (
         run_d19_oracle_mode,
         ORACLE_MODE,
         PROJECTION_ENABLED,
@@ -826,7 +826,7 @@ def cmd_d19_verify_projection_killed(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with verification results
     """
-    from src.depths.d19_swarm_intelligence import verify_projection_killed
+    from spaceproof.depths.d19_swarm_intelligence import verify_projection_killed
 
     print("\n=== PROJECTION KILL VERIFICATION ===")
     print("Verifying projection, simulation, and weave are KILLED...\n")
@@ -856,7 +856,7 @@ def cmd_d19_live_oracle_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_live_oracle
+    from spaceproof.depths.d19_swarm_intelligence import test_live_oracle
 
     print("\n=== LIVE ORACLE TEST ===")
     print("Testing history-only oracle (no projection)...\n")
@@ -883,7 +883,7 @@ def cmd_d19_gap_silence_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with test results
     """
-    from src.depths.d19_swarm_intelligence import test_gap_silence
+    from spaceproof.depths.d19_swarm_intelligence import test_gap_silence
 
     print("\n=== GAP-SILENCE LAW EMERGENCE TEST ===")
     print("Testing minimal-sync law selection under silence...\n")

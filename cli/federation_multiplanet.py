@@ -5,7 +5,7 @@ import json
 
 def cmd_federation_multiplanet_info(args) -> None:
     """Show multi-planet federation configuration."""
-    from src.federation_multiplanet import load_federation_config, get_federation_status
+    from spaceproof.federation_multiplanet import load_federation_config, get_federation_status
 
     config = load_federation_config()
     status = get_federation_status()
@@ -24,7 +24,7 @@ def cmd_federation_multiplanet_info(args) -> None:
 
 def cmd_federation_multiplanet_init(args) -> None:
     """Initialize multi-planet federation."""
-    from src.federation_multiplanet import init_federation
+    from spaceproof.federation_multiplanet import init_federation
 
     planets_str = getattr(args, "federation_planets", None)
     planets = planets_str.split(",") if planets_str else None
@@ -40,7 +40,7 @@ def cmd_federation_multiplanet_init(args) -> None:
 
 def cmd_federation_multiplanet_add(args) -> None:
     """Add planet to federation."""
-    from src.federation_multiplanet import add_planet
+    from spaceproof.federation_multiplanet import add_planet
 
     planet = getattr(args, "federation_planet", "earth")
 
@@ -53,7 +53,7 @@ def cmd_federation_multiplanet_add(args) -> None:
 
 def cmd_federation_multiplanet_sync(args) -> None:
     """Sync multi-planet federation."""
-    from src.federation_multiplanet import sync_federation
+    from spaceproof.federation_multiplanet import sync_federation
 
     result = sync_federation()
     print("\n=== FEDERATION SYNC ===")
@@ -65,7 +65,7 @@ def cmd_federation_multiplanet_sync(args) -> None:
 
 def cmd_federation_multiplanet_consensus(args) -> None:
     """Run federation consensus."""
-    from src.federation_multiplanet import run_consensus
+    from spaceproof.federation_multiplanet import run_consensus
 
     result = run_consensus()
     print("\n=== FEDERATION CONSENSUS ===")
@@ -78,7 +78,7 @@ def cmd_federation_multiplanet_consensus(args) -> None:
 
 def cmd_federation_multiplanet_arbitrate(args) -> None:
     """Run federation arbitration."""
-    from src.federation_multiplanet import arbitrate_dispute
+    from spaceproof.federation_multiplanet import arbitrate_dispute
 
     result = arbitrate_dispute()
     print("\n=== FEDERATION ARBITRATION ===")
@@ -89,7 +89,7 @@ def cmd_federation_multiplanet_arbitrate(args) -> None:
 
 def cmd_federation_multiplanet_status(args) -> None:
     """Show federation status."""
-    from src.federation_multiplanet import get_federation_status
+    from spaceproof.federation_multiplanet import get_federation_status
 
     status = get_federation_status()
     print("\n=== FEDERATION STATUS ===")
@@ -98,7 +98,7 @@ def cmd_federation_multiplanet_status(args) -> None:
 
 def cmd_federation_multiplanet_health(args) -> None:
     """Measure federation health."""
-    from src.federation_multiplanet import measure_federation_health
+    from spaceproof.federation_multiplanet import measure_federation_health
 
     health = measure_federation_health()
     print("\n=== FEDERATION HEALTH ===")
@@ -113,7 +113,7 @@ def cmd_federation_multiplanet_health(args) -> None:
 
 def cmd_federation_multiplanet_partition(args) -> None:
     """Simulate network partition."""
-    from src.federation_multiplanet import simulate_partition
+    from spaceproof.federation_multiplanet import simulate_partition
 
     planets_str = getattr(args, "partition_planets", "mars")
     planets = planets_str.split(",")
@@ -127,7 +127,7 @@ def cmd_federation_multiplanet_partition(args) -> None:
 
 def cmd_federation_multiplanet_recover(args) -> None:
     """Recover from partition."""
-    from src.federation_multiplanet import simulate_recovery
+    from spaceproof.federation_multiplanet import simulate_recovery
 
     planets_str = getattr(args, "recover_planets", "mars")
     planets = planets_str.split(",")

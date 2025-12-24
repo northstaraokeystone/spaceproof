@@ -25,7 +25,7 @@ import sys
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.alpha_compute import (
+from spaceproof.alpha_compute import (
     alpha_calc,
     compound_retention,
     isolate_layer_contribution,
@@ -41,15 +41,15 @@ from src.alpha_compute import (
     RETENTION_FACTOR_PRUNE_RANGE,
     ABLATION_MODES,
 )
-from src.gnn_cache import (
+from spaceproof.gnn_cache import (
     nonlinear_retention_with_pruning,
     get_retention_factor_gnn_isolated,
     CACHE_DEPTH_BASELINE,
     ENTROPY_ASYMPTOTE_E,
 )
-from src.pruning import generate_sample_merkle_tree, get_retention_factor_prune_isolated
-from src.reasoning import ablation_sweep, get_layer_contributions
-from src.core import StopRule
+from spaceproof.pruning import generate_sample_merkle_tree, get_retention_factor_prune_isolated
+from spaceproof.reasoning import ablation_sweep, get_layer_contributions
+from spaceproof.core import StopRule
 
 
 class TestAlphaFormulaCorrectness:

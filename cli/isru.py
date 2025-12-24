@@ -11,7 +11,7 @@ Commands for D5+ISRU hybrid operations:
 
 from typing import Dict, Any
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d5_info,
     d5_push,
     D5_ALPHA_TARGET,
@@ -20,7 +20,7 @@ from src.fractal_layers import (
     D5_TREE_MIN,
     D5_UPLIFT,
 )
-from src.isru_hybrid import (
+from spaceproof.isru_hybrid import (
     moxie_calibration,
     simulate_o2_production,
     compute_isru_closure,

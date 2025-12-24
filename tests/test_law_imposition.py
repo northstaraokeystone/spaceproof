@@ -21,7 +21,7 @@ import sys
 # Add src to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.darwinian_enforce import (
+from spaceproof.darwinian_enforce import (
     extract_surviving_pattern,
     is_law_candidate,
     impose_law,

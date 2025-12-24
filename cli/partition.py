@@ -3,7 +3,7 @@
 Commands: partition, stress_quorum
 """
 
-from src.partition import (
+from spaceproof.partition import (
     partition_sim,
     stress_sweep,
     NODE_BASELINE,
@@ -11,7 +11,7 @@ from src.partition import (
     PARTITION_MAX_TEST_PCT,
     BASE_ALPHA,
 )
-from src.ledger import LEDGER_ALPHA_BOOST_VALIDATED
+from spaceproof.ledger import LEDGER_ALPHA_BOOST_VALIDATED
 
 from cli.base import print_header
 

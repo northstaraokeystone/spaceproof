@@ -1,7 +1,7 @@
 """Tests for live relay hardware-in-loop module."""
 
 import pytest
-from src.live_relay_hil import (
+from spaceproof.live_relay_hil import (
     load_hil_config,
     connect_starlink_analog,
     disconnect_starlink_analog,
@@ -170,14 +170,14 @@ class TestHILStopRules:
 
     def test_hil_stoprule_connection(self):
         """StopRule on connection failure."""
-        from src.live_relay_hil import stoprule_hil_connection_failed
+        from spaceproof.live_relay_hil import stoprule_hil_connection_failed
 
         with pytest.raises(HILConnectionError):
             stoprule_hil_connection_failed("test error")
 
     def test_hil_stoprule_timeout(self):
         """StopRule on timeout."""
-        from src.live_relay_hil import stoprule_hil_timeout
+        from spaceproof.live_relay_hil import stoprule_hil_timeout
 
         with pytest.raises(HILTimeoutError):
             stoprule_hil_timeout(10000)

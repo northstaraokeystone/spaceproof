@@ -6,12 +6,12 @@ Commands: adaptive_depth_run, depth_scaling_test, compute_depth_single,
 
 import math
 
-from src.adaptive_depth import (
+from spaceproof.adaptive_depth import (
     load_depth_spec,
     compute_depth as compute_adaptive_n_depth,
     get_depth_scaling_info,
 )
-from src.rl_tune import (
+from spaceproof.rl_tune import (
     run_sweep,
     compare_sweep_efficiency,
     get_efficient_sweep_info,

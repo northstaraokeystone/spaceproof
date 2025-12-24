@@ -4,8 +4,8 @@ Extracted from cli.py to keep main entry point under 600 lines.
 """
 
 import argparse
-from src.partition import NODE_BASELINE
-from src.timeline import C_BASE_DEFAULT, P_FACTOR_DEFAULT
+from spaceproof.partition import NODE_BASELINE
+from spaceproof.timeline import C_BASE_DEFAULT, P_FACTOR_DEFAULT
 
 
 def create_parser() -> argparse.ArgumentParser:

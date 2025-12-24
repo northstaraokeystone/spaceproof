@@ -6,7 +6,7 @@ class TestD14FractalRecursion:
 
     def test_d14_spec_load(self) -> None:
         """Test loading D14 spec from JSON."""
-        from src.fractal_layers import get_d14_spec
+        from spaceproof.fractal_layers import get_d14_spec
 
         spec = get_d14_spec()
         assert spec is not None
@@ -18,7 +18,7 @@ class TestD14FractalRecursion:
 
     def test_d14_uplift(self) -> None:
         """Test D14 uplift value at depth 14."""
-        from src.fractal_layers import get_d14_uplift, D14_UPLIFT
+        from spaceproof.fractal_layers import get_d14_uplift, D14_UPLIFT
 
         uplift = get_d14_uplift(14)
         assert uplift == D14_UPLIFT
@@ -26,7 +26,7 @@ class TestD14FractalRecursion:
 
     def test_d14_info(self) -> None:
         """Test D14 info retrieval."""
-        from src.fractal_layers import get_d14_info
+        from spaceproof.fractal_layers import get_d14_info
 
         info = get_d14_info()
         assert info is not None
@@ -37,7 +37,7 @@ class TestD14FractalRecursion:
 
     def test_d14_adaptive_termination(self) -> None:
         """Test adaptive termination check."""
-        from src.fractal_layers import adaptive_termination_check
+        from spaceproof.fractal_layers import adaptive_termination_check
 
         # Should not terminate with high delta (current=3.5, previous=3.4 -> delta=0.1)
         result = adaptive_termination_check(3.5, 3.4, threshold=0.001)
@@ -49,7 +49,7 @@ class TestD14FractalRecursion:
 
     def test_d14_recursive_fractal(self) -> None:
         """Test D14 recursive fractal computation."""
-        from src.fractal_layers import d14_recursive_fractal
+        from spaceproof.fractal_layers import d14_recursive_fractal
 
         result = d14_recursive_fractal(
             tree_size=10**6,
@@ -66,7 +66,7 @@ class TestD14FractalRecursion:
 
     def test_d14_push_simulate(self) -> None:
         """Test D14 push in simulation mode."""
-        from src.fractal_layers import d14_push
+        from spaceproof.fractal_layers import d14_push
 
         result = d14_push(
             tree_size=10**6,
@@ -84,7 +84,7 @@ class TestD14FractalRecursion:
 
     def test_d14_push_execute(self) -> None:
         """Test D14 push in execute mode."""
-        from src.fractal_layers import d14_push
+        from spaceproof.fractal_layers import d14_push
 
         result = d14_push(
             tree_size=10**6,
@@ -99,7 +99,7 @@ class TestD14FractalRecursion:
 
     def test_d14_constants(self) -> None:
         """Test D14 constants are correctly defined."""
-        from src.fractal_layers import (
+        from spaceproof.fractal_layers import (
             D14_ALPHA_FLOOR,
             D14_ALPHA_TARGET,
             D14_ALPHA_CEILING,
@@ -123,7 +123,7 @@ class TestInterstellarBackbone:
 
     def test_interstellar_body_count(self) -> None:
         """Test that we have 7 bodies in the backbone."""
-        from src.interstellar_backbone import (
+        from spaceproof.interstellar_backbone import (
             INTERSTELLAR_BODY_COUNT,
             INTERSTELLAR_JOVIAN_BODIES,
             INTERSTELLAR_INNER_BODIES,
@@ -139,7 +139,7 @@ class TestInterstellarBackbone:
 
     def test_interstellar_jovian_bodies(self) -> None:
         """Test Jovian bodies are correctly defined."""
-        from src.interstellar_backbone import INTERSTELLAR_JOVIAN_BODIES
+        from spaceproof.interstellar_backbone import INTERSTELLAR_JOVIAN_BODIES
 
         assert "titan" in INTERSTELLAR_JOVIAN_BODIES
         assert "europa" in INTERSTELLAR_JOVIAN_BODIES
@@ -148,7 +148,7 @@ class TestInterstellarBackbone:
 
     def test_interstellar_inner_bodies(self) -> None:
         """Test inner bodies are correctly defined."""
-        from src.interstellar_backbone import INTERSTELLAR_INNER_BODIES
+        from spaceproof.interstellar_backbone import INTERSTELLAR_INNER_BODIES
 
         assert "venus" in INTERSTELLAR_INNER_BODIES
         assert "mercury" in INTERSTELLAR_INNER_BODIES
@@ -156,7 +156,7 @@ class TestInterstellarBackbone:
 
     def test_interstellar_info(self) -> None:
         """Test interstellar info retrieval."""
-        from src.interstellar_backbone import get_interstellar_info
+        from spaceproof.interstellar_backbone import get_interstellar_info
 
         info = get_interstellar_info()
         assert info is not None
@@ -169,7 +169,7 @@ class TestInterstellarBackbone:
 
     def test_body_positions(self) -> None:
         """Test body position computation."""
-        from src.interstellar_backbone import compute_body_positions
+        from spaceproof.interstellar_backbone import compute_body_positions
 
         positions = compute_body_positions(timestamp=0.0)
         assert positions is not None
@@ -186,7 +186,7 @@ class TestInterstellarBackbone:
 
     def test_communication_windows(self) -> None:
         """Test communication window computation."""
-        from src.interstellar_backbone import compute_interstellar_windows
+        from spaceproof.interstellar_backbone import compute_interstellar_windows
 
         windows = compute_interstellar_windows(timestamp=0.0)
         assert windows is not None
@@ -200,7 +200,7 @@ class TestInterstellarBackbone:
 
     def test_backbone_autonomy(self) -> None:
         """Test backbone autonomy computation."""
-        from src.interstellar_backbone import compute_backbone_autonomy
+        from spaceproof.interstellar_backbone import compute_backbone_autonomy
 
         result = compute_backbone_autonomy()
         assert result is not None
@@ -212,7 +212,7 @@ class TestInterstellarBackbone:
 
     def test_backbone_operations_simulation(self) -> None:
         """Test backbone operations simulation."""
-        from src.interstellar_backbone import simulate_backbone_operations
+        from spaceproof.interstellar_backbone import simulate_backbone_operations
 
         result = simulate_backbone_operations(duration_days=60)
         assert result is not None
@@ -225,7 +225,7 @@ class TestInterstellarBackbone:
 
     def test_emergency_failover(self) -> None:
         """Test emergency failover for a body."""
-        from src.interstellar_backbone import emergency_failover
+        from spaceproof.interstellar_backbone import emergency_failover
 
         result = emergency_failover("europa")
         assert result is not None
@@ -237,7 +237,7 @@ class TestInterstellarBackbone:
 
     def test_jovian_inner_handoff(self) -> None:
         """Test handoff between Jovian and inner systems."""
-        from src.interstellar_backbone import jovian_inner_handoff
+        from spaceproof.interstellar_backbone import jovian_inner_handoff
 
         result = jovian_inner_handoff({"test": "data"}, "jovian_to_inner")
         assert result is not None
@@ -252,7 +252,7 @@ class TestD14InterstellarHybrid:
 
     def test_d14_interstellar_hybrid_simulate(self) -> None:
         """Test D14+interstellar hybrid in simulation mode."""
-        from src.interstellar_backbone import d14_interstellar_hybrid
+        from spaceproof.interstellar_backbone import d14_interstellar_hybrid
 
         result = d14_interstellar_hybrid(
             tree_size=10**6,
@@ -270,7 +270,7 @@ class TestD14InterstellarHybrid:
 
     def test_d14_interstellar_hybrid_execute(self) -> None:
         """Test D14+interstellar hybrid in execute mode."""
-        from src.interstellar_backbone import d14_interstellar_hybrid
+        from spaceproof.interstellar_backbone import d14_interstellar_hybrid
 
         result = d14_interstellar_hybrid(
             tree_size=10**6,
@@ -284,7 +284,7 @@ class TestD14InterstellarHybrid:
 
     def test_integration_status_values(self) -> None:
         """Test that integration status is correctly set."""
-        from src.interstellar_backbone import d14_interstellar_hybrid
+        from spaceproof.interstellar_backbone import d14_interstellar_hybrid
 
         # With small tree size, may not meet all targets
         result = d14_interstellar_hybrid(
@@ -304,7 +304,7 @@ class TestMultiplanetIntegration:
 
     def test_integrate_interstellar_backbone(self) -> None:
         """Test multiplanet interstellar backbone integration."""
-        from src.paths.multiplanet.core import integrate_interstellar_backbone
+        from spaceproof.paths.multiplanet.core import integrate_interstellar_backbone
 
         result = integrate_interstellar_backbone()
         assert result is not None
@@ -314,7 +314,7 @@ class TestMultiplanetIntegration:
 
     def test_compute_interstellar_autonomy(self) -> None:
         """Test interstellar autonomy computation."""
-        from src.paths.multiplanet.core import compute_interstellar_autonomy
+        from spaceproof.paths.multiplanet.core import compute_interstellar_autonomy
 
         result = compute_interstellar_autonomy()
         # Returns float, not dict
@@ -324,7 +324,7 @@ class TestMultiplanetIntegration:
 
     def test_coordinate_full_system(self) -> None:
         """Test full system coordination."""
-        from src.paths.multiplanet.core import coordinate_full_system
+        from spaceproof.paths.multiplanet.core import coordinate_full_system
 
         result = coordinate_full_system()
         assert result is not None
@@ -334,7 +334,7 @@ class TestMultiplanetIntegration:
 
     def test_get_backbone_status(self) -> None:
         """Test backbone status retrieval."""
-        from src.paths.multiplanet.core import get_backbone_status
+        from spaceproof.paths.multiplanet.core import get_backbone_status
 
         result = get_backbone_status()
         assert result is not None

@@ -19,7 +19,7 @@ import os
 # Add src to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.partition import (
+from spaceproof.partition import (
     partition_sim,
     quorum_check,
     stress_sweep,
@@ -33,15 +33,15 @@ from src.partition import (
     GREENS_CURRENT,
     REROUTING_POTENTIAL_BOOST,
 )
-from src.ledger import (
+from spaceproof.ledger import (
     apply_ledger_boost,
     apply_quorum_factor,
     get_effective_alpha_with_partition,
     LEDGER_ALPHA_BOOST_VALIDATED,
 )
-from src.reasoning import partition_sweep, validate_resilience_slo, MIN_EFF_ALPHA_BOUND
-from src.mitigation import compute_partition_tolerance, compute_mitigation_score
-from src.core import StopRule
+from spaceproof.reasoning import partition_sweep, validate_resilience_slo, MIN_EFF_ALPHA_BOUND
+from spaceproof.mitigation import compute_partition_tolerance, compute_mitigation_score
+from spaceproof.core import StopRule
 
 
 class TestQuorumSurvives:

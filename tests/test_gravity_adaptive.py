@@ -1,6 +1,6 @@
 """Tests for gravity adaptive module."""
 
-from src.gravity_adaptive import (
+from spaceproof.gravity_adaptive import (
     get_gravity_status,
     get_planet_gravity,
     adjust_for_gravity,

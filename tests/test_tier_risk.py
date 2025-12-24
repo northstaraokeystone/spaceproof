@@ -12,7 +12,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.tier_risk import (
+from spaceproof.tier_risk import (
     tier_1_risk,
     tier_2_risk,
     tier_3_risk,

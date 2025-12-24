@@ -14,7 +14,7 @@ import random
 from datetime import datetime
 from typing import List, Tuple
 
-from src.core import TENANT_ID, dual_hash, emit_receipt
+from spaceproof.core import TENANT_ID, dual_hash, emit_receipt
 
 # Default parameters
 DEFAULT_LOSS_RATE = 0.001  # 0.1%

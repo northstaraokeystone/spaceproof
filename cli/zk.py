@@ -16,7 +16,7 @@ def cmd_zk_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with ZK info
     """
-    from src.zk_proof_audit import get_zk_info
+    from spaceproof.zk_proof_audit import get_zk_info
 
     info = get_zk_info()
 
@@ -49,7 +49,7 @@ def cmd_zk_setup(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with setup results
     """
-    from src.zk_proof_audit import setup_trusted_params, ZK_CIRCUIT_SIZE
+    from spaceproof.zk_proof_audit import setup_trusted_params, ZK_CIRCUIT_SIZE
 
     circuit_size = getattr(args, "circuit_size", ZK_CIRCUIT_SIZE)
 
@@ -80,7 +80,7 @@ def cmd_zk_prove(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with proof
     """
-    from src.zk_proof_audit import generate_attestation_circuit, generate_proof
+    from spaceproof.zk_proof_audit import generate_attestation_circuit, generate_proof
     import secrets
 
     circuit = generate_attestation_circuit()
@@ -123,7 +123,7 @@ def cmd_zk_verify(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with verification result
     """
-    from src.zk_proof_audit import (
+    from spaceproof.zk_proof_audit import (
         generate_attestation_circuit,
         generate_proof,
         verify_proof,
@@ -161,7 +161,7 @@ def cmd_zk_attestation(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with attestation
     """
-    from src.zk_proof_audit import create_attestation
+    from spaceproof.zk_proof_audit import create_attestation
 
     enclave_id = getattr(args, "enclave_id", "test_enclave")
     code_hash = getattr(args, "code_hash", "test_code_hash")
@@ -205,7 +205,7 @@ def cmd_zk_audit(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with audit results
     """
-    from src.zk_proof_audit import run_zk_audit
+    from spaceproof.zk_proof_audit import run_zk_audit
 
     count = getattr(args, "count", 5)
 
@@ -245,7 +245,7 @@ def cmd_zk_benchmark(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with benchmark results
     """
-    from src.zk_proof_audit import benchmark_proof_system
+    from spaceproof.zk_proof_audit import benchmark_proof_system
 
     iterations = getattr(args, "iterations", 10)
 

@@ -5,7 +5,7 @@ import json
 
 def cmd_venus_info():
     """Show Venus configuration."""
-    from src.venus_acid_hybrid import get_venus_info
+    from spaceproof.venus_acid_hybrid import get_venus_info
 
     info = get_venus_info()
     print(json.dumps(info, indent=2))
@@ -13,7 +13,7 @@ def cmd_venus_info():
 
 def cmd_venus_cloud(altitude_km: float = 55.0):
     """Show cloud zone analysis at altitude."""
-    from src.venus_acid_hybrid import compute_cloud_zone
+    from spaceproof.venus_acid_hybrid import compute_cloud_zone
 
     result = compute_cloud_zone(altitude_km)
     print(json.dumps(result, indent=2))
@@ -21,7 +21,7 @@ def cmd_venus_cloud(altitude_km: float = 55.0):
 
 def cmd_venus_acid(material: str = "ptfe"):
     """Test acid resistance for material."""
-    from src.venus_acid_hybrid import simulate_acid_resistance
+    from spaceproof.venus_acid_hybrid import simulate_acid_resistance
 
     result = simulate_acid_resistance(material)
     print(json.dumps(result, indent=2))
@@ -29,7 +29,7 @@ def cmd_venus_acid(material: str = "ptfe"):
 
 def cmd_venus_ops(duration_days: int = 30, altitude_km: float = 55.0):
     """Run Venus cloud operations simulation."""
-    from src.venus_acid_hybrid import simulate_cloud_ops
+    from spaceproof.venus_acid_hybrid import simulate_cloud_ops
 
     result = simulate_cloud_ops(duration_days, altitude_km)
     print(json.dumps(result, indent=2))
@@ -37,7 +37,7 @@ def cmd_venus_ops(duration_days: int = 30, altitude_km: float = 55.0):
 
 def cmd_venus_autonomy():
     """Show Venus autonomy metrics."""
-    from src.venus_acid_hybrid import simulate_cloud_ops, compute_autonomy
+    from spaceproof.venus_acid_hybrid import simulate_cloud_ops, compute_autonomy
 
     ops = simulate_cloud_ops(duration_days=30, altitude_km=55.0)
     autonomy = compute_autonomy(ops)

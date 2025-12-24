@@ -17,7 +17,7 @@ SLO Requirements:
 
 import pytest
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d5_spec,
     get_d5_uplift,
     d5_recursive_fractal,
@@ -29,7 +29,7 @@ from src.fractal_layers import (
     D5_UPLIFT,
     D5_TREE_MIN,
 )
-from src.isru_hybrid import (
+from spaceproof.isru_hybrid import (
     moxie_calibration,
     load_moxie_calibration,
     simulate_o2_production,
@@ -42,7 +42,7 @@ from src.isru_hybrid import (
     MOXIE_O2_AVG_G_HR,
     ISRU_CLOSURE_TARGET,
 )
-from src.paths.mars.core import (
+from spaceproof.paths.mars.core import (
     integrate_moxie,
     compute_o2_autonomy as mars_compute_o2_autonomy,
     simulate_dome_moxie,

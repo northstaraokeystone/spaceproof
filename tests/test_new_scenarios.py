@@ -13,35 +13,35 @@ class TestScenarioEnum:
 
     def test_has_14_scenarios(self):
         """Scenario enum should have 14 scenarios."""
-        from src.sim import Scenario
+        from spaceproof.sim import Scenario
 
         scenarios = list(Scenario)
         assert len(scenarios) >= 14, f"Expected 14 scenarios, got {len(scenarios)}"
 
     def test_has_radiation_scenario(self):
         """Scenario enum should include RADIATION."""
-        from src.sim import Scenario
+        from spaceproof.sim import Scenario
 
         assert hasattr(Scenario, "SCENARIO_RADIATION")
         assert Scenario.SCENARIO_RADIATION.value == "radiation"
 
     def test_has_blackout_scenario(self):
         """Scenario enum should include BLACKOUT."""
-        from src.sim import Scenario
+        from spaceproof.sim import Scenario
 
         assert hasattr(Scenario, "SCENARIO_BLACKOUT")
         assert Scenario.SCENARIO_BLACKOUT.value == "blackout"
 
     def test_has_psychology_scenario(self):
         """Scenario enum should include PSYCHOLOGY."""
-        from src.sim import Scenario
+        from spaceproof.sim import Scenario
 
         assert hasattr(Scenario, "SCENARIO_PSYCHOLOGY")
         assert Scenario.SCENARIO_PSYCHOLOGY.value == "psychology"
 
     def test_has_realdata_scenario(self):
         """Scenario enum should include REALDATA."""
-        from src.sim import Scenario
+        from spaceproof.sim import Scenario
 
         assert hasattr(Scenario, "SCENARIO_REALDATA")
         assert Scenario.SCENARIO_REALDATA.value == "realdata"
@@ -52,7 +52,7 @@ class TestRadiationScenario:
 
     def test_radiation_scenario_runs(self, capsys):
         """RADIATION scenario should complete without error."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig(max_cycles=20)
         state = run_scenario(Scenario.SCENARIO_RADIATION, config)
@@ -66,7 +66,7 @@ class TestRadiationScenario:
 
     def test_radiation_scenario_survives(self, capsys):
         """Colony should survive radiation event (dose < lethal)."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig()
         run_scenario(Scenario.SCENARIO_RADIATION, config)
@@ -84,7 +84,7 @@ class TestBlackoutScenario:
 
     def test_blackout_scenario_runs(self, capsys):
         """BLACKOUT scenario should complete without error."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig(max_cycles=100)
         state = run_scenario(Scenario.SCENARIO_BLACKOUT, config)
@@ -96,7 +96,7 @@ class TestBlackoutScenario:
 
     def test_blackout_scenario_43_days(self, capsys):
         """BLACKOUT should simulate 43-day conjunction."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig()
         run_scenario(Scenario.SCENARIO_BLACKOUT, config)
@@ -111,7 +111,7 @@ class TestPsychologyScenario:
 
     def test_psychology_scenario_runs(self, capsys):
         """PSYCHOLOGY scenario should complete without error."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig(max_cycles=400)  # 365 days + buffer
         state = run_scenario(Scenario.SCENARIO_PSYCHOLOGY, config)
@@ -123,7 +123,7 @@ class TestPsychologyScenario:
 
     def test_psychology_tracks_entropy(self, capsys):
         """PSYCHOLOGY should track entropy over time."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig()
         run_scenario(Scenario.SCENARIO_PSYCHOLOGY, config)
@@ -138,7 +138,7 @@ class TestRealdataScenario:
 
     def test_realdata_scenario_runs(self, capsys):
         """REALDATA scenario should complete without error."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig()
         run_scenario(Scenario.SCENARIO_REALDATA, config)
@@ -149,7 +149,7 @@ class TestRealdataScenario:
 
     def test_realdata_loads_sparc(self, capsys):
         """REALDATA should attempt to load SPARC galaxies."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         config = SimConfig()
         run_scenario(Scenario.SCENARIO_REALDATA, config)
@@ -179,7 +179,7 @@ class TestScenarioIntegration:
     )
     def test_scenario_completes(self, scenario_name):
         """Each scenario should complete without raising."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         scenario = getattr(Scenario, scenario_name)
         config = SimConfig(max_cycles=50)
@@ -190,7 +190,7 @@ class TestScenarioIntegration:
 
     def test_all_scenarios_emit_receipts(self, capsys):
         """All new scenarios should emit at least one receipt."""
-        from src.sim import Scenario, run_scenario, SimConfig
+        from spaceproof.sim import Scenario, run_scenario, SimConfig
 
         new_scenarios = [
             Scenario.SCENARIO_RADIATION,

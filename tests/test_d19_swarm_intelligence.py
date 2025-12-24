@@ -9,7 +9,7 @@ class TestD19SpecLoading:
 
     def test_d19_spec_loads(self):
         """Test that D19 spec loads correctly."""
-        from src.depths.d19_swarm_intelligence import load_d19_config
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config
 
         config = load_d19_config()
 
@@ -19,7 +19,7 @@ class TestD19SpecLoading:
 
     def test_d19_spec_version(self):
         """Test D19 spec version."""
-        from src.depths.d19_swarm_intelligence import load_d19_config
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config
 
         config = load_d19_config()
 
@@ -27,7 +27,7 @@ class TestD19SpecLoading:
 
     def test_d19_spec_has_gates(self):
         """Test D19 spec has all gate configs."""
-        from src.depths.d19_swarm_intelligence import load_d19_config
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config
 
         config = load_d19_config()
 
@@ -43,25 +43,25 @@ class TestD19AlphaTargets:
 
     def test_d19_alpha_floor(self):
         """Test D19 alpha floor is 3.93."""
-        from src.depths.d19_swarm_intelligence import D19_ALPHA_FLOOR
+        from spaceproof.depths.d19_swarm_intelligence import D19_ALPHA_FLOOR
 
         assert D19_ALPHA_FLOOR == 3.93
 
     def test_d19_alpha_target(self):
         """Test D19 alpha target is 3.92."""
-        from src.depths.d19_swarm_intelligence import D19_ALPHA_TARGET
+        from spaceproof.depths.d19_swarm_intelligence import D19_ALPHA_TARGET
 
         assert D19_ALPHA_TARGET == 3.92
 
     def test_d19_alpha_ceiling(self):
         """Test D19 alpha ceiling is 3.98."""
-        from src.depths.d19_swarm_intelligence import D19_ALPHA_CEILING
+        from spaceproof.depths.d19_swarm_intelligence import D19_ALPHA_CEILING
 
         assert D19_ALPHA_CEILING == 3.98
 
     def test_d19_uplift(self):
         """Test D19 uplift is 0.44."""
-        from src.depths.d19_swarm_intelligence import D19_UPLIFT
+        from spaceproof.depths.d19_swarm_intelligence import D19_UPLIFT
 
         assert D19_UPLIFT == 0.44
 
@@ -71,7 +71,7 @@ class TestD19Gate1:
 
     def test_gate_1_runs(self):
         """Test Gate 1 executes."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
 
         config = load_d19_config()
         result = run_gate_1(config)
@@ -83,7 +83,7 @@ class TestD19Gate1:
 
     def test_gate_1_coherence_target(self):
         """Test Gate 1 coherence is reasonable."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_1
 
         config = load_d19_config()
         result = run_gate_1(config)
@@ -96,7 +96,7 @@ class TestD19Gate2:
 
     def test_gate_2_runs(self):
         """Test Gate 2 executes."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
 
         config = load_d19_config()
         result = run_gate_2(config)
@@ -108,7 +108,7 @@ class TestD19Gate2:
 
     def test_gate_2_discovers_law(self):
         """Test Gate 2 discovers a law."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_2
 
         config = load_d19_config()
         result = run_gate_2(config)
@@ -122,7 +122,7 @@ class TestD19Gate3:
 
     def test_gate_3_runs(self):
         """Test Gate 3 executes."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
 
         config = load_d19_config()
         result = run_gate_3(config)
@@ -133,7 +133,7 @@ class TestD19Gate3:
 
     def test_gate_3_detects_patterns(self):
         """Test Gate 3 detects patterns."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_3
 
         config = load_d19_config()
         result = run_gate_3(config)
@@ -147,7 +147,7 @@ class TestD19Gate4:
 
     def test_gate_4_runs(self):
         """Test Gate 4 executes."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
 
         config = load_d19_config()
         result = run_gate_4(config)
@@ -158,7 +158,7 @@ class TestD19Gate4:
 
     def test_gate_4_discovers_system_law(self):
         """Test Gate 4 discovers system-level law."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_4
 
         config = load_d19_config()
         result = run_gate_4(config)
@@ -171,7 +171,7 @@ class TestD19Gate5:
 
     def test_gate_5_runs(self):
         """Test Gate 5 executes."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
 
         config = load_d19_config()
         result = run_gate_5(config)
@@ -182,7 +182,7 @@ class TestD19Gate5:
 
     def test_gate_5_high_correlation(self):
         """Test Gate 5 achieves high correlation."""
-        from src.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
+        from spaceproof.depths.d19_swarm_intelligence import load_d19_config, run_gate_5
 
         config = load_d19_config()
         result = run_gate_5(config)
@@ -196,7 +196,7 @@ class TestD19FullRun:
 
     def test_d19_full_run(self):
         """Test full D19 execution."""
-        from src.depths.d19_swarm_intelligence import run_d19
+        from spaceproof.depths.d19_swarm_intelligence import run_d19
 
         result = run_d19()
 
@@ -208,7 +208,7 @@ class TestD19FullRun:
 
     def test_d19_calculates_alpha(self):
         """Test D19 calculates effective alpha."""
-        from src.depths.d19_swarm_intelligence import run_d19
+        from spaceproof.depths.d19_swarm_intelligence import run_d19
 
         result = run_d19()
 
@@ -216,7 +216,7 @@ class TestD19FullRun:
 
     def test_d19_innovation_evaluation(self):
         """Test D19 evaluates innovation targets."""
-        from src.depths.d19_swarm_intelligence import run_d19
+        from spaceproof.depths.d19_swarm_intelligence import run_d19
 
         result = run_d19()
 
@@ -231,7 +231,7 @@ class TestD19Status:
 
     def test_get_d19_status(self):
         """Test D19 status returns correct info."""
-        from src.depths.d19_swarm_intelligence import get_d19_status
+        from spaceproof.depths.d19_swarm_intelligence import get_d19_status
 
         status = get_d19_status()
 

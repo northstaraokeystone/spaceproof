@@ -3,13 +3,13 @@
 Commands: quantum_estimate, quantum_sim, quantum_rl_hybrid_info
 """
 
-from src.quantum_hybrid import (
+from spaceproof.quantum_hybrid import (
     is_implemented as quantum_is_implemented,
     get_boost_estimate,
     get_quantum_stub_info,
     project_with_quantum,
 )
-from src.quantum_rl_hybrid import (
+from spaceproof.quantum_rl_hybrid import (
     simulate_quantum_policy,
     get_quantum_rl_hybrid_info,
     QUANTUM_SIM_RUNS,
@@ -160,7 +160,7 @@ def cmd_quantum_alt_info(args):
     Returns:
         Dict with quantum config
     """
-    from src.quantum_alternative import load_quantum_config
+    from spaceproof.quantum_alternative import load_quantum_config
 
     config = load_quantum_config()
 
@@ -185,7 +185,7 @@ def cmd_quantum_alt_simulate(args):
     Returns:
         Dict with simulation results
     """
-    from src.quantum_alternative import (
+    from spaceproof.quantum_alternative import (
         initialize_entanglement_pairs,
         simulate_nonlocal_correlation,
     )
@@ -216,7 +216,7 @@ def cmd_quantum_alt_correlation(args):
     Returns:
         Dict with correlation metrics
     """
-    from src.quantum_alternative import (
+    from spaceproof.quantum_alternative import (
         initialize_entanglement_pairs,
         measure_correlation,
     )
@@ -259,7 +259,7 @@ def cmd_quantum_alt_bell(args):
     Returns:
         Dict with Bell check results
     """
-    from src.quantum_alternative import (
+    from spaceproof.quantum_alternative import (
         initialize_entanglement_pairs,
         measure_correlation,
         check_bell_violation,

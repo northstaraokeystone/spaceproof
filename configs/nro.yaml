@@ -1,8 +1,9 @@
-# configs/nro.yaml
+# SpaceProof config for NRO
 # NRO (National Reconnaissance Office) stakeholder configuration
 # D20 Production Evolution
 
 stakeholder: nro
+version: "1.0"
 description: "Constellation sovereignty and ground control independence"
 
 primary_modules:

@@ -14,7 +14,7 @@ Source: AXIOM D4 recursion architecture
 
 def test_d4_spec_loads():
     """Spec loads with valid dual-hash."""
-    from src.fractal_layers import get_d4_spec
+    from spaceproof.fractal_layers import get_d4_spec
 
     spec = get_d4_spec()
 
@@ -27,7 +27,7 @@ def test_d4_spec_loads():
 
 def test_d4_alpha_floor():
     """Effective alpha >= 3.18 at depth=4 with base_alpha=3.0."""
-    from src.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
+    from spaceproof.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
 
     result = d4_recursive_fractal(tree_size=D4_TREE_MIN, base_alpha=3.0, depth=4)
 
@@ -37,7 +37,7 @@ def test_d4_alpha_floor():
 
 def test_d4_alpha_target():
     """Alpha target achievable with higher base alpha."""
-    from src.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
+    from spaceproof.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
 
     # With base_alpha=3.05, should reach target
     result = d4_recursive_fractal(tree_size=D4_TREE_MIN, base_alpha=3.05, depth=4)
@@ -49,7 +49,7 @@ def test_d4_alpha_target():
 
 def test_d4_instability_zero():
     """Instability should be 0.00 for D4."""
-    from src.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
+    from spaceproof.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
 
     result = d4_recursive_fractal(tree_size=D4_TREE_MIN, base_alpha=3.0, depth=4)
 
@@ -58,7 +58,7 @@ def test_d4_instability_zero():
 
 def test_d4_uplift_values():
     """Uplift values match spec."""
-    from src.fractal_layers import get_d4_spec, get_d4_uplift
+    from spaceproof.fractal_layers import get_d4_spec, get_d4_uplift
 
     spec = get_d4_spec()
     expected_uplifts = spec["uplift_by_depth"]
@@ -73,7 +73,7 @@ def test_d4_uplift_values():
 
 def test_d4_depth_contributions():
     """Depth contributions follow expected formula."""
-    from src.fractal_layers import get_d4_spec
+    from spaceproof.fractal_layers import get_d4_spec
 
     spec = get_d4_spec()
     contributions = spec.get("depth_contributions", {})
@@ -88,7 +88,7 @@ def test_d4_depth_contributions():
 
 def test_d4_push():
     """D4 push returns expected structure."""
-    from src.fractal_layers import d4_push
+    from spaceproof.fractal_layers import d4_push
 
     result = d4_push(tree_size=10**12, base_alpha=3.0, simulate=True)
 
@@ -103,7 +103,7 @@ def test_d4_push():
 
 def test_d4_info():
     """D4 info returns expected structure."""
-    from src.fractal_layers import get_d4_info
+    from spaceproof.fractal_layers import get_d4_info
 
     info = get_d4_info()
 
@@ -116,7 +116,7 @@ def test_d4_info():
 
 def test_d4_scale_factor():
     """Scale factor applied correctly for large trees."""
-    from src.fractal_layers import d4_recursive_fractal
+    from spaceproof.fractal_layers import d4_recursive_fractal
 
     result_small = d4_recursive_fractal(tree_size=10**6, base_alpha=3.0, depth=4)
 
@@ -130,7 +130,7 @@ def test_d4_scale_factor():
 
 def test_d4_slo_check():
     """SLO check validates targets correctly."""
-    from src.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
+    from spaceproof.fractal_layers import d4_recursive_fractal, D4_TREE_MIN
 
     result = d4_recursive_fractal(tree_size=D4_TREE_MIN, base_alpha=3.0, depth=4)
 

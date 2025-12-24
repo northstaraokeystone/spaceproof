@@ -9,7 +9,7 @@ Tests:
 - Infinite chain generation
 """
 
-from src.bulletproofs_infinite import (
+from spaceproof.bulletproofs_infinite import (
     load_bulletproofs_config,
     generate_bulletproof_circuit,
     generate_bulletproof,

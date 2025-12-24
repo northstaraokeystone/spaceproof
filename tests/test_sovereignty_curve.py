@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.plot_curve import generate_curve_data, find_knee
+from spaceproof.plot_curve import generate_curve_data, find_knee
 
 
 def test_generate_curve():

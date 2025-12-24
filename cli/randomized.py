@@ -11,7 +11,7 @@ import json
 
 def cmd_randomized_info():
     """Show randomized paths configuration."""
-    from src.randomized_paths_audit import get_randomized_info
+    from spaceproof.randomized_paths_audit import get_randomized_info
 
     info = get_randomized_info()
     print(json.dumps(info, indent=2))
@@ -19,7 +19,7 @@ def cmd_randomized_info():
 
 def cmd_randomized_config():
     """Show randomized paths configuration from spec."""
-    from src.randomized_paths_audit import load_randomized_config
+    from spaceproof.randomized_paths_audit import load_randomized_config
 
     config = load_randomized_config()
     print(json.dumps(config, indent=2))
@@ -31,7 +31,7 @@ def cmd_randomized_generate(depth: int = 8):
     Args:
         depth: Tree depth
     """
-    from src.randomized_paths_audit import generate_execution_tree
+    from spaceproof.randomized_paths_audit import generate_execution_tree
 
     result = generate_execution_tree(depth)
     # Don't print full tree, just summary
@@ -50,7 +50,7 @@ def cmd_randomized_audit(iterations: int = 100, simulate: bool = False):
         iterations: Test iterations per attack type
         simulate: Whether to run in simulation mode
     """
-    from src.randomized_paths_audit import run_randomized_audit
+    from spaceproof.randomized_paths_audit import run_randomized_audit
 
     result = run_randomized_audit(iterations=iterations)
     # Simplify results for display
@@ -78,7 +78,7 @@ def cmd_randomized_timing(iterations: int = 100, simulate: bool = False):
         iterations: Number of test iterations
         simulate: Whether to run in simulation mode
     """
-    from src.randomized_paths_audit import test_timing_resilience
+    from spaceproof.randomized_paths_audit import test_timing_resilience
 
     result = test_timing_resilience(iterations)
     print(json.dumps(result, indent=2))
@@ -91,7 +91,7 @@ def cmd_randomized_power(iterations: int = 100, simulate: bool = False):
         iterations: Number of test iterations
         simulate: Whether to run in simulation mode
     """
-    from src.randomized_paths_audit import test_power_resilience
+    from spaceproof.randomized_paths_audit import test_power_resilience
 
     result = test_power_resilience(iterations)
     print(json.dumps(result, indent=2))
@@ -104,7 +104,7 @@ def cmd_randomized_cache(iterations: int = 100, simulate: bool = False):
         iterations: Number of test iterations
         simulate: Whether to run in simulation mode
     """
-    from src.randomized_paths_audit import test_cache_resilience
+    from spaceproof.randomized_paths_audit import test_cache_resilience
 
     result = test_cache_resilience(iterations)
     print(json.dumps(result, indent=2))
@@ -116,7 +116,7 @@ def cmd_randomized_recommend(threat_level: str = "medium"):
     Args:
         threat_level: Threat level (low, medium, high, critical)
     """
-    from src.randomized_paths_audit import recommend_path_depth
+    from spaceproof.randomized_paths_audit import recommend_path_depth
 
     depth = recommend_path_depth(threat_level)
     result = {

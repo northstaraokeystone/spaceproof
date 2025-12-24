@@ -8,7 +8,7 @@ Tests:
 - No-FTL constraint enforcement
 """
 
-from src.quantum_alternative import (
+from spaceproof.quantum_alternative import (
     load_quantum_config,
     initialize_entanglement_pairs,
     measure_correlation,

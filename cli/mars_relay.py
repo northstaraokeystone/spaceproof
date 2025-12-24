@@ -5,7 +5,7 @@ import json
 
 def cmd_mars_relay_info(args) -> None:
     """Show Mars relay configuration."""
-    from src.mars_relay_node import get_mars_status
+    from spaceproof.mars_relay_node import get_mars_status
 
     status = get_mars_status()
     print("\n=== MARS RELAY CONFIGURATION ===")
@@ -20,7 +20,7 @@ def cmd_mars_relay_info(args) -> None:
 
 def cmd_mars_relay_deploy(args) -> None:
     """Deploy Mars relay node."""
-    from src.mars_relay_node import deploy_node
+    from spaceproof.mars_relay_node import deploy_node
 
     node_id = getattr(args, "node_id", None)
     node_type = getattr(args, "node_type", "orbital")
@@ -36,7 +36,7 @@ def cmd_mars_relay_deploy(args) -> None:
 
 def cmd_mars_relay_mesh(args) -> None:
     """Deploy Mars relay mesh."""
-    from src.mars_relay_node import deploy_mesh
+    from spaceproof.mars_relay_node import deploy_mesh
 
     node_count = getattr(args, "mars_node_count", None)
 
@@ -51,7 +51,7 @@ def cmd_mars_relay_mesh(args) -> None:
 
 def cmd_mars_relay_proof(args) -> None:
     """Run Mars relay proof."""
-    from src.mars_relay_node import run_mars_proof
+    from spaceproof.mars_relay_node import run_mars_proof
 
     duration = getattr(args, "mars_proof_duration", 1.0)
 
@@ -68,7 +68,7 @@ def cmd_mars_relay_proof(args) -> None:
 
 def cmd_mars_relay_latency(args) -> None:
     """Measure Mars relay latency."""
-    from src.mars_relay_node import measure_mars_latency
+    from spaceproof.mars_relay_node import measure_mars_latency
 
     result = measure_mars_latency()
     print("\n=== MARS RELAY LATENCY ===")
@@ -80,7 +80,7 @@ def cmd_mars_relay_latency(args) -> None:
 
 def cmd_mars_relay_status(args) -> None:
     """Show Mars relay status."""
-    from src.mars_relay_node import get_mars_status
+    from spaceproof.mars_relay_node import get_mars_status
 
     status = get_mars_status()
     print("\n=== MARS RELAY STATUS ===")
@@ -89,7 +89,7 @@ def cmd_mars_relay_status(args) -> None:
 
 def cmd_mars_relay_opposition(args) -> None:
     """Simulate Mars opposition latency."""
-    from src.mars_relay_node import simulate_opposition
+    from spaceproof.mars_relay_node import simulate_opposition
 
     result = simulate_opposition()
     print("\n=== MARS OPPOSITION SIMULATION ===")
@@ -102,7 +102,7 @@ def cmd_mars_relay_opposition(args) -> None:
 
 def cmd_mars_relay_conjunction(args) -> None:
     """Simulate Mars conjunction latency."""
-    from src.mars_relay_node import simulate_conjunction
+    from spaceproof.mars_relay_node import simulate_conjunction
 
     result = simulate_conjunction()
     print("\n=== MARS CONJUNCTION SIMULATION ===")
@@ -115,7 +115,7 @@ def cmd_mars_relay_conjunction(args) -> None:
 
 def cmd_mars_relay_stress(args) -> None:
     """Run Mars relay stress test."""
-    from src.mars_relay_node import stress_test_mars
+    from spaceproof.mars_relay_node import stress_test_mars
 
     cycles = getattr(args, "mars_stress_cycles", 100)
 

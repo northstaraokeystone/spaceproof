@@ -16,7 +16,7 @@ SLO Requirements:
 - Perovskite scaling factor == 3.33
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d6_spec,
     get_d6_uplift,
     d6_recursive_fractal,
@@ -28,7 +28,7 @@ from src.fractal_layers import (
     D6_UPLIFT,
     D6_TREE_MIN,
 )
-from src.titan_methane_hybrid import (
+from spaceproof.titan_methane_hybrid import (
     load_titan_config,
     simulate_harvest,
     compute_autonomy,
@@ -39,7 +39,7 @@ from src.titan_methane_hybrid import (
     TITAN_LATENCY_MIN_MIN,
     TITAN_LATENCY_MAX_MIN,
 )
-from src.perovskite_efficiency import (
+from spaceproof.perovskite_efficiency import (
     load_efficiency_config,
     compute_scaling_factor,
     project_efficiency,

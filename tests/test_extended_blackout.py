@@ -19,7 +19,7 @@ Expected Results (from Grok Simulation):
 import pytest
 import warnings
 
-from src.blackout import (
+from spaceproof.blackout import (
     retention_curve,
     alpha_at_duration,
     extended_blackout_sweep,
@@ -31,8 +31,8 @@ from src.blackout import (
     REROUTING_ALPHA_BOOST_LOCKED,
     DEGRADATION_RATE,
 )
-from src.partition import partition_sim
-from src.core import StopRule
+from spaceproof.partition import partition_sim
+from spaceproof.core import StopRule
 
 
 class TestAlphaHoldsAtExtendedDurations:

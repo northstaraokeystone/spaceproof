@@ -17,7 +17,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.timeline import (
+from spaceproof.timeline import (
     project_timeline,
     generate_timeline_table,
     validate_grok_table,
@@ -32,7 +32,7 @@ from src.timeline import (
     YEARS_15PCT,
     YEARS_0PCT,
 )
-from src.latency import tau_penalty, effective_alpha
+from spaceproof.latency import tau_penalty, effective_alpha
 
 
 class TestAllocationToMultiplier:

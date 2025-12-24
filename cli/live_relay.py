@@ -16,7 +16,7 @@ def cmd_live_relay_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Configuration info.
     """
-    from src.live_relay_hil import load_hil_config
+    from spaceproof.live_relay_hil import load_hil_config
 
     config = load_hil_config()
 
@@ -50,7 +50,7 @@ def cmd_live_relay_connect(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Connection result.
     """
-    from src.live_relay_hil import connect_starlink_analog
+    from spaceproof.live_relay_hil import connect_starlink_analog
 
     print("\n=== CONNECTING TO STARLINK ANALOG ===")
     result = connect_starlink_analog()
@@ -74,7 +74,7 @@ def cmd_live_relay_test(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Test result.
     """
-    from src.live_relay_hil import run_hil_test
+    from spaceproof.live_relay_hil import run_hil_test
 
     duration = getattr(args, "duration", 60)
 
@@ -100,7 +100,7 @@ def cmd_live_relay_mars(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Proof result.
     """
-    from src.live_relay_hil import mars_hil_proof
+    from spaceproof.live_relay_hil import mars_hil_proof
 
     duration = getattr(args, "duration", 1)
 
@@ -127,7 +127,7 @@ def cmd_live_relay_stress(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Stress test result.
     """
-    from src.live_relay_hil import stress_test_hil
+    from spaceproof.live_relay_hil import stress_test_hil
 
     iterations = getattr(args, "iterations", 100)
 
@@ -153,7 +153,7 @@ def cmd_live_relay_status(args: Namespace) -> Dict[str, Any]:
     Returns:
         dict: Status info.
     """
-    from src.live_relay_hil import get_hil_status
+    from spaceproof.live_relay_hil import get_hil_status
 
     status = get_hil_status()
 

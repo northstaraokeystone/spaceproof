@@ -25,7 +25,7 @@ import pytest
 import io
 from contextlib import redirect_stdout
 
-from src.gnn_cache import (
+from spaceproof.gnn_cache import (
     nonlinear_retention,
     compute_asymptote,
     cache_depth_check,
@@ -49,7 +49,7 @@ from src.gnn_cache import (
     NONLINEAR_RETENTION_FLOOR,
     CURVE_TYPE,
 )
-from src.core import StopRule
+from spaceproof.core import StopRule
 
 
 class TestAsymptoteApproach:

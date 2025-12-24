@@ -14,7 +14,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.strategies import (
+from spaceproof.strategies import (
     Strategy,
     StrategyConfig,
     StrategyResult,
@@ -30,7 +30,7 @@ from src.strategies import (
     PREDICTIVE_TAU_REDUCTION,
     PREDICTIVE_C_FACTOR,
 )
-from src.relay import RELAY_TAU_FACTOR, RELAY_SWARM_OPTIMAL
+from spaceproof.relay import RELAY_TAU_FACTOR, RELAY_SWARM_OPTIMAL
 
 
 class TestStrategyConfig:

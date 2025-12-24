@@ -1,6 +1,6 @@
 """Tests for lag-tolerant consensus module."""
 
-from src.lag_consensus import (
+from spaceproof.lag_consensus import (
     load_consensus_config,
     initialize_modified_raft,
     send_heartbeat,

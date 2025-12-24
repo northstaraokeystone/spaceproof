@@ -4,7 +4,7 @@ Commands: rl_info, adaptive_info, rl_status, validate_no_static, rl_tune,
           dynamic_mode, tune_sweep, rl_500_sweep, rl_500_sweep_info
 """
 
-from src.rl_tune import (
+from spaceproof.rl_tune import (
     rl_auto_tune,
     get_rl_tune_info,
     RETENTION_MILESTONE_1,
@@ -15,9 +15,9 @@ from src.rl_tune import (
     RL_SWEEP_RUNS,
     RETENTION_TARGET,
 )
-from src.adaptive import get_adaptive_info
-from src.adaptive_depth import compute_depth as compute_adaptive_n_depth
-from src.reasoning import (
+from spaceproof.adaptive import get_adaptive_info
+from spaceproof.adaptive_depth import compute_depth as compute_adaptive_n_depth
+from spaceproof.reasoning import (
     sovereignty_timeline_dynamic,
     validate_no_static_configs,
     get_rl_integration_status,

@@ -5,7 +5,7 @@ import json
 
 def cmd_gravity_info(args) -> None:
     """Show gravity configuration."""
-    from src.gravity_adaptive import get_gravity_status
+    from spaceproof.gravity_adaptive import get_gravity_status
 
     status = get_gravity_status()
     print("\n=== GRAVITY ADAPTIVE CONFIGURATION ===")
@@ -18,7 +18,7 @@ def cmd_gravity_info(args) -> None:
 
 def cmd_gravity_adjust(args) -> None:
     """Adjust parameters for planet gravity."""
-    from src.gravity_adaptive import adjust_for_gravity, get_planet_gravity
+    from spaceproof.gravity_adaptive import adjust_for_gravity, get_planet_gravity
 
     planet = getattr(args, "gravity_planet", "mars")
     gravity_g = get_planet_gravity(planet)
@@ -35,7 +35,7 @@ def cmd_gravity_adjust(args) -> None:
 
 def cmd_gravity_consensus(args) -> None:
     """Show gravity-adjusted consensus timing."""
-    from src.gravity_adaptive import adjust_consensus_timing, get_planet_gravity
+    from spaceproof.gravity_adaptive import adjust_consensus_timing, get_planet_gravity
 
     planet = getattr(args, "gravity_planet", "mars")
     gravity_g = get_planet_gravity(planet)
@@ -51,7 +51,7 @@ def cmd_gravity_consensus(args) -> None:
 
 def cmd_gravity_packet(args) -> None:
     """Show gravity-adjusted packet timing."""
-    from src.gravity_adaptive import adjust_packet_timing, get_planet_gravity
+    from spaceproof.gravity_adaptive import adjust_packet_timing, get_planet_gravity
 
     planet = getattr(args, "gravity_planet", "mars")
     gravity_g = get_planet_gravity(planet)
@@ -67,7 +67,7 @@ def cmd_gravity_packet(args) -> None:
 
 def cmd_gravity_validate(args) -> None:
     """Validate gravity adjustment for a planet."""
-    from src.gravity_adaptive import validate_gravity_adjustment
+    from spaceproof.gravity_adaptive import validate_gravity_adjustment
 
     planet = getattr(args, "gravity_planet", "mars")
 
@@ -82,7 +82,7 @@ def cmd_gravity_validate(args) -> None:
 
 def cmd_gravity_status(args) -> None:
     """Show gravity status."""
-    from src.gravity_adaptive import get_gravity_status
+    from spaceproof.gravity_adaptive import get_gravity_status
 
     status = get_gravity_status()
     print("\n=== GRAVITY STATUS ===")
@@ -91,7 +91,7 @@ def cmd_gravity_status(args) -> None:
 
 def cmd_gravity_all_planets(args) -> None:
     """Show adjustments for all planets."""
-    from src.gravity_adaptive import get_all_planet_adjustments
+    from spaceproof.gravity_adaptive import get_all_planet_adjustments
 
     adjustments = get_all_planet_adjustments()
     print("\n=== GRAVITY ADJUSTMENTS FOR ALL PLANETS ===")

@@ -12,14 +12,14 @@ class TestEnclaveConfig:
 
     def test_enclave_config_loads(self):
         """Test enclave config loads."""
-        from src.secure_enclave_audit import load_enclave_config
+        from spaceproof.secure_enclave_audit import load_enclave_config
 
         config = load_enclave_config()
         assert config is not None
 
     def test_enclave_type(self):
         """Test enclave type is SGX."""
-        from src.secure_enclave_audit import load_enclave_config, ENCLAVE_TYPE
+        from spaceproof.secure_enclave_audit import load_enclave_config, ENCLAVE_TYPE
 
         config = load_enclave_config()
         assert config["type"] == "SGX"
@@ -27,7 +27,7 @@ class TestEnclaveConfig:
 
     def test_enclave_memory(self):
         """Test enclave memory is 128 MB."""
-        from src.secure_enclave_audit import load_enclave_config, ENCLAVE_MEMORY_MB
+        from spaceproof.secure_enclave_audit import load_enclave_config, ENCLAVE_MEMORY_MB
 
         config = load_enclave_config()
         assert config["memory_mb"] == 128
@@ -35,7 +35,7 @@ class TestEnclaveConfig:
 
     def test_branch_defense_enabled(self):
         """Test branch prediction defense is enabled."""
-        from src.secure_enclave_audit import (
+        from spaceproof.secure_enclave_audit import (
             load_enclave_config,
             BRANCH_PREDICTION_DEFENSE,
         )
@@ -46,7 +46,7 @@ class TestEnclaveConfig:
 
     def test_speculative_barrier_enabled(self):
         """Test speculative execution barrier is enabled."""
-        from src.secure_enclave_audit import (
+        from spaceproof.secure_enclave_audit import (
             load_enclave_config,
             SPECULATIVE_EXECUTION_BARRIER,
         )
@@ -57,7 +57,7 @@ class TestEnclaveConfig:
 
     def test_attack_types_present(self):
         """Test all 3 attack types are present."""
-        from src.secure_enclave_audit import load_enclave_config, ATTACK_TYPES
+        from spaceproof.secure_enclave_audit import load_enclave_config, ATTACK_TYPES
 
         config = load_enclave_config()
         assert len(config["attack_types"]) == 3
@@ -68,7 +68,7 @@ class TestEnclaveConfig:
 
     def test_defense_mechanisms_present(self):
         """Test all 5 defense mechanisms are present."""
-        from src.secure_enclave_audit import load_enclave_config, DEFENSE_MECHANISMS
+        from spaceproof.secure_enclave_audit import load_enclave_config, DEFENSE_MECHANISMS
 
         config = load_enclave_config()
         assert len(config["defense_mechanisms"]) == 5
@@ -85,7 +85,7 @@ class TestEnclaveInit:
 
     def test_enclave_init(self):
         """Test enclave initialization."""
-        from src.secure_enclave_audit import init_enclave
+        from spaceproof.secure_enclave_audit import init_enclave
 
         result = init_enclave(memory_mb=128)
         assert result is not None
@@ -94,7 +94,7 @@ class TestEnclaveInit:
 
     def test_enclave_defenses_applied(self):
         """Test all defenses are applied on init."""
-        from src.secure_enclave_audit import init_enclave, DEFENSE_MECHANISMS
+        from spaceproof.secure_enclave_audit import init_enclave, DEFENSE_MECHANISMS
 
         result = init_enclave()
         assert len(result["defenses_applied"]) == len(DEFENSE_MECHANISMS)
@@ -105,7 +105,7 @@ class TestBTBDefense:
 
     def test_btb_resilience(self):
         """Test BTB injection resilience is 1.0."""
-        from src.secure_enclave_audit import test_btb_injection
+        from spaceproof.secure_enclave_audit import test_btb_injection
 
         result = test_btb_injection(iterations=100)
         assert result["resilience"] == 1.0
@@ -113,7 +113,7 @@ class TestBTBDefense:
 
     def test_btb_defense_mechanism(self):
         """Test BTB defense mechanism is BTB_flush."""
-        from src.secure_enclave_audit import test_btb_injection
+        from spaceproof.secure_enclave_audit import test_btb_injection
 
         result = test_btb_injection(iterations=10)
         assert result["defense_mechanism"] == "BTB_flush"
@@ -124,7 +124,7 @@ class TestPHTDefense:
 
     def test_pht_resilience(self):
         """Test PHT poisoning resilience is 1.0."""
-        from src.secure_enclave_audit import test_pht_poisoning
+        from spaceproof.secure_enclave_audit import test_pht_poisoning
 
         result = test_pht_poisoning(iterations=100)
         assert result["resilience"] == 1.0
@@ -132,7 +132,7 @@ class TestPHTDefense:
 
     def test_pht_defense_mechanism(self):
         """Test PHT defense mechanism is PHT_isolation."""
-        from src.secure_enclave_audit import test_pht_poisoning
+        from spaceproof.secure_enclave_audit import test_pht_poisoning
 
         result = test_pht_poisoning(iterations=10)
         assert result["defense_mechanism"] == "PHT_isolation"
@@ -143,7 +143,7 @@ class TestRSBDefense:
 
     def test_rsb_resilience(self):
         """Test RSB stuffing resilience is 1.0."""
-        from src.secure_enclave_audit import test_rsb_stuffing
+        from spaceproof.secure_enclave_audit import test_rsb_stuffing
 
         result = test_rsb_stuffing(iterations=100)
         assert result["resilience"] == 1.0
@@ -151,7 +151,7 @@ class TestRSBDefense:
 
     def test_rsb_defense_mechanism(self):
         """Test RSB defense mechanism is RSB_fill."""
-        from src.secure_enclave_audit import test_rsb_stuffing
+        from spaceproof.secure_enclave_audit import test_rsb_stuffing
 
         result = test_rsb_stuffing(iterations=10)
         assert result["defense_mechanism"] == "RSB_fill"
@@ -162,7 +162,7 @@ class TestFullEnclaveAudit:
 
     def test_enclave_audit_runs(self):
         """Test full enclave audit runs."""
-        from src.secure_enclave_audit import run_enclave_audit
+        from spaceproof.secure_enclave_audit import run_enclave_audit
 
         result = run_enclave_audit(iterations=50)
         assert result is not None
@@ -170,7 +170,7 @@ class TestFullEnclaveAudit:
 
     def test_enclave_audit_all_passed(self):
         """Test all enclave audit tests pass."""
-        from src.secure_enclave_audit import run_enclave_audit
+        from spaceproof.secure_enclave_audit import run_enclave_audit
 
         result = run_enclave_audit(iterations=50)
         assert result["all_passed"] is True
@@ -178,14 +178,14 @@ class TestFullEnclaveAudit:
 
     def test_enclave_audit_resilience_100(self):
         """Test enclave audit achieves 100% resilience."""
-        from src.secure_enclave_audit import run_enclave_audit
+        from spaceproof.secure_enclave_audit import run_enclave_audit
 
         result = run_enclave_audit(iterations=100)
         assert result["overall_resilience"] == 1.0
 
     def test_secure_enclave_receipt(self):
         """Test secure enclave receipt emitted."""
-        from src.secure_enclave_audit import run_enclave_audit
+        from spaceproof.secure_enclave_audit import run_enclave_audit
 
         result = run_enclave_audit(iterations=50)
         # Receipt should be emitted (tested via result structure)
@@ -197,7 +197,7 @@ class TestEnclaveOverhead:
 
     def test_overhead_measurement(self):
         """Test overhead measurement runs."""
-        from src.secure_enclave_audit import measure_enclave_overhead
+        from spaceproof.secure_enclave_audit import measure_enclave_overhead
 
         result = measure_enclave_overhead()
         assert result is not None
@@ -205,7 +205,7 @@ class TestEnclaveOverhead:
 
     def test_overhead_acceptable(self):
         """Test overhead is acceptable (<10%)."""
-        from src.secure_enclave_audit import measure_enclave_overhead
+        from spaceproof.secure_enclave_audit import measure_enclave_overhead
 
         result = measure_enclave_overhead()
         assert result["acceptable"] is True

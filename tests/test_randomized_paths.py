@@ -13,7 +13,7 @@ class TestRandomizedConfig:
 
     def test_randomized_config_loads(self):
         """Config loads with valid structure."""
-        from src.randomized_paths_audit import load_randomized_config
+        from spaceproof.randomized_paths_audit import load_randomized_config
 
         config = load_randomized_config()
         assert "path_depth" in config
@@ -23,7 +23,7 @@ class TestRandomizedConfig:
 
     def test_path_depth(self):
         """Path depth is 8."""
-        from src.randomized_paths_audit import (
+        from spaceproof.randomized_paths_audit import (
             load_randomized_config,
             RANDOMIZED_PATH_DEPTH,
         )
@@ -34,7 +34,7 @@ class TestRandomizedConfig:
 
     def test_timing_jitter_range(self):
         """Timing jitter is in [10, 100] ns."""
-        from src.randomized_paths_audit import (
+        from spaceproof.randomized_paths_audit import (
             load_randomized_config,
             TIMING_JITTER_NS_MIN,
             TIMING_JITTER_NS_MAX,
@@ -47,7 +47,7 @@ class TestRandomizedConfig:
 
     def test_shuffle_factor(self):
         """Shuffle factor is 0.3."""
-        from src.randomized_paths_audit import (
+        from spaceproof.randomized_paths_audit import (
             load_randomized_config,
             EXECUTION_SHUFFLE_FACTOR,
         )
@@ -58,7 +58,7 @@ class TestRandomizedConfig:
 
     def test_resilience_target(self):
         """Resilience target is 0.95."""
-        from src.randomized_paths_audit import (
+        from spaceproof.randomized_paths_audit import (
             load_randomized_config,
             TIMING_LEAK_RESILIENCE,
         )
@@ -73,7 +73,7 @@ class TestExecutionTree:
 
     def test_generate_tree(self):
         """Tree generation works."""
-        from src.randomized_paths_audit import generate_execution_tree
+        from spaceproof.randomized_paths_audit import generate_execution_tree
 
         result = generate_execution_tree(8)
         assert result["depth"] == 8
@@ -82,7 +82,7 @@ class TestExecutionTree:
 
     def test_tree_has_nodes(self):
         """Tree has multiple nodes."""
-        from src.randomized_paths_audit import generate_execution_tree
+        from spaceproof.randomized_paths_audit import generate_execution_tree
 
         result = generate_execution_tree(4)
         assert result["total_nodes"] > 1
@@ -93,7 +93,7 @@ class TestDefenseMechanisms:
 
     def test_shuffle_instructions(self):
         """Instruction shuffling works."""
-        from src.randomized_paths_audit import shuffle_instructions
+        from spaceproof.randomized_paths_audit import shuffle_instructions
 
         code_block = ["op1", "op2", "op3", "op4", "op5"]
         result = shuffle_instructions(code_block, 0.3)
@@ -103,7 +103,7 @@ class TestDefenseMechanisms:
 
     def test_add_dummy_operations(self):
         """Dummy operation insertion works."""
-        from src.randomized_paths_audit import add_dummy_operations
+        from spaceproof.randomized_paths_audit import add_dummy_operations
 
         code_block = ["op1", "op2", "op3"]
         result = add_dummy_operations(code_block, 0.5)
@@ -119,7 +119,7 @@ class TestResilienceTesting:
 
     def test_timing_resilience(self):
         """Timing resilience test works."""
-        from src.randomized_paths_audit import test_timing_resilience
+        from spaceproof.randomized_paths_audit import test_timing_resilience
 
         result = test_timing_resilience(50)
         assert "attack_type" in result
@@ -129,7 +129,7 @@ class TestResilienceTesting:
 
     def test_power_resilience(self):
         """Power resilience test works."""
-        from src.randomized_paths_audit import test_power_resilience
+        from spaceproof.randomized_paths_audit import test_power_resilience
 
         result = test_power_resilience(50)
         assert "attack_type" in result
@@ -139,7 +139,7 @@ class TestResilienceTesting:
 
     def test_cache_resilience(self):
         """Cache resilience test works."""
-        from src.randomized_paths_audit import test_cache_resilience
+        from spaceproof.randomized_paths_audit import test_cache_resilience
 
         result = test_cache_resilience(50)
         assert "attack_type" in result
@@ -153,7 +153,7 @@ class TestFullAudit:
 
     def test_attack_types_present(self):
         """All 3 attack types are tested."""
-        from src.randomized_paths_audit import run_randomized_audit
+        from spaceproof.randomized_paths_audit import run_randomized_audit
 
         result = run_randomized_audit(iterations=50)
         assert len(result["attack_types_tested"]) == 3
@@ -163,7 +163,7 @@ class TestFullAudit:
 
     def test_defense_mechanisms_present(self):
         """All 3 defense mechanisms are configured."""
-        from src.randomized_paths_audit import load_randomized_config
+        from spaceproof.randomized_paths_audit import load_randomized_config
 
         config = load_randomized_config()
         assert len(config["defense_mechanisms"]) == 3
@@ -173,7 +173,7 @@ class TestFullAudit:
 
     def test_avg_resilience_computed(self):
         """Average resilience is computed."""
-        from src.randomized_paths_audit import run_randomized_audit
+        from spaceproof.randomized_paths_audit import run_randomized_audit
 
         result = run_randomized_audit(iterations=50)
         assert "avg_resilience" in result
@@ -181,7 +181,7 @@ class TestFullAudit:
 
     def test_randomized_paths_audit_complete(self):
         """Full audit completes successfully."""
-        from src.randomized_paths_audit import run_randomized_audit
+        from spaceproof.randomized_paths_audit import run_randomized_audit
 
         result = run_randomized_audit(iterations=50)
         assert "all_passed" in result
@@ -193,28 +193,28 @@ class TestRecommendation:
 
     def test_recommend_low(self):
         """Low threat level recommends depth 4."""
-        from src.randomized_paths_audit import recommend_path_depth
+        from spaceproof.randomized_paths_audit import recommend_path_depth
 
         depth = recommend_path_depth("low")
         assert depth == 4
 
     def test_recommend_medium(self):
         """Medium threat level recommends depth 6."""
-        from src.randomized_paths_audit import recommend_path_depth
+        from spaceproof.randomized_paths_audit import recommend_path_depth
 
         depth = recommend_path_depth("medium")
         assert depth == 6
 
     def test_recommend_high(self):
         """High threat level recommends depth 8."""
-        from src.randomized_paths_audit import recommend_path_depth
+        from spaceproof.randomized_paths_audit import recommend_path_depth
 
         depth = recommend_path_depth("high")
         assert depth == 8
 
     def test_recommend_critical(self):
         """Critical threat level recommends depth 10."""
-        from src.randomized_paths_audit import recommend_path_depth
+        from spaceproof.randomized_paths_audit import recommend_path_depth
 
         depth = recommend_path_depth("critical")
         assert depth == 10
@@ -225,7 +225,7 @@ class TestModuleInfo:
 
     def test_get_randomized_info(self):
         """Module info returns complete structure."""
-        from src.randomized_paths_audit import get_randomized_info
+        from spaceproof.randomized_paths_audit import get_randomized_info
 
         info = get_randomized_info()
         assert info["module"] == "randomized_paths_audit"

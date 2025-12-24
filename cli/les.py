@@ -16,7 +16,7 @@ def cmd_les_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with LES info
     """
-    from src.cfd_dust_dynamics import get_les_info
+    from spaceproof.cfd_dust_dynamics import get_les_info
 
     info = get_les_info()
 
@@ -48,7 +48,7 @@ def cmd_les_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.cfd_dust_dynamics import simulate_les
+    from spaceproof.cfd_dust_dynamics import simulate_les
 
     reynolds = getattr(args, "reynolds", 50000)
     duration = getattr(args, "duration", 100.0)
@@ -88,7 +88,7 @@ def cmd_les_dust_devil(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with dust devil simulation results
     """
-    from src.cfd_dust_dynamics import simulate_les_dust_devil
+    from spaceproof.cfd_dust_dynamics import simulate_les_dust_devil
 
     diameter = getattr(args, "diameter", 50.0)
     height = getattr(args, "height", 500.0)
@@ -132,7 +132,7 @@ def cmd_les_compare(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with comparison results
     """
-    from src.cfd_dust_dynamics import les_vs_rans_comparison
+    from spaceproof.cfd_dust_dynamics import les_vs_rans_comparison
 
     reynolds = getattr(args, "reynolds", 50000)
 
@@ -169,7 +169,7 @@ def cmd_les_validate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with validation results
     """
-    from src.cfd_dust_dynamics import run_les_validation
+    from spaceproof.cfd_dust_dynamics import run_les_validation
 
     result = run_les_validation()
 

@@ -6,7 +6,7 @@ class TestHalo2Config:
 
     def test_load_halo2_config(self) -> None:
         """Test loading Halo2 configuration."""
-        from src.halo2_recursive import load_halo2_config
+        from spaceproof.halo2_recursive import load_halo2_config
 
         config = load_halo2_config()
         assert config is not None
@@ -18,7 +18,7 @@ class TestHalo2Config:
 
     def test_halo2_constants(self) -> None:
         """Test Halo2 constants are correctly defined."""
-        from src.halo2_recursive import (
+        from spaceproof.halo2_recursive import (
             HALO2_CIRCUIT_SIZE,
             HALO2_PROOF_TIME_MS,
             HALO2_VERIFY_TIME_MS,
@@ -40,7 +40,7 @@ class TestHalo2Circuit:
 
     def test_generate_circuit(self) -> None:
         """Test Halo2 circuit generation."""
-        from src.halo2_recursive import generate_halo2_circuit
+        from spaceproof.halo2_recursive import generate_halo2_circuit
 
         circuit = generate_halo2_circuit()
 
@@ -51,7 +51,7 @@ class TestHalo2Circuit:
 
     def test_circuit_size_param(self) -> None:
         """Test circuit size parameter."""
-        from src.halo2_recursive import generate_halo2_circuit, HALO2_CIRCUIT_SIZE
+        from spaceproof.halo2_recursive import generate_halo2_circuit, HALO2_CIRCUIT_SIZE
 
         circuit = generate_halo2_circuit(circuit_size=HALO2_CIRCUIT_SIZE)
 
@@ -63,7 +63,7 @@ class TestHalo2Proof:
 
     def test_generate_proof(self) -> None:
         """Test Halo2 proof generation."""
-        from src.halo2_recursive import generate_halo2_circuit, generate_halo2_proof
+        from spaceproof.halo2_recursive import generate_halo2_circuit, generate_halo2_proof
 
         circuit = generate_halo2_circuit()
         proof = generate_halo2_proof(
@@ -79,7 +79,7 @@ class TestHalo2Proof:
 
     def test_verify_proof(self) -> None:
         """Test Halo2 proof verification."""
-        from src.halo2_recursive import (
+        from spaceproof.halo2_recursive import (
             generate_halo2_circuit,
             generate_halo2_proof,
             verify_halo2_proof,
@@ -108,7 +108,7 @@ class TestHalo2Recursion:
 
     def test_accumulate_proofs(self) -> None:
         """Test proof accumulation using IPA."""
-        from src.halo2_recursive import accumulate_proofs
+        from spaceproof.halo2_recursive import accumulate_proofs
 
         proof_ids = ["proof_1", "proof_2", "proof_3"]
         result = accumulate_proofs(proof_ids)
@@ -122,7 +122,7 @@ class TestHalo2Recursion:
 
     def test_recursive_verify(self) -> None:
         """Test recursive verification."""
-        from src.halo2_recursive import accumulate_proofs, recursive_verify
+        from spaceproof.halo2_recursive import accumulate_proofs, recursive_verify
 
         proof_ids = ["proof_1", "proof_2", "proof_3"]
         accumulation = accumulate_proofs(proof_ids)
@@ -139,7 +139,7 @@ class TestHalo2Recursion:
 
     def test_generate_recursive_proof(self) -> None:
         """Test recursive proof generation."""
-        from src.halo2_recursive import generate_recursive_proof
+        from spaceproof.halo2_recursive import generate_recursive_proof
 
         result = generate_recursive_proof(
             depth=3,
@@ -154,7 +154,7 @@ class TestHalo2Recursion:
 
     def test_verify_recursive_proof(self) -> None:
         """Test recursive proof verification."""
-        from src.halo2_recursive import (
+        from spaceproof.halo2_recursive import (
             generate_recursive_proof,
             verify_recursive_proof,
         )
@@ -180,7 +180,7 @@ class TestHalo2Attestation:
 
     def test_create_attestation(self) -> None:
         """Test Halo2 attestation creation."""
-        from src.halo2_recursive import create_halo2_attestation
+        from spaceproof.halo2_recursive import create_halo2_attestation
 
         result = create_halo2_attestation(
             enclave_id="test_enclave",
@@ -198,7 +198,7 @@ class TestHalo2Attestation:
 
     def test_verify_attestation(self) -> None:
         """Test Halo2 attestation verification."""
-        from src.halo2_recursive import (
+        from spaceproof.halo2_recursive import (
             create_halo2_attestation,
             verify_halo2_attestation,
         )
@@ -225,7 +225,7 @@ class TestHalo2Benchmark:
 
     def test_benchmark(self) -> None:
         """Test Halo2 benchmark."""
-        from src.halo2_recursive import benchmark_halo2
+        from spaceproof.halo2_recursive import benchmark_halo2
 
         result = benchmark_halo2(iterations=5)
 
@@ -247,7 +247,7 @@ class TestHalo2Comparison:
 
     def test_compare_to_plonk(self) -> None:
         """Test comparison with PLONK."""
-        from src.halo2_recursive import compare_to_plonk
+        from spaceproof.halo2_recursive import compare_to_plonk
 
         result = compare_to_plonk()
 
@@ -260,7 +260,7 @@ class TestHalo2Comparison:
 
     def test_halo2_features(self) -> None:
         """Test Halo2 feature comparison."""
-        from src.halo2_recursive import compare_to_plonk
+        from spaceproof.halo2_recursive import compare_to_plonk
 
         result = compare_to_plonk()
 
@@ -275,7 +275,7 @@ class TestHalo2Audit:
 
     def test_run_audit(self) -> None:
         """Test Halo2 audit run."""
-        from src.halo2_recursive import run_halo2_audit
+        from spaceproof.halo2_recursive import run_halo2_audit
 
         result = run_halo2_audit(attestation_count=3)
 
@@ -289,7 +289,7 @@ class TestHalo2Audit:
 
     def test_audit_resilience_target(self) -> None:
         """Test that audit checks resilience target."""
-        from src.halo2_recursive import run_halo2_audit, HALO2_RESILIENCE_TARGET
+        from spaceproof.halo2_recursive import run_halo2_audit, HALO2_RESILIENCE_TARGET
 
         result = run_halo2_audit(attestation_count=3)
 

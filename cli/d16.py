@@ -16,7 +16,7 @@ def cmd_d16_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D16 info
     """
-    from src.fractal_layers import get_d16_info
+    from spaceproof.fractal_layers import get_d16_info
 
     info = get_d16_info()
 
@@ -71,7 +71,7 @@ def cmd_d16_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D16 push results
     """
-    from src.fractal_layers import d16_push
+    from spaceproof.fractal_layers import d16_push
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -111,7 +111,7 @@ def cmd_d16_topological(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with topological push results
     """
-    from src.fractal_layers import d16_topological_push
+    from spaceproof.fractal_layers import d16_topological_push
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -152,7 +152,7 @@ def cmd_d16_homology(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with homology results
     """
-    from src.fractal_layers import compute_persistent_homology, compute_betti_numbers
+    from spaceproof.fractal_layers import compute_persistent_homology, compute_betti_numbers
 
     dimension = getattr(args, "d16_homology_dim", 2)
 
@@ -186,7 +186,7 @@ def cmd_d16_kuiper_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.fractal_layers import d16_kuiper_hybrid
+    from spaceproof.fractal_layers import d16_kuiper_hybrid
 
     tree_size = getattr(args, "tree_size", 10**9)
     base_alpha = getattr(args, "base_alpha", 3.55)
@@ -227,7 +227,7 @@ def cmd_kuiper_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Kuiper info
     """
-    from src.kuiper_12body_chaos import load_kuiper_config
+    from spaceproof.kuiper_12body_chaos import load_kuiper_config
 
     config = load_kuiper_config()
 
@@ -254,7 +254,7 @@ def cmd_kuiper_simulate(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with simulation results
     """
-    from src.kuiper_12body_chaos import simulate_kuiper
+    from spaceproof.kuiper_12body_chaos import simulate_kuiper
 
     duration_years = getattr(args, "kuiper_duration", 100.0)
 
@@ -285,7 +285,7 @@ def cmd_kuiper_resonances(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with resonance analysis
     """
-    from src.kuiper_12body_chaos import analyze_resonances, simulate_kuiper
+    from spaceproof.kuiper_12body_chaos import analyze_resonances, simulate_kuiper
 
     # First run simulation to get trajectory
     duration = getattr(args, "kuiper_duration", 10.0)
@@ -320,7 +320,7 @@ def cmd_bulletproofs_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with Bulletproofs info
     """
-    from src.bulletproofs_infinite import load_bulletproofs_config
+    from spaceproof.bulletproofs_infinite import load_bulletproofs_config
 
     config = load_bulletproofs_config()
 
@@ -342,7 +342,7 @@ def cmd_bulletproofs_stress(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with stress test results
     """
-    from src.bulletproofs_infinite import stress_test
+    from spaceproof.bulletproofs_infinite import stress_test
 
     depth = getattr(args, "bulletproofs_depth", 1000)
 
@@ -374,7 +374,7 @@ def cmd_bulletproofs_chain(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with chain results
     """
-    from src.bulletproofs_infinite import generate_infinite_chain
+    from spaceproof.bulletproofs_infinite import generate_infinite_chain
 
     depth = getattr(args, "bulletproofs_depth", 100)
 
@@ -401,7 +401,7 @@ def cmd_ml_ensemble_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with ML ensemble info
     """
-    from src.cfd_dust_dynamics import load_ml_ensemble_config
+    from spaceproof.cfd_dust_dynamics import load_ml_ensemble_config
 
     config = load_ml_ensemble_config()
 
@@ -424,7 +424,7 @@ def cmd_ml_ensemble_predict(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with prediction results
     """
-    from src.cfd_dust_dynamics import ml_ensemble_forecast
+    from spaceproof.cfd_dust_dynamics import ml_ensemble_forecast
 
     horizon = getattr(args, "ml_horizon", 60)
 
@@ -456,7 +456,7 @@ def cmd_ml_ensemble_train(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with training results
     """
-    from src.cfd_dust_dynamics import train_ensemble
+    from spaceproof.cfd_dust_dynamics import train_ensemble
 
     result = train_ensemble()
 

@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.ingest_real import load_bandwidth_data, load_delay_data, sample_bandwidth
+from spaceproof.ingest_real import load_bandwidth_data, load_delay_data, sample_bandwidth
 
 
 def test_load_bandwidth_data():

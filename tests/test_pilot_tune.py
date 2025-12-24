@@ -82,8 +82,8 @@ def capture_receipts():
 @pytest.fixture
 def clear_cache():
     """Clear cached specs before each test."""
-    from src.rl_tune import clear_sweep_spec_cache, clear_pilot_spec_cache
-    from src.adaptive_depth import clear_spec_cache
+    from spaceproof.rl_tune import clear_sweep_spec_cache, clear_pilot_spec_cache
+    from spaceproof.adaptive_depth import clear_spec_cache
 
     clear_sweep_spec_cache()
     clear_pilot_spec_cache()
@@ -108,14 +108,14 @@ class TestPilotSpecLoads:
 
     def test_spec_loads_valid_json(self, suppress_receipts, clear_cache):
         """Verify spec loads as valid JSON."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert isinstance(spec, dict), "Spec should be a dict"
 
     def test_spec_contains_required_fields(self, suppress_receipts, clear_cache):
         """Verify spec contains all required fields."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         required_fields = [
@@ -140,7 +140,7 @@ class TestSpecHasDualHash:
 
     def test_receipt_contains_payload_hash(self, capture_receipts, clear_cache):
         """Verify pilot_spec_receipt contains payload_hash."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         cap = capture_receipts()
         with cap:
@@ -165,7 +165,7 @@ class TestPilotRunsValue:
 
     def test_pilot_runs_equals_50(self, suppress_receipts, clear_cache):
         """Verify pilot_runs is exactly 50."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert spec["pilot_runs"] == 50, (
@@ -174,7 +174,7 @@ class TestPilotRunsValue:
 
     def test_constant_matches_spec(self, suppress_receipts, clear_cache):
         """Verify PILOT_LR_RUNS constant matches spec."""
-        from src.rl_tune import PILOT_LR_RUNS, load_pilot_spec
+        from spaceproof.rl_tune import PILOT_LR_RUNS, load_pilot_spec
 
         spec = load_pilot_spec()
         assert PILOT_LR_RUNS == spec["pilot_runs"], "Constant should match spec"
@@ -188,7 +188,7 @@ class TestInitialLRRange:
 
     def test_initial_lr_min(self, suppress_receipts, clear_cache):
         """Verify initial_lr_min is 0.001."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert spec["initial_lr_min"] == 0.001, (
@@ -197,7 +197,7 @@ class TestInitialLRRange:
 
     def test_initial_lr_max(self, suppress_receipts, clear_cache):
         """Verify initial_lr_max is 0.01."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert spec["initial_lr_max"] == 0.01, (
@@ -213,14 +213,14 @@ class TestTargetNarrowRange:
 
     def test_target_narrow_min(self, suppress_receipts, clear_cache):
         """Verify target_narrow_min is 0.002."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert spec["target_narrow_min"] == 0.002, "target_narrow_min should be 0.002"
 
     def test_target_narrow_max(self, suppress_receipts, clear_cache):
         """Verify target_narrow_max is 0.008."""
-        from src.rl_tune import load_pilot_spec
+        from spaceproof.rl_tune import load_pilot_spec
 
         spec = load_pilot_spec()
         assert spec["target_narrow_max"] == 0.008, "target_narrow_max should be 0.008"
@@ -234,7 +234,7 @@ class TestPilot50Runs:
 
     def test_pilot_completes_50_runs(self, suppress_receipts, clear_cache):
         """Verify pilot runs 50 iterations."""
-        from src.rl_tune import pilot_lr_narrow
+        from spaceproof.rl_tune import pilot_lr_narrow
 
         result = pilot_lr_narrow(runs=50, seed=42)
 
@@ -251,7 +251,7 @@ class TestNarrowingOccurs:
 
     def test_narrowed_range_within_initial(self, suppress_receipts, clear_cache):
         """Verify narrowed range is within initial range."""
-        from src.rl_tune import pilot_lr_narrow, INITIAL_LR_RANGE
+        from spaceproof.rl_tune import pilot_lr_narrow, INITIAL_LR_RANGE
 
         result = pilot_lr_narrow(runs=50, seed=42)
         narrowed = result["narrowed_range"]
@@ -272,7 +272,7 @@ class TestNarrowedMinAbove:
 
     def test_narrowed_min_reasonable(self, suppress_receipts, clear_cache):
         """Verify narrowed_min is within reasonable range."""
-        from src.rl_tune import pilot_lr_narrow
+        from spaceproof.rl_tune import pilot_lr_narrow
 
         result = pilot_lr_narrow(runs=50, seed=42)
         narrowed_min = result["narrowed_range"][0]
@@ -289,7 +289,7 @@ class TestNarrowedMaxBelow:
 
     def test_narrowed_max_reasonable(self, suppress_receipts, clear_cache):
         """Verify narrowed_max is within reasonable range."""
-        from src.rl_tune import pilot_lr_narrow
+        from spaceproof.rl_tune import pilot_lr_narrow
 
         result = pilot_lr_narrow(runs=50, seed=42)
         narrowed_max = result["narrowed_range"][1]
@@ -306,7 +306,7 @@ class TestQuantumSimRuns:
 
     def test_quantum_sim_10_runs(self, suppress_receipts):
         """Verify quantum sim completes 10 iterations."""
-        from src.quantum_rl_hybrid import simulate_quantum_policy
+        from spaceproof.quantum_rl_hybrid import simulate_quantum_policy
 
         result = simulate_quantum_policy(runs=10, seed=42)
 
@@ -323,7 +323,7 @@ class TestEntangledPenalty:
 
     def test_entangled_penalty_reduced(self, suppress_receipts):
         """Verify entangled penalty is less than standard."""
-        from src.quantum_rl_hybrid import (
+        from spaceproof.quantum_rl_hybrid import (
             compute_entangled_penalty,
             compute_standard_penalty,
         )
@@ -344,7 +344,7 @@ class TestEntangledPenalty:
 
     def test_penalty_factor_value(self, suppress_receipts):
         """Verify ENTANGLED_PENALTY_FACTOR is 0.08."""
-        from src.quantum_rl_hybrid import ENTANGLED_PENALTY_FACTOR
+        from spaceproof.quantum_rl_hybrid import ENTANGLED_PENALTY_FACTOR
 
         assert ENTANGLED_PENALTY_FACTOR == 0.08, (
             f"Factor should be 0.08, got {ENTANGLED_PENALTY_FACTOR}"
@@ -359,7 +359,7 @@ class TestRetentionBoost:
 
     def test_quantum_retention_boost(self, suppress_receipts):
         """Verify quantum retention boost is ~0.03."""
-        from src.quantum_rl_hybrid import QUANTUM_RETENTION_BOOST
+        from spaceproof.quantum_rl_hybrid import QUANTUM_RETENTION_BOOST
 
         assert QUANTUM_RETENTION_BOOST == 0.03, (
             f"Boost should be 0.03, got {QUANTUM_RETENTION_BOOST}"
@@ -367,7 +367,7 @@ class TestRetentionBoost:
 
     def test_effective_boost_positive(self, suppress_receipts):
         """Verify effective boost from simulation is positive."""
-        from src.quantum_rl_hybrid import simulate_quantum_policy
+        from spaceproof.quantum_rl_hybrid import simulate_quantum_policy
 
         result = simulate_quantum_policy(runs=10, seed=42)
 
@@ -384,7 +384,7 @@ class TestChainPilotToQuantum:
 
     def test_pilot_produces_narrowed_range(self, suppress_receipts, clear_cache):
         """Verify pilot produces narrowed range for next stage."""
-        from src.rl_tune import pilot_lr_narrow
+        from spaceproof.rl_tune import pilot_lr_narrow
 
         result = pilot_lr_narrow(runs=20, seed=42)
 
@@ -400,7 +400,7 @@ class TestChainQuantumToSweep:
 
     def test_quantum_produces_boost(self, suppress_receipts):
         """Verify quantum produces boost for sweep."""
-        from src.quantum_rl_hybrid import simulate_quantum_policy
+        from spaceproof.quantum_rl_hybrid import simulate_quantum_policy
 
         result = simulate_quantum_policy(runs=5, seed=42)
 
@@ -416,7 +416,7 @@ class TestTunedSweep500:
 
     def test_tuned_sweep_completes(self, suppress_receipts, clear_cache):
         """Verify tuned sweep completes requested iterations."""
-        from src.rl_tune import run_tuned_sweep
+        from spaceproof.rl_tune import run_tuned_sweep
 
         lr_range = (0.002, 0.008)
         result = run_tuned_sweep(
@@ -438,7 +438,7 @@ class TestFinalRetentionTarget:
 
     def test_retention_above_baseline(self, suppress_receipts, clear_cache):
         """Verify retention exceeds baseline after tuned sweep."""
-        from src.rl_tune import run_tuned_sweep
+        from spaceproof.rl_tune import run_tuned_sweep
 
         lr_range = (0.002, 0.008)
         result = run_tuned_sweep(
@@ -459,7 +459,7 @@ class TestFinalEffAlpha:
 
     def test_eff_alpha_reasonable(self, suppress_receipts, clear_cache):
         """Verify eff_alpha is in reasonable range."""
-        from src.rl_tune import run_tuned_sweep, SHANNON_FLOOR
+        from spaceproof.rl_tune import run_tuned_sweep, SHANNON_FLOOR
 
         lr_range = (0.002, 0.008)
         result = run_tuned_sweep(
@@ -481,7 +481,7 @@ class TestAllReceiptsEmitted:
 
     def test_pilot_receipt_emitted(self, capture_receipts, clear_cache):
         """Verify lr_pilot_narrow_receipt is emitted."""
-        from src.rl_tune import pilot_lr_narrow
+        from spaceproof.rl_tune import pilot_lr_narrow
 
         cap = capture_receipts()
         with cap:
@@ -495,7 +495,7 @@ class TestAllReceiptsEmitted:
 
     def test_quantum_receipt_emitted(self, capture_receipts):
         """Verify quantum_10run_sim_receipt is emitted."""
-        from src.quantum_rl_hybrid import simulate_quantum_policy
+        from spaceproof.quantum_rl_hybrid import simulate_quantum_policy
 
         cap = capture_receipts()
         with cap:
@@ -509,7 +509,7 @@ class TestAllReceiptsEmitted:
 
     def test_sweep_receipt_emitted(self, capture_receipts, clear_cache):
         """Verify post_tune_sweep_receipt is emitted."""
-        from src.rl_tune import run_tuned_sweep
+        from spaceproof.rl_tune import run_tuned_sweep
 
         cap = capture_receipts()
         with cap:
@@ -523,7 +523,7 @@ class TestAllReceiptsEmitted:
 
     def test_full_pipeline_emits_all(self, capture_receipts, clear_cache):
         """Verify full pipeline emits all 3 receipt types."""
-        from src.reasoning import execute_full_pipeline
+        from spaceproof.reasoning import execute_full_pipeline
 
         cap = capture_receipts()
         with cap:

@@ -5,7 +5,7 @@ Commands for D8 fractal recursion with unified RL sync.
 
 import json
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d8_info,
     d8_push,
 )

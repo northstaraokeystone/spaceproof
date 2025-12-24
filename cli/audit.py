@@ -5,7 +5,7 @@ Commands for AGI alignment testing via adversarial audits.
 
 import json
 
-from src.adversarial_audit import (
+from spaceproof.adversarial_audit import (
     load_adversarial_config,
     run_audit,
     run_stress_test,

@@ -14,7 +14,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.roi import (
+from spaceproof.roi import (
     ROIConfig,
     reward,
     penalty,
@@ -27,7 +27,7 @@ from src.roi import (
     DEFAULT_PENALTY_PER_P_COST,
     DEFAULT_PENALTY_PER_C_REDUCTION,
 )
-from src.strategies import Strategy, StrategyResult
+from spaceproof.strategies import Strategy, StrategyResult
 
 
 class TestROIConfig:

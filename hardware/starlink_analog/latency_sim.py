@@ -14,7 +14,7 @@ import random
 from datetime import datetime
 from typing import Dict, Any
 
-from src.core import TENANT_ID, dual_hash, emit_receipt
+from spaceproof.core import TENANT_ID, dual_hash, emit_receipt
 
 # Physical constants
 SPEED_OF_LIGHT_KM_S = 299792.458

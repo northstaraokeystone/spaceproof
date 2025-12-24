@@ -97,37 +97,37 @@ class TestD19_2Constants:
 
     def test_simulation_enabled_is_false(self):
         """Verify SIMULATION_ENABLED is False."""
-        from src.depths.d19_swarm_intelligence import SIMULATION_ENABLED
+        from spaceproof.depths.d19_swarm_intelligence import SIMULATION_ENABLED
 
         assert SIMULATION_ENABLED is False, "SIMULATION_ENABLED must be False"
 
     def test_reactive_mode_enabled_is_false(self):
         """Verify REACTIVE_MODE_ENABLED is False."""
-        from src.depths.d19_swarm_intelligence import REACTIVE_MODE_ENABLED
+        from spaceproof.depths.d19_swarm_intelligence import REACTIVE_MODE_ENABLED
 
         assert REACTIVE_MODE_ENABLED is False, "REACTIVE_MODE_ENABLED must be False"
 
     def test_future_projection_mode_is_true(self):
         """Verify FUTURE_PROJECTION_MODE is True."""
-        from src.depths.d19_swarm_intelligence import FUTURE_PROJECTION_MODE
+        from spaceproof.depths.d19_swarm_intelligence import FUTURE_PROJECTION_MODE
 
         assert FUTURE_PROJECTION_MODE is True, "FUTURE_PROJECTION_MODE must be True"
 
     def test_proxima_rtt_years(self):
         """Verify PROXIMA_RTT_YEARS is 8.48."""
-        from src.depths.d19_swarm_intelligence import PROXIMA_RTT_YEARS
+        from spaceproof.depths.d19_swarm_intelligence import PROXIMA_RTT_YEARS
 
         assert PROXIMA_RTT_YEARS == 8.48, "PROXIMA_RTT_YEARS must be 8.48"
 
     def test_projection_horizon_years(self):
         """Verify PROJECTION_HORIZON_YEARS is 10."""
-        from src.depths.d19_swarm_intelligence import PROJECTION_HORIZON_YEARS
+        from spaceproof.depths.d19_swarm_intelligence import PROJECTION_HORIZON_YEARS
 
         assert PROJECTION_HORIZON_YEARS == 10, "PROJECTION_HORIZON_YEARS must be 10"
 
     def test_preemptive_amplify_threshold(self):
         """Verify PREEMPTIVE_AMPLIFY_THRESHOLD is 0.85."""
-        from src.depths.d19_swarm_intelligence import PREEMPTIVE_AMPLIFY_THRESHOLD
+        from spaceproof.depths.d19_swarm_intelligence import PREEMPTIVE_AMPLIFY_THRESHOLD
 
         assert PREEMPTIVE_AMPLIFY_THRESHOLD == 0.85, (
             "PREEMPTIVE_AMPLIFY_THRESHOLD must be 0.85"
@@ -135,7 +135,7 @@ class TestD19_2Constants:
 
     def test_preemptive_starve_threshold(self):
         """Verify PREEMPTIVE_STARVE_THRESHOLD is 0.50."""
-        from src.depths.d19_swarm_intelligence import PREEMPTIVE_STARVE_THRESHOLD
+        from spaceproof.depths.d19_swarm_intelligence import PREEMPTIVE_STARVE_THRESHOLD
 
         assert PREEMPTIVE_STARVE_THRESHOLD == 0.50, (
             "PREEMPTIVE_STARVE_THRESHOLD must be 0.50"
@@ -147,7 +147,7 @@ class TestProjectionPackage:
 
     def test_projection_package_imports(self):
         """Verify projection package imports."""
-        from src.projection import (
+        from spaceproof.projection import (
             init_projection,
             project_single_path,
             project_all_paths,
@@ -161,7 +161,7 @@ class TestProjectionPackage:
 
     def test_latency_bound_model_imports(self):
         """Verify latency bound model imports."""
-        from src.projection import (
+        from spaceproof.projection import (
             init_model,
             calculate_geodesic,
             validate_light_speed,
@@ -175,7 +175,7 @@ class TestProjectionPackage:
 
     def test_path_compression_estimator_imports(self):
         """Verify path compression estimator imports."""
-        from src.projection import (
+        from spaceproof.projection import (
             init_estimator,
             estimate_path_compression,
             estimate_batch_compression,
@@ -193,7 +193,7 @@ class TestWeavePackage:
 
     def test_preemptive_weave_imports(self):
         """Verify preemptive weave imports."""
-        from src.weave import (
+        from spaceproof.weave import (
             init_preemptive_weave,
             amplify_high_future_paths,
             starve_low_future_paths,
@@ -209,7 +209,7 @@ class TestWeavePackage:
 
     def test_impending_entropy_weave_imports(self):
         """Verify impending entropy weave imports."""
-        from src.weave import (
+        from spaceproof.weave import (
             init_entropy_weave,
             load_weave_template,
             weave_from_known_latency,
@@ -223,7 +223,7 @@ class TestWeavePackage:
 
     def test_delay_nullification_imports(self):
         """Verify delay nullification imports."""
-        from src.weave import (
+        from spaceproof.weave import (
             init_nullification,
             nullify_known_delay,
             generate_preemptive_law,
@@ -237,7 +237,7 @@ class TestWeavePackage:
 
     def test_weave_to_chain_imports(self):
         """Verify weave to chain imports."""
-        from src.weave import (
+        from spaceproof.weave import (
             init_weave_chain,
             insert_woven_law,
             batch_insert_laws,
@@ -257,7 +257,7 @@ class TestFuturePathProjection:
 
     def test_init_projection(self):
         """Test projection initialization."""
-        from src.projection import init_projection
+        from spaceproof.projection import init_projection
 
         proj = init_projection({})
         assert proj is not None
@@ -266,7 +266,7 @@ class TestFuturePathProjection:
 
     def test_project_single_path_respects_light_speed(self):
         """Verify single path projection respects light speed."""
-        from src.projection import init_projection, project_single_path
+        from spaceproof.projection import init_projection, project_single_path
 
         proj = init_projection({})
         receipt = {"receipt_type": "test", "payload_hash": "test"}
@@ -279,7 +279,7 @@ class TestFuturePathProjection:
 
     def test_projection_status_simulation_disabled(self):
         """Verify projection status shows simulation disabled."""
-        from src.projection import get_projection_status
+        from spaceproof.projection import get_projection_status
 
         status = get_projection_status()
         assert status.get("simulation_enabled") is False
@@ -291,7 +291,7 @@ class TestPreemptiveWeave:
 
     def test_init_preemptive_weave(self):
         """Test preemptive weave initialization."""
-        from src.weave import init_preemptive_weave
+        from spaceproof.weave import init_preemptive_weave
 
         weave = init_preemptive_weave({})
         assert weave is not None
@@ -299,7 +299,7 @@ class TestPreemptiveWeave:
 
     def test_amplify_high_future_paths(self):
         """Test amplification of high-future-compression paths."""
-        from src.weave import init_preemptive_weave, amplify_high_future_paths
+        from spaceproof.weave import init_preemptive_weave, amplify_high_future_paths
 
         weave = init_preemptive_weave({})
         paths = [
@@ -313,7 +313,7 @@ class TestPreemptiveWeave:
 
     def test_starve_low_future_paths(self):
         """Test starvation of low-future-compression paths."""
-        from src.weave import init_preemptive_weave, starve_low_future_paths
+        from spaceproof.weave import init_preemptive_weave, starve_low_future_paths
 
         weave = init_preemptive_weave({})
         paths = [
@@ -327,7 +327,7 @@ class TestPreemptiveWeave:
 
     def test_weave_status_reactive_disabled(self):
         """Verify weave status shows reactive mode disabled."""
-        from src.weave import get_weave_status
+        from spaceproof.weave import get_weave_status
 
         status = get_weave_status()
         assert status.get("reactive_mode_enabled") is False
@@ -339,7 +339,7 @@ class TestImpendingEntropyWeave:
 
     def test_init_entropy_weave(self):
         """Test entropy weave initialization."""
-        from src.weave import init_entropy_weave
+        from spaceproof.weave import init_entropy_weave
 
         weave = init_entropy_weave({})
         assert weave is not None
@@ -347,7 +347,7 @@ class TestImpendingEntropyWeave:
 
     def test_load_proxima_weave_template(self):
         """Test loading Proxima Centauri weave template."""
-        from src.weave import init_entropy_weave, load_weave_template
+        from spaceproof.weave import init_entropy_weave, load_weave_template
 
         weave = init_entropy_weave({})
         template = load_weave_template(weave, "proxima_centauri")
@@ -356,7 +356,7 @@ class TestImpendingEntropyWeave:
 
     def test_weave_from_known_latency(self):
         """Test weaving from known latency."""
-        from src.weave import (
+        from spaceproof.weave import (
             init_entropy_weave,
             load_weave_template,
             weave_from_known_latency,
@@ -370,7 +370,7 @@ class TestImpendingEntropyWeave:
 
     def test_entropy_weave_status_latency_not_obstacle(self):
         """Verify entropy weave status shows latency is not obstacle."""
-        from src.weave import get_entropy_weave_status
+        from spaceproof.weave import get_entropy_weave_status
 
         status = get_entropy_weave_status()
         assert status.get("latency_as_obstacle") is False
@@ -382,7 +382,7 @@ class TestDelayNullification:
 
     def test_init_nullification(self):
         """Test nullification initialization."""
-        from src.weave import init_nullification
+        from spaceproof.weave import init_nullification
 
         nullification = init_nullification({})
         assert nullification is not None
@@ -390,7 +390,7 @@ class TestDelayNullification:
 
     def test_nullify_proxima_delay(self):
         """Test nullifying Proxima Centauri delay."""
-        from src.weave import init_nullification, nullify_known_delay
+        from spaceproof.weave import init_nullification, nullify_known_delay
 
         nullification = init_nullification({})
         law = nullify_known_delay(nullification, "proxima_centauri", 8.48)
@@ -404,7 +404,7 @@ class TestWeaveToChain:
 
     def test_init_weave_chain(self):
         """Test weave chain initialization."""
-        from src.weave import init_weave_chain
+        from spaceproof.weave import init_weave_chain
 
         chain = init_weave_chain({})
         assert chain is not None
@@ -412,7 +412,7 @@ class TestWeaveToChain:
 
     def test_insert_woven_law(self):
         """Test inserting woven law into chain."""
-        from src.weave import init_weave_chain, insert_woven_law
+        from spaceproof.weave import init_weave_chain, insert_woven_law
 
         chain = init_weave_chain({})
         woven = insert_woven_law(
@@ -424,7 +424,7 @@ class TestWeaveToChain:
 
     def test_verify_chain_integrity(self):
         """Test chain integrity verification."""
-        from src.weave import init_weave_chain, insert_woven_law, verify_chain_integrity
+        from spaceproof.weave import init_weave_chain, insert_woven_law, verify_chain_integrity
 
         chain = init_weave_chain({})
         insert_woven_law(chain, "test_law", "delay_nullification", {"test": True})
@@ -437,7 +437,7 @@ class TestProjectedFutureFitness:
 
     def test_compute_projected_fitness(self):
         """Test computing projected fitness."""
-        from src.autocatalytic.fitness_evaluator import compute_projected_fitness
+        from spaceproof.autocatalytic.fitness_evaluator import compute_projected_fitness
 
         pattern = {"fitness": 0.8, "entropy": 1.0, "stability": 0.9}
         result = compute_projected_fitness(pattern)
@@ -446,7 +446,7 @@ class TestProjectedFutureFitness:
 
     def test_high_future_fitness_classified_amplify(self):
         """Test high future fitness classified for amplification."""
-        from src.autocatalytic.fitness_evaluator import compute_projected_fitness
+        from spaceproof.autocatalytic.fitness_evaluator import compute_projected_fitness
 
         pattern = {"fitness": 0.95, "entropy": 0.5, "stability": 0.95}
         result = compute_projected_fitness(pattern)
@@ -455,7 +455,7 @@ class TestProjectedFutureFitness:
 
     def test_low_future_fitness_classified_starve(self):
         """Test low future fitness classified for starvation."""
-        from src.autocatalytic.fitness_evaluator import compute_projected_fitness
+        from spaceproof.autocatalytic.fitness_evaluator import compute_projected_fitness
 
         pattern = {"fitness": 0.2, "entropy": 5.0, "stability": 0.1}
         result = compute_projected_fitness(pattern)
@@ -468,7 +468,7 @@ class TestD19_2Integration:
 
     def test_run_d19_preemptive_executes(self):
         """Test that run_d19_preemptive executes successfully."""
-        from src.depths.d19_swarm_intelligence import run_d19_preemptive
+        from spaceproof.depths.d19_swarm_intelligence import run_d19_preemptive
 
         result = run_d19_preemptive()
         assert result is not None
@@ -476,7 +476,7 @@ class TestD19_2Integration:
 
     def test_run_d19_preemptive_simulation_killed(self):
         """Verify simulation is killed in D19.2 run."""
-        from src.depths.d19_swarm_intelligence import run_d19_preemptive
+        from spaceproof.depths.d19_swarm_intelligence import run_d19_preemptive
 
         result = run_d19_preemptive()
         assert result.get("simulation_enabled") is False
@@ -486,7 +486,7 @@ class TestD19_2Integration:
 
     def test_run_d19_preemptive_reactive_killed(self):
         """Verify reactive mode is killed in D19.2 run."""
-        from src.depths.d19_swarm_intelligence import run_d19_preemptive
+        from spaceproof.depths.d19_swarm_intelligence import run_d19_preemptive
 
         result = run_d19_preemptive()
         assert result.get("reactive_mode_enabled") is False
@@ -496,14 +496,14 @@ class TestD19_2Integration:
 
     def test_run_d19_preemptive_all_gates_pass(self):
         """Verify all gates pass in D19.2 run."""
-        from src.depths.d19_swarm_intelligence import run_d19_preemptive
+        from spaceproof.depths.d19_swarm_intelligence import run_d19_preemptive
 
         result = run_d19_preemptive()
         assert result.get("all_gates_passed") is True
 
     def test_run_d19_preemptive_slo_passed(self):
         """Verify SLO passes in D19.2 run."""
-        from src.depths.d19_swarm_intelligence import run_d19_preemptive
+        from spaceproof.depths.d19_swarm_intelligence import run_d19_preemptive
 
         result = run_d19_preemptive()
         assert result.get("slo_passed") is True

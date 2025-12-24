@@ -5,7 +5,7 @@ import json
 
 def cmd_quantum_v2_info(args) -> None:
     """Show quantum v2 configuration."""
-    from src.quantum_refine_v2 import get_v2_status
+    from spaceproof.quantum_refine_v2 import get_v2_status
 
     status = get_v2_status()
     print("\n=== QUANTUM V2 CONFIGURATION ===")
@@ -20,7 +20,7 @@ def cmd_quantum_v2_info(args) -> None:
 
 def cmd_quantum_v2_refine(args) -> None:
     """Run quantum v2 refinement."""
-    from src.quantum_refine_v2 import refine_v2
+    from spaceproof.quantum_refine_v2 import refine_v2
 
     result = refine_v2()
     print("\n=== QUANTUM V2 REFINEMENT ===")
@@ -38,7 +38,7 @@ def cmd_quantum_v2_refine(args) -> None:
 
 def cmd_quantum_v2_iterative(args) -> None:
     """Run iterative v2 refinement."""
-    from src.quantum_refine_v2 import iterative_refinement_v2
+    from spaceproof.quantum_refine_v2 import iterative_refinement_v2
 
     iterations = getattr(args, "quantum_v2_iterations", 20)
 
@@ -54,7 +54,7 @@ def cmd_quantum_v2_iterative(args) -> None:
 
 def cmd_quantum_v2_compare(args) -> None:
     """Compare v1 vs v2 refinement."""
-    from src.quantum_refine_v2 import compare_v1_v2
+    from spaceproof.quantum_refine_v2 import compare_v1_v2
 
     result = compare_v1_v2()
     print("\n=== QUANTUM V1 VS V2 COMPARISON ===")
@@ -71,8 +71,8 @@ def cmd_quantum_v2_compare(args) -> None:
 
 def cmd_quantum_v2_decoherence(args) -> None:
     """Test advanced decoherence model."""
-    from src.quantum_refine import create_entangled_pairs
-    from src.quantum_refine_v2 import advanced_decoherence_model
+    from spaceproof.quantum_refine import create_entangled_pairs
+    from spaceproof.quantum_refine_v2 import advanced_decoherence_model
 
     pairs = create_entangled_pairs(100)
     result = advanced_decoherence_model(pairs)
@@ -87,8 +87,8 @@ def cmd_quantum_v2_decoherence(args) -> None:
 
 def cmd_quantum_v2_correction(args) -> None:
     """Test deep error correction."""
-    from src.quantum_refine import create_entangled_pairs
-    from src.quantum_refine_v2 import deep_error_correction
+    from spaceproof.quantum_refine import create_entangled_pairs
+    from spaceproof.quantum_refine_v2 import deep_error_correction
 
     depth = getattr(args, "correction_depth", 3)
     pairs = create_entangled_pairs(100)
@@ -105,7 +105,7 @@ def cmd_quantum_v2_correction(args) -> None:
 
 def cmd_quantum_v2_status(args) -> None:
     """Show quantum v2 status."""
-    from src.quantum_refine_v2 import get_v2_status
+    from spaceproof.quantum_refine_v2 import get_v2_status
 
     status = get_v2_status()
     print("\n=== QUANTUM V2 STATUS ===")
@@ -114,7 +114,7 @@ def cmd_quantum_v2_status(args) -> None:
 
 def cmd_quantum_v2_validate(args) -> None:
     """Validate four-nines correlation."""
-    from src.quantum_refine_v2 import refine_v2, validate_four_nines
+    from spaceproof.quantum_refine_v2 import refine_v2, validate_four_nines
 
     result = refine_v2()
     correlation = result["correlation_after"]

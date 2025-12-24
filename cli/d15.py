@@ -16,7 +16,7 @@ def cmd_d15_info(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D15 info
     """
-    from src.fractal_layers import get_d15_info
+    from spaceproof.fractal_layers import get_d15_info
 
     info = get_d15_info()
 
@@ -61,7 +61,7 @@ def cmd_d15_push(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with D15 push results
     """
-    from src.fractal_layers import d15_push, D15_TREE_MIN
+    from spaceproof.fractal_layers import d15_push, D15_TREE_MIN
 
     tree_size = getattr(args, "tree_size", D15_TREE_MIN)
     base_alpha = getattr(args, "base_alpha", 3.45)
@@ -107,7 +107,7 @@ def cmd_d15_chaos_hybrid(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with hybrid results
     """
-    from src.interstellar_backbone import d15_chaos_hybrid
+    from spaceproof.interstellar_backbone import d15_chaos_hybrid
 
     tree_size = getattr(args, "tree_size", 10**12)
     base_alpha = getattr(args, "base_alpha", 3.45)
@@ -160,7 +160,7 @@ def cmd_d15_entanglement(args: Namespace) -> Dict[str, Any]:
     Returns:
         Dict with entanglement test results
     """
-    from src.fractal_layers import compute_entanglement_correlation
+    from spaceproof.fractal_layers import compute_entanglement_correlation
 
     depth = getattr(args, "recursion_depth", 15)
 

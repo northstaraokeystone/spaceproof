@@ -3,12 +3,12 @@
 Commands: full_500_sweep (combined quantum-fractal sweep)
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     multi_scale_fractal,
     FRACTAL_SCALES,
     FRACTAL_UPLIFT,
 )
-from src.quantum_rl_hybrid import (
+from spaceproof.quantum_rl_hybrid import (
     quantum_fractal_hybrid,
     simulate_quantum_policy,
     QUANTUM_RETENTION_BOOST,

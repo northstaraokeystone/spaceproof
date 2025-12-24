@@ -115,6 +115,6 @@ src/
 
 # Import verification
 python -c "from src import *"
-python -c "from src.fractal import recursive_fractal"
-python -c "from src.cfd import stokes_settling"
+python -c "from spaceproof.fractal import recursive_fractal"
+python -c "from spaceproof.cfd import stokes_settling"
 ```

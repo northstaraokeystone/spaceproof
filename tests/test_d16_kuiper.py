@@ -7,7 +7,7 @@ Tests:
 - D16+Kuiper hybrid integration
 """
 
-from src.fractal_layers import (
+from spaceproof.fractal_layers import (
     get_d16_spec,
     get_d16_uplift,
     compute_persistent_homology,

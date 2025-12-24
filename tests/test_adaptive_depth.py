@@ -80,8 +80,8 @@ def capture_receipts():
 @pytest.fixture
 def clear_cache():
     """Clear cached spec before each test."""
-    from src.adaptive_depth import clear_spec_cache
-    from src.gnn_cache import reset_gnn_layer_state
+    from spaceproof.adaptive_depth import clear_spec_cache
+    from spaceproof.gnn_cache import reset_gnn_layer_state
 
     clear_spec_cache()
     reset_gnn_layer_state()
@@ -104,14 +104,14 @@ class TestSpecLoads:
 
     def test_spec_loads_valid_json(self, suppress_receipts, clear_cache):
         """Verify spec loads as valid JSON."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         spec = load_depth_spec()
         assert isinstance(spec, dict), "Spec should be a dict"
 
     def test_spec_contains_required_fields(self, suppress_receipts, clear_cache):
         """Verify spec contains all required fields."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         spec = load_depth_spec()
         required_fields = [
@@ -134,7 +134,7 @@ class TestSpecHasDualHash:
 
     def test_receipt_contains_payload_hash(self, capture_receipts, clear_cache):
         """Verify depth_spec_receipt contains payload_hash."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         cap = capture_receipts()
         with cap:
@@ -152,7 +152,7 @@ class TestSpecHasDualHash:
 
     def test_spec_hash_has_colon_format(self, capture_receipts, clear_cache):
         """Verify payload_hash is in sha256:blake3 format."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         cap = capture_receipts()
         with cap:
@@ -177,7 +177,7 @@ class TestBaseLayersValue:
 
     def test_base_layers_equals_4(self, suppress_receipts, clear_cache):
         """Verify base_layers is exactly 4."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         spec = load_depth_spec()
         assert spec["base_layers"] == 4, (
@@ -193,7 +193,7 @@ class TestScaleFactorRange:
 
     def test_scale_factor_in_range(self, suppress_receipts, clear_cache):
         """Verify scale_factor is within valid range."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         spec = load_depth_spec()
         scale_factor = spec["scale_factor"]
@@ -210,7 +210,7 @@ class TestMaxLayersCap:
 
     def test_max_layers_equals_12(self, suppress_receipts, clear_cache):
         """Verify max_layers is exactly 12."""
-        from src.adaptive_depth import load_depth_spec
+        from spaceproof.adaptive_depth import load_depth_spec
 
         spec = load_depth_spec()
         assert spec["max_layers"] == 12, (
@@ -226,14 +226,14 @@ class TestComputeDepthSmallTree:
 
     def test_small_tree_uses_base(self, suppress_receipts, clear_cache):
         """Small tree should use base_layers (4)."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**4, 0.5)
         assert depth == 4, f"Small tree (n=10^4) should have depth=4, got {depth}"
 
     def test_baseline_tree_uses_base(self, suppress_receipts, clear_cache):
         """Baseline tree (n=10^6) should use base_layers."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**6, 0.5)
         assert depth == 4, f"Baseline tree (n=10^6) should have depth=4, got {depth}"
@@ -247,7 +247,7 @@ class TestComputeDepthLargeTree:
 
     def test_large_tree_scales_up(self, suppress_receipts, clear_cache):
         """Large tree should scale up from base."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**9, 0.5)
         assert 5 <= depth <= 8, (
@@ -256,7 +256,7 @@ class TestComputeDepthLargeTree:
 
     def test_large_tree_greater_than_base(self, suppress_receipts, clear_cache):
         """Large tree depth should be greater than small tree."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         small_depth = compute_depth(10**4, 0.5)
         large_depth = compute_depth(10**9, 0.5)
@@ -273,14 +273,14 @@ class TestComputeDepthHugeTree:
 
     def test_huge_tree_capped(self, suppress_receipts, clear_cache):
         """Huge tree should be capped at max_layers."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**12, 0.5)
         assert depth <= 12, f"Huge tree (n=10^12) should be capped at 12, got {depth}"
 
     def test_extreme_tree_capped(self, suppress_receipts, clear_cache):
         """Extreme tree (n=10^15) should also be capped."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**15, 0.5)
         assert depth <= 12, (
@@ -296,7 +296,7 @@ class TestDepthDeterminism:
 
     def test_depth_is_deterministic(self, suppress_receipts, clear_cache):
         """Same inputs should produce same depth."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         # Run multiple times with same inputs
         results = []
@@ -310,7 +310,7 @@ class TestDepthDeterminism:
 
     def test_depth_varies_with_entropy(self, suppress_receipts, clear_cache):
         """Different entropy should potentially produce different depth."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         # Higher entropy may increase depth slightly
         depth_low = compute_depth(10**10, 0.1)
@@ -329,7 +329,7 @@ class TestRetentionQuickWin:
 
     def test_50_run_sweep_minimum_retention(self, suppress_receipts, clear_cache):
         """50 runs should achieve at least 1.01 retention."""
-        from src.rl_tune import run_sweep
+        from spaceproof.rl_tune import run_sweep
 
         result = run_sweep(runs=50, adaptive_depth=True, seed=42)
         assert result["retention"] >= 1.01, (
@@ -338,7 +338,7 @@ class TestRetentionQuickWin:
 
     def test_500_run_sweep_early_convergence(self, suppress_receipts, clear_cache):
         """500 runs should achieve retention >= 1.03."""
-        from src.rl_tune import run_sweep
+        from spaceproof.rl_tune import run_sweep
 
         result = run_sweep(runs=500, adaptive_depth=True, early_stopping=False, seed=42)
         assert result["best_retention"] >= 1.03, (
@@ -354,7 +354,7 @@ class TestFullSweepTarget:
 
     def test_500_run_achieves_target(self, suppress_receipts, clear_cache):
         """500 runs should achieve quick win target (1.05)."""
-        from src.rl_tune import run_sweep, RETENTION_QUICK_WIN_TARGET
+        from spaceproof.rl_tune import run_sweep, RETENTION_QUICK_WIN_TARGET
 
         result = run_sweep(runs=500, adaptive_depth=True, early_stopping=False, seed=42)
 
@@ -372,7 +372,7 @@ class TestEfficiencyVsBlind:
 
     def test_informed_beats_blind(self, suppress_receipts, clear_cache):
         """500 informed runs should outperform 300 blind runs."""
-        from src.rl_tune import run_sweep
+        from spaceproof.rl_tune import run_sweep
 
         # Run informed sweep (with adaptive depth)
         informed = run_sweep(
@@ -411,7 +411,7 @@ class TestAdaptiveDepthIntegration:
 
     def test_gnn_cache_queries_adaptive_depth(self, suppress_receipts, clear_cache):
         """GNN cache should be able to query adaptive depth."""
-        from src.gnn_cache import (
+        from spaceproof.gnn_cache import (
             set_adaptive_depth_enabled,
             query_adaptive_depth,
             reset_gnn_layer_state,
@@ -426,7 +426,7 @@ class TestAdaptiveDepthIntegration:
 
     def test_rebuild_detection(self, suppress_receipts, clear_cache):
         """GNN should detect when rebuild is needed."""
-        from src.gnn_cache import (
+        from spaceproof.gnn_cache import (
             set_adaptive_depth_enabled,
             check_gnn_rebuild_needed,
             reset_gnn_layer_state,
@@ -445,7 +445,7 @@ class TestAdaptiveDepthIntegration:
 
     def test_depth_info_function(self, suppress_receipts, clear_cache):
         """get_depth_scaling_info should return valid config."""
-        from src.adaptive_depth import get_depth_scaling_info
+        from spaceproof.adaptive_depth import get_depth_scaling_info
 
         info = get_depth_scaling_info()
 
@@ -464,29 +464,29 @@ class TestBoundaryConditions:
 
     def test_zero_tree_size(self, suppress_receipts, clear_cache):
         """Zero tree size should return base depth."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(0, 0.5)
         assert depth == 4, f"Zero tree should use base depth 4, got {depth}"
 
     def test_negative_tree_size(self, suppress_receipts, clear_cache):
         """Negative tree size should return base depth."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(-100, 0.5)
         assert depth == 4, f"Negative tree should use base depth 4, got {depth}"
 
     def test_negative_entropy_raises(self, suppress_receipts, clear_cache):
         """Negative entropy should raise StopRule."""
-        from src.adaptive_depth import compute_depth
-        from src.core import StopRule
+        from spaceproof.adaptive_depth import compute_depth
+        from spaceproof.core import StopRule
 
         with pytest.raises(StopRule):
             compute_depth(10**6, -0.1)
 
     def test_very_high_entropy(self, suppress_receipts, clear_cache):
         """Very high entropy should still return valid depth."""
-        from src.adaptive_depth import compute_depth
+        from spaceproof.adaptive_depth import compute_depth
 
         depth = compute_depth(10**9, 1.0)
         assert 4 <= depth <= 12, f"High entropy depth should be valid: {depth}"

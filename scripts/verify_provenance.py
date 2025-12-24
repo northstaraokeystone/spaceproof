@@ -20,7 +20,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.prove import verify_provenance, verify_real_data_provenance
+from spaceproof.prove import verify_provenance, verify_real_data_provenance
 
 
 def format_results(results: dict) -> str:
