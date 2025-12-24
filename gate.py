@@ -28,7 +28,7 @@ from typing import Any
 # === CONSTANTS ===
 
 TENANT_ID = "spaceproof-gate"
-RECEIPT_FILE = "receipts/gate_receipts.jsonl"
+RECEIPT_FILE = "receipt/gate_receipts.jsonl"
 SLO_TOTAL_MS = 60000  # Max 60 seconds for all checks
 PROJECT_ROOT = Path(__file__).parent.absolute()
 
@@ -67,8 +67,8 @@ def emit_gate_receipt(
     }
     receipt["payload_hash"] = dual_hash(json.dumps(receipt, sort_keys=True))
 
-    # Ensure receipts directory exists
-    receipts_dir = PROJECT_ROOT / "receipts"
+    # Ensure receipt directory exists
+    receipts_dir = PROJECT_ROOT / "receipt"
     receipts_dir.mkdir(exist_ok=True)
 
     # Append to receipt file
@@ -90,7 +90,7 @@ def emit_install_receipt(hook_path: str, gate_hash: str) -> dict:
     }
     receipt["payload_hash"] = dual_hash(json.dumps(receipt, sort_keys=True))
 
-    receipts_dir = PROJECT_ROOT / "receipts"
+    receipts_dir = PROJECT_ROOT / "receipt"
     receipts_dir.mkdir(exist_ok=True)
 
     receipt_path = PROJECT_ROOT / RECEIPT_FILE
@@ -128,7 +128,7 @@ def stoprule_test(error: str) -> None:
     """Print stoprule for test errors."""
     print("\n[STOPRULE] test_check FAILED")
     print(f"  Error: {error}")
-    print("  Fix: Run 'pytest tests/ -v' to see failing tests")
+    print("  Fix: Run 'pytest test/ -v' to see failing tests")
 
 
 def stoprule_lint(error: str) -> None:
@@ -233,10 +233,10 @@ def check_cli() -> dict[str, Any]:
 
 
 def check_tests() -> dict[str, Any]:
-    """Check 4: Run pytest tests/ -x (fail fast)."""
+    """Check 4: Run pytest test/ -x (fail fast)."""
     t0 = time.time()
 
-    tests_dir = PROJECT_ROOT / "tests"
+    tests_dir = PROJECT_ROOT / "test"
     if not tests_dir.exists():
         return {"passed": True, "duration_ms": 0, "error": None}
 

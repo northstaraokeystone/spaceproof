@@ -1,118 +1,111 @@
-"""SpaceProof v4.0.0 — Space-grade proof infrastructure.
+"""SpaceProof v4.0.0 - Space-grade proof infrastructure.
 
 No receipt, not real.
 
 Part of ProofChain: SpaceProof | SpendProof | ClaimProof | VoteProof | OriginProof | GreenProof
 
-STAKEHOLDER-INTUITIVE MODULES:
+CORE MODULES:
+- core.py: Hashing and receipts (dual_hash, emit_receipt, merkle, StopRule)
 - compress.py: Telemetry compression (10x+, 0.999 recall)
 - witness.py: KAN/MDL law discovery
-- sovereignty.py: Autonomy threshold calculator
+- anchor.py: Merkle proofs
 - detect.py: Entropy-based anomaly detection
 - ledger.py: Append-only receipt storage
-- anchor.py: Merkle proofs
-- loop.py: 60-second SENSE→ACTUATE cycle
+- sovereignty.py: Autonomy threshold calculator
+- loop.py: 60-second SENSE->ACTUATE cycle
 
 DOMAIN GENERATORS:
-- domains/galaxy.py: Galaxy rotation curves
-- domains/colony.py: Mars colony simulation
-- domains/telemetry.py: Fleet telemetry (Tesla/Starlink/SpaceX)
+- domain/galaxy.py: Galaxy rotation curves
+- domain/colony.py: Mars colony simulation
+- domain/telemetry.py: Fleet telemetry (Tesla/Starlink/SpaceX)
 
 STAKEHOLDER CONFIGS:
-- configs/xai.yaml: Elon/xAI
-- configs/doge.yaml: DOGE
-- configs/dot.yaml: DOT
-- configs/defense.yaml: Defense
-- configs/nro.yaml: NRO
+- config/xai.yaml: Elon/xAI
+- config/doge.yaml: DOGE
+- config/dot.yaml: DOT
+- config/defense.yaml: Defense
+- config/nro.yaml: NRO
 
 Source: D20 Production Evolution (Dec 2025)
 """
 
+# Core primitives
 from .core import dual_hash, emit_receipt, merkle, StopRule
 
-# Centralized constants (single source of truth)
-from .constants import (
-    SHANNON_FLOOR_ALPHA,
-    ALPHA_CEILING_TARGET,
-    ENTROPY_ASYMPTOTE_E,
+# Core module classes and functions
+from .compress import (
+    CompressionConfig,
+    CompressionResult,
+    compress,
+    decompress,
+    calculate_recall,
+    validate_compression_slo,
+    compress_stream,
 )
 
-# Receipt helpers
-from .receipts import emit_with_hash, emit_anomaly, emit_spec_ingest
-from .entropy_shannon import (
-    HUMAN_DECISION_RATE_BPS,
-    STARLINK_MARS_BANDWIDTH_MIN_MBPS,
-    STARLINK_MARS_BANDWIDTH_MAX_MBPS,
-    MARS_LIGHT_DELAY_MIN_S,
-    MARS_LIGHT_DELAY_MAX_S,
+from .witness import (
+    KANConfig,
+    KAN,
+    train,
+    crossover_detection,
+    emit_witness_receipt,
+    validate_compression_threshold,
+)
+
+from .anchor import (
+    Proof,
+    AnchorResult,
+    create_proof,
+    verify_proof,
+    anchor_batch,
+    verify_batch,
+    chain_receipts,
+)
+
+from .detect import (
+    BaselineStats,
+    DetectionResult,
+    shannon_entropy,
+    entropy_delta,
+    detect_anomaly,
+    classify_anomaly,
+    build_baseline,
+    detect_fraud_pattern,
+    estimate_improper_payments,
+)
+
+from .ledger import (
+    LedgerEntry,
+    Ledger,
+    create_ledger,
+    append_to_ledger,
+    verify_ledger,
+    save_ledger,
+    load_ledger,
+)
+
+from .sovereignty import (
+    SovereigntyConfig,
+    SovereigntyResult,
     internal_rate,
     external_rate,
     sovereignty_advantage,
     is_sovereign,
-)
-from .sovereignty import (
-    SovereigntyConfig,
-    SovereigntyResult,
     compute_sovereignty,
     find_threshold,
     sensitivity_analysis,
 )
-from .ingest_real import (
-    load_bandwidth_data,
-    load_delay_data,
-    sample_bandwidth,
-    sample_delay,
+
+from .loop import (
+    Action,
+    CycleResult,
+    Loop,
+    run_loop_once,
+    run_loop_continuous,
 )
-from .validate import (
-    test_null_hypothesis,
-    test_baseline,
-    bootstrap_threshold,
-    compute_p_value,
-    generate_falsifiable_prediction,
-)
-from .plot_curve import (
-    generate_curve_data,
-    find_knee,
-    plot_sovereignty_curve,
-    format_finding,
-)
-from .optimize import (
-    OptimizationConfig,
-    OptimizationState,
-    selection_pressure,
-    update_fitness,
-    sample_thompson,
-    measure_improvement,
-)
-from .helper import (
-    HelperConfig,
-    HelperBlueprint,
-    harvest,
-    hypothesize,
-    gate,
-    actuate,
-    measure_effectiveness,
-    retire,
-)
-from .support import (
-    SupportLevel,
-    SupportCoverage,
-    classify_receipt,
-    measure_coverage,
-    check_completeness,
-    detect_gaps,
-    l4_feedback,
-)
-from .sim import (
-    SimConfig,
-    SimState,
-    Scenario,
-    initialize_sim,
-    simulate_cycle,
-    inject_gap,
-    run_scenario,
-    validate_constraints,
-)
+
+# Domain generators
+from . import domain
 
 __version__ = "4.0.0"
 __series__ = "ProofChain"
@@ -121,98 +114,68 @@ __all__ = [
     # Identity
     "__version__",
     "__series__",
-    # Core
+    # Core primitives
     "dual_hash",
     "emit_receipt",
     "merkle",
     "StopRule",
-    # Centralized constants
-    "SHANNON_FLOOR_ALPHA",
-    "ALPHA_CEILING_TARGET",
-    "ENTROPY_ASYMPTOTE_E",
-    # Receipt helpers
-    "emit_with_hash",
-    "emit_anomaly",
-    "emit_spec_ingest",
-    # Entropy (Shannon only)
-    "HUMAN_DECISION_RATE_BPS",
-    "STARLINK_MARS_BANDWIDTH_MIN_MBPS",
-    "STARLINK_MARS_BANDWIDTH_MAX_MBPS",
-    "MARS_LIGHT_DELAY_MIN_S",
-    "MARS_LIGHT_DELAY_MAX_S",
+    # Compress
+    "CompressionConfig",
+    "CompressionResult",
+    "compress",
+    "decompress",
+    "calculate_recall",
+    "validate_compression_slo",
+    "compress_stream",
+    # Witness
+    "KANConfig",
+    "KAN",
+    "train",
+    "crossover_detection",
+    "emit_witness_receipt",
+    "validate_compression_threshold",
+    # Anchor
+    "Proof",
+    "AnchorResult",
+    "create_proof",
+    "verify_proof",
+    "anchor_batch",
+    "verify_batch",
+    "chain_receipts",
+    # Detect
+    "BaselineStats",
+    "DetectionResult",
+    "shannon_entropy",
+    "entropy_delta",
+    "detect_anomaly",
+    "classify_anomaly",
+    "build_baseline",
+    "detect_fraud_pattern",
+    "estimate_improper_payments",
+    # Ledger
+    "LedgerEntry",
+    "Ledger",
+    "create_ledger",
+    "append_to_ledger",
+    "verify_ledger",
+    "save_ledger",
+    "load_ledger",
+    # Sovereignty
+    "SovereigntyConfig",
+    "SovereigntyResult",
     "internal_rate",
     "external_rate",
     "sovereignty_advantage",
     "is_sovereign",
-    # Sovereignty
-    "SovereigntyConfig",
-    "SovereigntyResult",
     "compute_sovereignty",
     "find_threshold",
     "sensitivity_analysis",
-    # Data ingest
-    "load_bandwidth_data",
-    "load_delay_data",
-    "sample_bandwidth",
-    "sample_delay",
-    # Validation
-    "test_null_hypothesis",
-    "test_baseline",
-    "bootstrap_threshold",
-    "compute_p_value",
-    "generate_falsifiable_prediction",
-    # Plotting
-    "generate_curve_data",
-    "find_knee",
-    "plot_sovereignty_curve",
-    "format_finding",
-    # Optimization (Thompson sampling)
-    "OptimizationConfig",
-    "OptimizationState",
-    "selection_pressure",
-    "update_fitness",
-    "sample_thompson",
-    "measure_improvement",
-    # Helper (HARVEST → HYPOTHESIZE → GATE → ACTUATE)
-    "HelperConfig",
-    "HelperBlueprint",
-    "harvest",
-    "hypothesize",
-    "gate",
-    "actuate",
-    "measure_effectiveness",
-    "retire",
-    # Support (L0-L4 levels)
-    "SupportLevel",
-    "SupportCoverage",
-    "classify_receipt",
-    "measure_coverage",
-    "check_completeness",
-    "detect_gaps",
-    "l4_feedback",
-    # Simulation
-    "SimConfig",
-    "SimState",
-    "Scenario",
-    "initialize_sim",
-    "simulate_cycle",
-    "inject_gap",
-    "run_scenario",
-    "validate_constraints",
-    # D20 Production Evolution - Stakeholder-Intuitive Modules
-    "compress",
-    "detect",
-    "anchor",
-    "loop",
-    # D20 Domain Generators
-    "domains",
+    # Loop
+    "Action",
+    "CycleResult",
+    "Loop",
+    "run_loop_once",
+    "run_loop_continuous",
+    # Domain
+    "domain",
 ]
-
-# D20 Production Evolution - New Modules
-from . import compress
-from . import detect
-from . import anchor
-from . import loop
-
-# D20 Domain Generators
-from . import domains

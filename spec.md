@@ -46,19 +46,19 @@ When a DOT secretary sees `qed.py`, they see nothing. When they see `compress.py
 
 | Domain | Path | Purpose |
 |--------|------|---------|
-| galaxy | spaceproof/domains/galaxy.py | Galaxy rotation curves |
-| colony | spaceproof/domains/colony.py | Mars colony simulation |
-| telemetry | spaceproof/domains/telemetry.py | Fleet telemetry (Tesla/Starlink/SpaceX) |
+| galaxy | spaceproof/domain/galaxy.py | Galaxy rotation curves |
+| colony | spaceproof/domain/colony.py | Mars colony simulation |
+| telemetry | spaceproof/domain/telemetry.py | Fleet telemetry (Tesla/Starlink/SpaceX) |
 
 ### Stakeholder Configs (D20)
 
 | Stakeholder | Config | Primary Modules |
 |-------------|--------|-----------------|
-| Elon/xAI | configs/xai.yaml | compress, witness, sovereignty |
-| DOGE | configs/doge.yaml | ledger, detect, anchor |
-| DOT | configs/dot.yaml | compress, ledger, detect |
-| Defense | configs/defense.yaml | compress, ledger, anchor |
-| NRO | configs/nro.yaml | compress, anchor, sovereignty |
+| Elon/xAI | config/xai.yaml | compress, witness, sovereignty |
+| DOGE | config/doge.yaml | ledger, detect, anchor |
+| DOT | config/dot.yaml | compress, ledger, detect |
+| Defense | config/defense.yaml | compress, ledger, anchor |
+| NRO | config/nro.yaml | compress, anchor, sovereignty |
 
 ### SLOs (D20)
 

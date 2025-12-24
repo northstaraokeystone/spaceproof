@@ -1,243 +1,219 @@
-"""ledger.py - Distributed Anchor Boost with Quorum Integration
+"""ledger.py - Append-Only Receipt Storage
 
-THE PHYSICS (Dec 2025 distributed anchoring):
-    Base α = 2.56 (τ-penalty adjusted)
-    Ledger boost = +0.12 (validated)
-    Effective α = 2.68 with distributed anchoring
+D20 Production Evolution: Stakeholder-intuitive name for receipt ledger.
 
-QUORUM INTEGRATION:
-    Before anchoring, check quorum status.
-    If quorum degraded (< baseline but >= threshold), apply degradation factor.
-    If quorum fails (< threshold), halt via StopRule.
+THE LEDGER INSIGHT:
+    Receipts are the atoms of proof.
+    An append-only ledger is tamper-evident.
+    No receipt, not real.
 
-Source: Grok - "eff_α to 2.68 (+0.12)", "quorum intact for 5-node eg."
+Source: SpaceProof D20 Production Evolution
+
+Stakeholder Value:
+    - DOGE: Audit trail for all government payments
+    - Defense: Chain of custody for decisions
+    - NRO: Immutable decision lineage
 """
 
-from typing import Dict, Any, Optional
+from dataclasses import dataclass, field
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+import json
+import os
 
-from .core import emit_receipt
-from .partition import quorum_check, NODE_BASELINE, QUORUM_THRESHOLD, partition_sim
+from .core import emit_receipt, dual_hash, merkle
 
+# === CONSTANTS ===
 
-# === CONSTANTS (Dec 2025 distributed anchoring validated) ===
-
-LEDGER_ALPHA_BOOST = 0.12
-"""Legacy constant for backwards compatibility."""
-
-LEDGER_ALPHA_BOOST_VALIDATED = 0.12
-"""physics: Dec 2025 distributed anchoring boost. Validated by stress tests."""
-
-BASE_ALPHA_PRE_BOOST = 2.56
-"""Base α before distributed anchoring boost (τ-penalty adjusted)."""
-
-EFFECTIVE_ALPHA_WITH_BOOST = 2.68
-"""Effective α with distributed anchoring: 2.56 + 0.12 = 2.68"""
-
-QUORUM_DEGRADATION_FACTOR = 0.02
-"""Alpha degradation per missing node above threshold."""
+TENANT_ID = "spaceproof-ledger"
 
 
-def apply_ledger_boost(
-    base_alpha: float = BASE_ALPHA_PRE_BOOST,
-    boost: float = LEDGER_ALPHA_BOOST_VALIDATED,
-) -> float:
-    """Apply distributed anchoring boost to base alpha.
+@dataclass
+class LedgerEntry:
+    """A single entry in the ledger."""
 
-    Args:
-        base_alpha: Base α before boost (default: 2.56)
-        boost: Ledger boost amount (default: 0.12)
-
-    Returns:
-        Effective α with distributed anchoring
-
-    Receipt: ledger_boost
-    """
-    eff_alpha = base_alpha + boost
-
-    emit_receipt(
-        "ledger_boost",
-        {
-            "tenant_id": "spaceproof-ledger",
-            "base_alpha": base_alpha,
-            "boost": boost,
-            "effective_alpha": eff_alpha,
-            "boost_validated": True,
-            "physics": "Dec 2025 distributed anchoring",
-        },
-    )
-
-    return eff_alpha
+    receipt: Dict
+    hash: str
+    timestamp: str
+    index: int
 
 
-def apply_quorum_factor(
-    base_alpha: float,
-    nodes_surviving: int,
-    nodes_baseline: int = NODE_BASELINE,
-    quorum_min: int = QUORUM_THRESHOLD,
-) -> float:
-    """Apply quorum factor to alpha based on node health.
+@dataclass
+class Ledger:
+    """Append-only receipt ledger."""
 
-    If quorum is degraded (surviving < baseline but >= threshold),
-    apply degradation factor. If quorum fails, raise StopRule.
+    entries: List[LedgerEntry] = field(default_factory=list)
+    merkle_root: str = ""
 
-    Args:
-        base_alpha: Effective α to adjust
-        nodes_surviving: Number of nodes still operational
-        nodes_baseline: Expected baseline node count (default: 5)
-        quorum_min: Minimum required for quorum (default: 3)
+    def append(self, receipt: Dict) -> LedgerEntry:
+        """Append a receipt to the ledger.
 
-    Returns:
-        Alpha with quorum degradation applied (if any)
+        Args:
+            receipt: Receipt dict to append
 
-    Raises:
-        StopRule: If quorum fails (surviving < threshold)
+        Returns:
+            LedgerEntry with hash and index
+        """
+        receipt_hash = dual_hash(json.dumps(receipt, sort_keys=True))
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        index = len(self.entries)
 
-    Receipt: quorum_factor (if degraded), warning if < baseline
-    """
-    # Check quorum - raises StopRule if failed
-    quorum_check(nodes_surviving, quorum_min)
-
-    # Calculate degradation
-    nodes_missing = nodes_baseline - nodes_surviving
-    degradation = 0.0
-    quorum_status = "intact"
-
-    if nodes_missing > 0:
-        # Apply degradation per missing node
-        degradation = nodes_missing * QUORUM_DEGRADATION_FACTOR
-        quorum_status = "degraded"
-
-        # Emit warning receipt
-        emit_receipt(
-            "quorum_warning",
-            {
-                "tenant_id": "spaceproof-ledger",
-                "nodes_baseline": nodes_baseline,
-                "nodes_surviving": nodes_surviving,
-                "nodes_missing": nodes_missing,
-                "degradation": degradation,
-                "alpha_before": base_alpha,
-                "alpha_after": base_alpha - degradation,
-                "quorum_status": quorum_status,
-            },
+        entry = LedgerEntry(
+            receipt=receipt,
+            hash=receipt_hash,
+            timestamp=timestamp,
+            index=index,
         )
 
-    adjusted_alpha = base_alpha - degradation
+        self.entries.append(entry)
+        self._update_merkle_root()
+
+        return entry
+
+    def _update_merkle_root(self) -> None:
+        """Update Merkle root after append."""
+        if not self.entries:
+            self.merkle_root = dual_hash(b"empty")
+        else:
+            self.merkle_root = merkle([e.receipt for e in self.entries])
+
+    def verify(self) -> bool:
+        """Verify ledger integrity.
+
+        Returns:
+            True if all entries are valid
+        """
+        for entry in self.entries:
+            expected_hash = dual_hash(json.dumps(entry.receipt, sort_keys=True))
+            if expected_hash != entry.hash:
+                return False
+
+        expected_root = merkle([e.receipt for e in self.entries]) if self.entries else dual_hash(b"empty")
+        return expected_root == self.merkle_root
+
+    def get_proof(self, index: int) -> Dict:
+        """Get Merkle proof for entry at index.
+
+        Args:
+            index: Entry index
+
+        Returns:
+            Proof dict with path and root
+        """
+        if index < 0 or index >= len(self.entries):
+            raise ValueError(f"Index {index} out of range")
+
+        return {
+            "entry_hash": self.entries[index].hash,
+            "merkle_root": self.merkle_root,
+            "index": index,
+            "total_entries": len(self.entries),
+        }
+
+
+def create_ledger() -> Ledger:
+    """Create a new empty ledger.
+
+    Returns:
+        Empty Ledger instance
+    """
+    ledger = Ledger()
 
     emit_receipt(
-        "quorum_factor",
+        "ledger_created",
         {
-            "tenant_id": "spaceproof-ledger",
-            "base_alpha": base_alpha,
-            "nodes_surviving": nodes_surviving,
-            "nodes_baseline": nodes_baseline,
-            "quorum_min": quorum_min,
-            "degradation": degradation,
-            "adjusted_alpha": adjusted_alpha,
-            "quorum_status": quorum_status,
+            "tenant_id": TENANT_ID,
+            "merkle_root": ledger.merkle_root,
+            "entry_count": 0,
         },
     )
 
-    return adjusted_alpha
+    return ledger
 
 
-def anchor_with_quorum(
-    data: Dict[str, Any],
-    nodes_surviving: Optional[int] = None,
-    base_alpha: float = BASE_ALPHA_PRE_BOOST,
-) -> Dict[str, Any]:
-    """Anchor data with quorum check and ledger boost.
-
-    Performs full anchoring pipeline:
-    1. Apply ledger boost (+0.12)
-    2. Check quorum status
-    3. Apply quorum degradation if needed
-    4. Emit anchor receipt
+def append_to_ledger(ledger: Ledger, receipt: Dict) -> LedgerEntry:
+    """Append receipt to ledger.
 
     Args:
-        data: Data to anchor
-        nodes_surviving: Current node count (default: baseline, no degradation)
-        base_alpha: Pre-boost α (default: 2.56)
+        ledger: Ledger instance
+        receipt: Receipt to append
 
     Returns:
-        Anchor receipt with effective α and quorum status
-
-    Raises:
-        StopRule: If quorum fails
-
-    Receipt: distributed_anchor
+        New LedgerEntry
     """
-    # Step 1: Apply ledger boost
-    boosted_alpha = apply_ledger_boost(base_alpha)
+    entry = ledger.append(receipt)
 
-    # Step 2 & 3: Check quorum and apply factor
-    if nodes_surviving is None:
-        nodes_surviving = NODE_BASELINE
-
-    final_alpha = apply_quorum_factor(
-        boosted_alpha, nodes_surviving, NODE_BASELINE, QUORUM_THRESHOLD
-    )
-
-    # Determine quorum status string
-    if nodes_surviving >= NODE_BASELINE:
-        quorum_status = "full"
-    elif nodes_surviving >= QUORUM_THRESHOLD:
-        quorum_status = "degraded"
-    else:
-        quorum_status = "failed"  # Won't reach here due to StopRule
-
-    # Step 4: Emit anchor receipt
-    receipt = emit_receipt(
-        "distributed_anchor",
+    emit_receipt(
+        "ledger_append",
         {
-            "tenant_id": "spaceproof-ledger",
-            "data_hash": data.get("payload_hash", "uncomputed"),
-            "base_alpha": base_alpha,
-            "ledger_boost": LEDGER_ALPHA_BOOST_VALIDATED,
-            "boosted_alpha": boosted_alpha,
-            "nodes_surviving": nodes_surviving,
-            "nodes_baseline": NODE_BASELINE,
-            "quorum_threshold": QUORUM_THRESHOLD,
-            "quorum_status": quorum_status,
-            "effective_alpha": final_alpha,
-            "physics": "Dec 2025 distributed anchoring + quorum",
+            "tenant_id": TENANT_ID,
+            "entry_hash": entry.hash,
+            "entry_index": entry.index,
+            "merkle_root": ledger.merkle_root,
         },
     )
 
-    return receipt
+    return entry
 
 
-def get_effective_alpha_with_partition(
-    loss_pct: float = 0.0, base_alpha: float = BASE_ALPHA_PRE_BOOST
-) -> Dict[str, Any]:
-    """Get effective alpha considering partition loss.
-
-    Convenience function that combines ledger boost and partition impact.
+def verify_ledger(ledger: Ledger) -> Dict:
+    """Verify ledger integrity.
 
     Args:
-        loss_pct: Partition loss percentage (0-1)
-        base_alpha: Pre-boost α (default: 2.56)
+        ledger: Ledger to verify
 
     Returns:
-        Dict with effective α after all factors applied
+        Verification result dict
     """
-    # Apply ledger boost first
-    boosted_alpha = base_alpha + LEDGER_ALPHA_BOOST_VALIDATED
+    is_valid = ledger.verify()
 
-    # Simulate partition impact
-    result = partition_sim(
-        nodes_total=NODE_BASELINE,
-        loss_pct=loss_pct,
-        base_alpha=boosted_alpha,
-        emit=False,
-    )
-
-    return {
-        "base_alpha": base_alpha,
-        "ledger_boost": LEDGER_ALPHA_BOOST_VALIDATED,
-        "boosted_alpha": boosted_alpha,
-        "loss_pct": loss_pct,
-        "eff_alpha_drop": result["eff_alpha_drop"],
-        "effective_alpha": result["eff_alpha"],
-        "quorum_status": result["quorum_status"],
+    result = {
+        "valid": is_valid,
+        "entry_count": len(ledger.entries),
+        "merkle_root": ledger.merkle_root,
     }
+
+    emit_receipt(
+        "ledger_verify",
+        {
+            "tenant_id": TENANT_ID,
+            **result,
+        },
+    )
+
+    return result
+
+
+def save_ledger(ledger: Ledger, path: str) -> None:
+    """Save ledger to JSONL file.
+
+    Args:
+        ledger: Ledger to save
+        path: File path
+    """
+    with open(path, "w") as f:
+        for entry in ledger.entries:
+            line = json.dumps(entry.receipt)
+            f.write(line + "\n")
+
+
+def load_ledger(path: str) -> Ledger:
+    """Load ledger from JSONL file.
+
+    Args:
+        path: File path
+
+    Returns:
+        Ledger instance
+    """
+    ledger = Ledger()
+
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    receipt = json.loads(line)
+                    ledger.append(receipt)
+
+    return ledger
