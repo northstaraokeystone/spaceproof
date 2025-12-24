@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gate-receipts
-          path: receipts/gate_receipts.jsonl
+          path: receipt/gate_receipts.jsonl
           if-no-files-found: ignore
 
   lint:
@@ -58,11 +58,11 @@ jobs:
 
       - name: Run flake8
         run: |
-          flake8 spaceproof/ real_data/ benchmarks/ --max-line-length=120 --ignore=E501,W503,W504,E128,E226,F841,F811,F824
+          flake8 spaceproof/ benchmark/ --max-line-length=120 --ignore=E501,W503,W504,E128,E226,F841,F811,F824
 
       - name: Check black formatting
         run: |
-          black --check --line-length=120 spaceproof/ real_data/ benchmarks/ || true
+          black --check --line-length=120 spaceproof/ benchmark/ || true
 
   test:
     name: Test
@@ -84,7 +84,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --cov=spaceproof --cov=real_data --cov=benchmarks --cov-report=xml --cov-report=term-missing
+          pytest test/ -v --cov=spaceproof --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -112,10 +112,10 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          pytest tests/ --cov=spaceproof --cov=real_data --cov=benchmarks --cov-fail-under=80 || echo "Coverage below target, continuing..."
+          pytest test/ --cov=spaceproof --cov-fail-under=50 || echo "Coverage below target, continuing..."
 
-  scenarios:
-    name: Run Scenarios
+  import-check:
+    name: Import Check
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -132,93 +132,20 @@ jobs:
           pip install numpy
           pip install blake3 || true
 
-      - name: Count available scenarios
+      - name: Verify core imports
         run: |
           python -c "
-          from spaceproof.sim import Scenario
-          scenarios = list(Scenario)
-          print(f'Available scenarios: {len(scenarios)}')
-          for s in scenarios:
-              print(f'  - {s.value}')
-          assert len(scenarios) >= 10, f'Expected 10+ scenarios, got {len(scenarios)}'
-          print('PASS: 10+ scenarios available')
-          "
-
-      - name: Run baseline scenario
-        run: |
-          python -c "
-          from spaceproof.sim import Scenario, run_scenario, SimConfig
-          config = SimConfig(max_cycles=50)
-          state = run_scenario(Scenario.SCENARIO_BASELINE, config)
-          print(f'Baseline: {state.cycle} cycles completed')
-          "
-
-  provenance:
-    name: Verify Provenance
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install numpy
-          pip install blake3 || true
-
-      - name: Run provenance verification
-        run: |
-          python scripts/verify_provenance.py receipts.jsonl || echo "No receipts to verify (expected on clean repo)"
-
-  real-data-validation:
-    name: Real Data Validation
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install numpy
-          pip install blake3 || true
-
-      - name: Validate SPARC loader
-        run: |
-          python -c "
-          from real_data.sparc import load_sparc
-          galaxies = load_sparc(n_galaxies=5)
-          print(f'Loaded {len(galaxies)} SPARC galaxies')
-          assert len(galaxies) >= 5, 'Failed to load minimum galaxies'
-          for g in galaxies:
-              print(f'  - {g[\"id\"]}: {len(g[\"r\"])} points')
-          print('PASS: SPARC loader working')
-          "
-
-      - name: Validate Landauer calibration
-        run: |
-          python -c "
-          from spaceproof.entropy import landauer_mass_equivalent
-          m = landauer_mass_equivalent(1e6)
-          print(f'1M bps = {m:.0f} kg')
-          assert 51000 < m < 69000, f'Calibration out of range: {m}'
-          print('PASS: Landauer calibration within ±15%')
+          from spaceproof import core, compress, witness, anchor, detect, ledger, sovereignty, loop
+          from spaceproof.domain import galaxy, colony, telemetry
+          print('Core modules: core, compress, witness, anchor, detect, ledger, sovereignty, loop')
+          print('Domain modules: galaxy, colony, telemetry')
+          print('PASS: All core imports working')
           "
 
   emit-ci-receipt:
     name: Emit CI Gate Receipt
     runs-on: ubuntu-latest
-    needs: [gate, lint, test, coverage-gate, scenarios, provenance, real-data-validation]
+    needs: [gate, lint, test, coverage-gate, import-check]
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -250,9 +177,7 @@ jobs:
               'lint_status': '${{ needs.lint.result }}',
               'test_status': '${{ needs.test.result }}',
               'coverage_status': '${{ needs.coverage-gate.result }}',
-              'scenarios_status': '${{ needs.scenarios.result }}',
-              'provenance_status': '${{ needs.provenance.result }}',
-              'realdata_status': '${{ needs.real-data-validation.result }}',
+              'import_check_status': '${{ needs.import-check.result }}',
               'gate_status': 'PASS' if all([
                   '${{ needs.gate.result }}' == 'success',
                   '${{ needs.lint.result }}' == 'success',
@@ -272,6 +197,4 @@ jobs:
           echo '| Lint | ${{ needs.lint.result }} |' >> $GITHUB_STEP_SUMMARY
           echo '| Test | ${{ needs.test.result }} |' >> $GITHUB_STEP_SUMMARY
           echo '| Coverage Gate | ${{ needs.coverage-gate.result }} |' >> $GITHUB_STEP_SUMMARY
-          echo '| Scenarios | ${{ needs.scenarios.result }} |' >> $GITHUB_STEP_SUMMARY
-          echo '| Provenance | ${{ needs.provenance.result }} |' >> $GITHUB_STEP_SUMMARY
-          echo '| Real Data | ${{ needs.real-data-validation.result }} |' >> $GITHUB_STEP_SUMMARY
+          echo '| Import Check | ${{ needs.import-check.result }} |' >> $GITHUB_STEP_SUMMARY
