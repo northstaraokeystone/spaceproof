@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
 
-from ..core import emit_receipt, dual_hash, merkle, TENANT_ID, StopRule
+from src.core import emit_receipt, dual_hash, merkle, TENANT_ID, StopRule
 
 # === D19.2 WEAVE TO CHAIN CONSTANTS ===
 

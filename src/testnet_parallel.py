@@ -152,6 +152,7 @@ def init_ethereum_testnet() -> Dict[str, Any]:
         "block_time_sec": chain.block_time_sec,
         "current_block": chain.current_block,
         "status": chain.status,
+        "confirmations": ETHEREUM_CONFIRMATIONS,
     }
 
     emit_receipt(
@@ -164,6 +165,18 @@ def init_ethereum_testnet() -> Dict[str, Any]:
             "initialized": True,
             "current_block": chain.current_block,
             "status": chain.status,
+            "payload_hash": dual_hash(json.dumps(result)),
+        },
+    )
+    emit_receipt(
+        "testnet_receipt",
+        {
+            "receipt_type": "testnet_receipt",
+            "tenant_id": TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "chain": "ethereum",
+            "action": "init",
+            "initialized": True,
             "payload_hash": dual_hash(json.dumps(result)),
         },
     )
@@ -201,6 +214,7 @@ def init_solana_testnet() -> Dict[str, Any]:
         "block_time_sec": chain.block_time_sec,
         "current_block": chain.current_block,
         "status": chain.status,
+        "confirmations": SOLANA_CONFIRMATIONS,
     }
 
     emit_receipt(
@@ -310,11 +324,15 @@ def send_cross_chain(
     _testnet_state.chains[from_chain].transactions += 1
 
     result = {
+        "success": True,
         "tx_id": tx_id,
         "from_chain": from_chain,
+        "source_chain": from_chain,  # Alias for from_chain
         "to_chain": to_chain,
+        "target_chain": to_chain,  # Alias for to_chain
         "status": "pending",
         "data": data,
+        "eventual_consistency": True,  # Cross-chain txs achieve eventual consistency
     }
 
     emit_receipt(
@@ -425,7 +443,10 @@ def get_testnet_status() -> Dict[str, Any]:
 
     return {
         "chains": chain_status,
+        "ethereum_initialized": "ethereum" in _testnet_state.chains,
+        "solana_initialized": "solana" in _testnet_state.chains,
         "bridge_enabled": _testnet_state.bridge_enabled,
+        "bridge_active": _testnet_state.bridge_enabled,  # Alias for bridge_enabled
         "pending_transactions": len(_testnet_state.pending_transactions),
         "completed_transactions": len(_testnet_state.completed_transactions),
         "total_transactions": _testnet_state.tx_counter,
@@ -503,6 +524,7 @@ def stress_test_bridge(transactions: int = 100) -> Dict[str, Any]:
     return {
         "stress_passed": successful / max(1, transactions) >= 0.95,
         "transactions": transactions,
+        "iterations": transactions,  # Alias for transactions
         "successful": successful,
         "failed": failed,
         "success_rate": successful / max(1, transactions),
@@ -531,6 +553,7 @@ def sync_testnets() -> Dict[str, Any]:
         "synced": True,
         "block_height": max_block,
         "chains": list(_testnet_state.chains.keys()),
+        "chains_synced": len(_testnet_state.chains),
     }
 
 

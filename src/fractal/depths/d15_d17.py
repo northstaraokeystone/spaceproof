@@ -173,7 +173,7 @@ def compute_entanglement_correlation(
 
 
 def entangled_termination_check(
-    correlation: float, threshold: float = D15_TERMINATION_THRESHOLD
+    delta: float, threshold: float = D15_TERMINATION_THRESHOLD
 ) -> Dict[str, Any]:
     """Check if entangled termination condition is met.
 
@@ -181,28 +181,25 @@ def entangled_termination_check(
     because the entangled states maintain coherence across depths.
 
     Args:
-        correlation: Current entanglement correlation
+        delta: Delta value to check against threshold
         threshold: Termination threshold (default: 0.0005)
 
     Returns:
         Dict with should_terminate and details
     """
-    target = D15_ENTANGLEMENT_CORRELATION
-    variance = abs(correlation - target)
-    should_terminate = variance < threshold
+    should_terminate = delta < threshold
 
     return {
         "should_terminate": should_terminate,
-        "variance": round(variance, 6),
+        "delta": round(delta, 6),
         "threshold": threshold,
-        "target": target,
-        "correlation": correlation,
     }
 
 
 def d15_quantum_push(
     tree_size: int,
     base_alpha: float,
+    depth: int = 15,
     entangled: bool = True,
 ) -> Dict[str, Any]:
     """D15 quantum-entangled recursion for alpha > 3.80.
@@ -214,6 +211,7 @@ def d15_quantum_push(
     Args:
         tree_size: Number of nodes in tree
         base_alpha: Base alpha before recursion
+        depth: Recursion depth (default: 15)
         entangled: Whether to use quantum entanglement (default: True)
 
     Returns:
@@ -224,7 +222,6 @@ def d15_quantum_push(
     spec = get_d15_spec()
     d15_config = spec.get("d15_config", {})
 
-    depth = 15
     uplift = get_d15_uplift(depth)
 
     scale_factor = get_scale_factor(tree_size)
@@ -251,6 +248,7 @@ def d15_quantum_push(
         "base_alpha": base_alpha,
         "depth": depth,
         "entangled": entangled,
+        "quantum_entanglement": entangled,
         "entanglement_correlation": entanglement_correlation,
         "entanglement_boost": round(entanglement_boost, 4),
         "uplift_from_spec": uplift,
@@ -328,7 +326,8 @@ def d15_quantum_push(
 def d15_recursive_fractal(
     tree_size: int,
     base_alpha: float,
-    depth: int = 15,
+    depth: int = None,
+    max_depth: int = None,
     entangled: bool = True,
     adaptive: bool = True,
 ) -> Dict[str, Any]:
@@ -346,6 +345,7 @@ def d15_recursive_fractal(
         tree_size: Number of nodes in tree
         base_alpha: Base alpha before recursion
         depth: Recursion depth (default: 15)
+        max_depth: Alias for depth parameter
         entangled: Whether to use quantum entanglement (default: True)
         adaptive: Whether to use adaptive termination (default: True)
 
@@ -354,6 +354,12 @@ def d15_recursive_fractal(
 
     Receipt: d15_fractal_receipt
     """
+    # Handle max_depth alias
+    if max_depth is not None:
+        depth = max_depth
+    elif depth is None:
+        depth = 15
+
     spec = get_d15_spec()
     d15_config = spec.get("d15_config", {})
 
@@ -397,6 +403,8 @@ def d15_recursive_fractal(
         "base_alpha": base_alpha,
         "depth": depth,
         "actual_depth": actual_depth,
+        "depth_reached": actual_depth,
+        "adaptive": adaptive,
         "entangled": entangled,
         "entanglement_correlation": entanglement_correlation,
         "entanglement_boost": round(entanglement_boost, 4),
@@ -484,6 +492,7 @@ def d15_push(
         "base_alpha": base_alpha,
         "depth": 15,
         "entangled": entangled,
+        "quantum_entanglement": entangled,
         "adaptive": adaptive,
         "entanglement_correlation": result.get("entanglement_correlation", 0.0),
         "eff_alpha": result["eff_alpha"],
@@ -1003,7 +1012,7 @@ def d16_kuiper_hybrid(
     d16_result = d16_topological_push(tree_size, base_alpha, topological=True)
 
     # Run Kuiper simulation (short for hybrid test)
-    from .kuiper_12body_chaos import simulate_kuiper, integrate_with_backbone
+    from src.kuiper_12body_chaos import simulate_kuiper, integrate_with_backbone
 
     kuiper_result = simulate_kuiper(bodies=12, duration_years=10)
 
@@ -1192,7 +1201,7 @@ def get_d17_uplift(depth: int) -> float:
     return float(uplift_map.get(str(depth), 0.0))
 
 
-def depth_first_traversal(node: Dict[str, Any], depth: int) -> Dict[str, Any]:
+def depth_first_traversal(data: List[List[float]], max_depth: int = 10) -> Dict[str, Any]:
     """Execute depth-first traversal strategy for D17 recursion.
 
     Depth-first traversal maximizes alpha gains by fully exploring
@@ -1200,46 +1209,48 @@ def depth_first_traversal(node: Dict[str, Any], depth: int) -> Dict[str, Any]:
     plateau effects seen in breadth-first approaches.
 
     Args:
-        node: Current node in fractal tree
-        depth: Current recursion depth
+        data: Input data as list of points/vectors
+        max_depth: Maximum recursion depth to traverse
 
     Returns:
-        Dict with traversal results including accumulated alpha
+        Dict with traversal results including order, nodes visited, and max depth reached
     """
-    if depth <= 0:
-        return {
-            "depth": 0,
-            "accumulated_alpha": 0.0,
-            "nodes_visited": 1,
-            "plateau_detected": False,
-        }
+    traversal_order = []
+    nodes_visited = 0
+    max_depth_reached = 0
 
-    # Get uplift at this depth
-    uplift = get_d17_uplift(depth)
+    def traverse(index: int, current_depth: int):
+        nonlocal nodes_visited, max_depth_reached
 
-    # Simulate child traversals (depth-first: complete left before right)
-    left_result = depth_first_traversal({}, depth - 1)
-    right_result = depth_first_traversal({}, depth - 1)
+        if current_depth > max_depth or index >= len(data):
+            return
 
-    # Accumulate alpha from children
-    child_alpha = left_result["accumulated_alpha"] + right_result["accumulated_alpha"]
+        # Visit current node
+        traversal_order.append(index)
+        nodes_visited += 1
+        max_depth_reached = max(max_depth_reached, current_depth)
 
-    # Check for plateau (alpha gain less than threshold)
-    alpha_gain = uplift - get_d17_uplift(depth - 1) if depth > 1 else uplift
-    plateau_detected = alpha_gain < D17_TERMINATION_THRESHOLD
+        # Traverse children depth-first (left then right)
+        left_index = 2 * index + 1
+        right_index = 2 * index + 2
+
+        if left_index < len(data):
+            traverse(left_index, current_depth + 1)
+        if right_index < len(data):
+            traverse(right_index, current_depth + 1)
+
+    # Start traversal from root
+    if data:
+        traverse(0, 0)
 
     return {
-        "depth": depth,
-        "uplift_at_depth": round(uplift, 4),
-        "accumulated_alpha": round(child_alpha + uplift * 0.1, 4),
-        "nodes_visited": left_result["nodes_visited"]
-        + right_result["nodes_visited"]
-        + 1,
-        "plateau_detected": plateau_detected,
+        "traversal_order": traversal_order,
+        "nodes_visited": nodes_visited,
+        "max_depth_reached": max_depth_reached,
     }
 
 
-def check_asymptotic_ceiling(alphas: list) -> bool:
+def check_asymptotic_ceiling(alphas: list, threshold: float = D17_TERMINATION_THRESHOLD) -> Dict[str, Any]:
     """Check if alpha values are approaching asymptotic ceiling.
 
     D17 targets non-asymptotic growth - this function detects if
@@ -1247,56 +1258,70 @@ def check_asymptotic_ceiling(alphas: list) -> bool:
 
     Args:
         alphas: List of alpha values at increasing depths
+        threshold: Threshold for detecting plateau (default: D17_TERMINATION_THRESHOLD)
 
     Returns:
-        True if plateau detected, False otherwise
+        Dict with plateau_detected and ceiling_value
     """
     if len(alphas) < 3:
-        return False
+        return {
+            "plateau_detected": False,
+            "ceiling_value": alphas[-1] if alphas else 0.0,
+        }
 
     # Check last 3 alpha values for diminishing returns
     deltas = [alphas[i] - alphas[i - 1] for i in range(1, len(alphas))]
 
     if len(deltas) < 2:
-        return False
+        return {
+            "plateau_detected": False,
+            "ceiling_value": alphas[-1] if alphas else 0.0,
+        }
 
     # Plateau if last two deltas are both below threshold
     recent_deltas = deltas[-2:]
-    plateau = all(d < D17_TERMINATION_THRESHOLD for d in recent_deltas)
+    plateau = all(d < threshold for d in recent_deltas)
 
-    return plateau
+    return {
+        "plateau_detected": plateau,
+        "ceiling_value": alphas[-1] if alphas else 0.0,
+    }
 
 
-def compute_uplift_sustainability(history: list) -> float:
-    """Compute sustainability of uplift over recursion history.
+def compute_uplift_sustainability(
+    current_alpha: float, target_alpha: float, uplift: float, depth: int
+) -> Dict[str, Any]:
+    """Compute sustainability of uplift for reaching target alpha.
 
     Args:
-        history: List of (depth, alpha, uplift) tuples
+        current_alpha: Current effective alpha value
+        target_alpha: Target alpha to reach
+        uplift: Uplift value at current depth
+        depth: Current recursion depth
 
     Returns:
-        Sustainability score 0-1 (1.0 = fully sustainable)
+        Dict with sustainable (bool) and margin (float)
     """
-    if len(history) < 2:
-        return 1.0
+    # Compute projected alpha after uplift
+    projected_alpha = current_alpha + uplift
 
-    # Extract uplifts
-    uplifts = [h[2] for h in history]
+    # Check if we can reach target
+    margin = projected_alpha - target_alpha
+    sustainable = projected_alpha >= target_alpha
 
-    # Compute moving average trend
-    trend = 0.0
-    for i in range(1, len(uplifts)):
-        trend += (uplifts[i] - uplifts[i - 1]) / uplifts[i - 1] if uplifts[i - 1] > 0 else 0
+    # Compute sustainability score based on margin
+    sustainability_score = max(0.0, min(1.0, (margin + 0.5) / 1.0))
 
-    avg_trend = trend / (len(uplifts) - 1)
-
-    # Positive trend = sustainable, negative = declining
-    sustainability = max(0.0, min(1.0, 0.5 + avg_trend * 10))
-
-    return round(sustainability, 4)
+    return {
+        "sustainable": sustainable,
+        "margin": round(margin, 4),
+        "sustainability_score": round(sustainability_score, 4),
+        "projected_alpha": round(projected_alpha, 4),
+    }
 
 
 def d17_depth_first_push(
-    tree_size: int, base_alpha: float, simulate: bool = False
+    tree_size: int, base_alpha: float, depth_first: bool = True
 ) -> Dict[str, Any]:
     """D17 depth-first recursion for sustained alpha > 3.90.
 
@@ -1311,7 +1336,7 @@ def d17_depth_first_push(
     Args:
         tree_size: Number of nodes in tree
         base_alpha: Base alpha before recursion
-        simulate: Whether to run in simulation mode
+        depth_first: Whether to use depth-first traversal (default: True)
 
     Returns:
         Dict with D17 recursion results
@@ -1333,9 +1358,11 @@ def d17_depth_first_push(
 
     # Depth-first traversal bonus
     depth_first_bonus = 0.0
-    if d17_config.get("depth_first", D17_DEPTH_FIRST):
-        traversal = depth_first_traversal({}, 17)
-        depth_first_bonus = min(0.02, traversal["accumulated_alpha"] * 0.05)
+    if depth_first and d17_config.get("depth_first", D17_DEPTH_FIRST):
+        # Generate sample data for traversal
+        data = [[i * 0.01, (i % 10) * 0.1] for i in range(100)]
+        traversal = depth_first_traversal(data, max_depth=17)
+        depth_first_bonus = min(0.02, traversal["nodes_visited"] * 0.0001)
         adjusted_uplift += depth_first_bonus
 
     # Compute effective alpha
@@ -1352,11 +1379,17 @@ def d17_depth_first_push(
         alpha_history.append(d_alpha)
 
     # Check for asymptotic ceiling
-    plateau_detected = check_asymptotic_ceiling(alpha_history)
+    ceiling_result = check_asymptotic_ceiling(alpha_history)
+    plateau_detected = ceiling_result["plateau_detected"]
 
     # Compute uplift sustainability
-    history = [(d, alpha_history[d - 1], get_d17_uplift(d)) for d in range(1, 18)]
-    sustainability = compute_uplift_sustainability(history)
+    sustainability_result = compute_uplift_sustainability(
+        current_alpha=base_alpha,
+        target_alpha=D17_ALPHA_TARGET,
+        uplift=adjusted_uplift,
+        depth=17
+    )
+    sustainability = sustainability_result["sustainability_score"]
 
     # Check targets
     floor_met = eff_alpha >= d17_config.get("alpha_floor", D17_ALPHA_FLOOR)
@@ -1364,13 +1397,12 @@ def d17_depth_first_push(
     ceiling_met = eff_alpha >= d17_config.get("alpha_ceiling", D17_ALPHA_CEILING)
 
     result = {
-        "mode": "simulate" if simulate else "execute",
         "tree_size": tree_size,
         "base_alpha": base_alpha,
         "depth": 17,
         "uplift_from_spec": uplift,
         "scale_factor": round(scale_factor, 6),
-        "depth_first": d17_config.get("depth_first", D17_DEPTH_FIRST),
+        "depth_first": depth_first,
         "depth_first_bonus": round(depth_first_bonus, 4),
         "adjusted_uplift": round(adjusted_uplift, 4),
         "eff_alpha": round(eff_alpha, 4),
@@ -1465,10 +1497,9 @@ def d17_push(
 
     Receipt: d17_push_receipt
     """
-    result = d17_depth_first_push(tree_size, base_alpha, simulate)
+    result = d17_depth_first_push(tree_size, base_alpha, depth_first=True)
 
     push_result = {
-        "mode": result["mode"],
         "tree_size": tree_size,
         "base_alpha": base_alpha,
         "depth": 17,
@@ -1476,6 +1507,7 @@ def d17_push(
         "depth_first": result["depth_first"],
         "depth_first_bonus": result.get("depth_first_bonus", 0),
         "non_asymptotic": result["non_asymptotic"],
+        "plateau_detected": result.get("plateau_detected", False),
         "sustainability": result["sustainability"],
         "instability": result["instability"],
         "floor_met": result["floor_met"],
@@ -1518,10 +1550,10 @@ def d17_heliosphere_hybrid(
     Receipt: d17_heliosphere_hybrid_receipt
     """
     # Run D17 recursion
-    d17_result = d17_depth_first_push(tree_size, base_alpha, simulate)
+    d17_result = d17_depth_first_push(tree_size, base_alpha, depth_first=True)
 
     # Run Heliosphere Oort simulation
-    from .heliosphere_oort_sim import simulate_oort_coordination, get_heliosphere_status
+    from ...heliosphere_oort_sim import simulate_oort_coordination, get_heliosphere_status
 
     oort_result = simulate_oort_coordination(au=50000, duration_days=365)
     helio_status = get_heliosphere_status()

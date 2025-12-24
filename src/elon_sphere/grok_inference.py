@@ -50,6 +50,7 @@ def load_grok_config() -> Dict[str, Any]:
     result = {
         "enabled": config.get("enabled", True),
         "model": config.get("model", GROK_MODEL),
+        "model_version": config.get("model_version", GROK_MODEL),
         "parallel_agents": config.get("parallel_agents", GROK_PARALLEL_AGENTS),
         "latency_tuning": config.get("latency_tuning", GROK_LATENCY_TUNING),
         "ensemble_integration": config.get("ensemble_integration", True),
@@ -71,19 +72,19 @@ def load_grok_config() -> Dict[str, Any]:
     return result
 
 
-def initialize_grok_agents(count: int = GROK_PARALLEL_AGENTS, model: str = GROK_MODEL) -> List[Dict[str, Any]]:
+def initialize_grok_agents(agent_count: int = GROK_PARALLEL_AGENTS, model: str = GROK_MODEL) -> Dict[str, Any]:
     """Create parallel Grok agents.
 
     Args:
-        count: Number of agents
+        agent_count: Number of agents
         model: Grok model to use
 
     Returns:
-        List of agent configurations
+        Dict with agent configurations
     """
     agents = []
 
-    for i in range(count):
+    for i in range(agent_count):
         agent = {
             "agent_id": i,
             "model": model,
@@ -99,19 +100,42 @@ def initialize_grok_agents(count: int = GROK_PARALLEL_AGENTS, model: str = GROK_
         }
         agents.append(agent)
 
-    return agents
+    result = {
+        "agents": agents,
+        "agent_count": agent_count,
+        "model": model,
+        "initialized": True,
+    }
+
+    return result
 
 
-def parallel_inference(agents: List[Dict[str, Any]], inputs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def parallel_inference(prompts: List[str] = None, agents: List[Dict[str, Any]] = None, inputs: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Run parallel inference across agents.
 
     Args:
-        agents: List of Grok agents
-        inputs: List of inputs to process
+        prompts: List of prompts to process
+        agents: List of Grok agents (optional, will be initialized if not provided)
+        inputs: List of inputs to process (optional, alternative to prompts)
 
     Returns:
-        List of inference results
+        Dict with inference results
     """
+    # Initialize agents if not provided
+    if agents is None:
+        agents_data = initialize_grok_agents()
+        agents = agents_data["agents"]
+
+    # Use prompts if provided, otherwise use inputs
+    if prompts is not None:
+        inputs = [{"prompt": p} for p in prompts]
+        prompts_processed = len(prompts)
+    elif inputs is not None:
+        prompts_processed = len(inputs)
+    else:
+        inputs = []
+        prompts_processed = 0
+
     results = []
 
     for i, input_data in enumerate(inputs):
@@ -127,7 +151,11 @@ def parallel_inference(agents: List[Dict[str, Any]], inputs: List[Dict[str, Any]
         }
         results.append(result)
 
-    return results
+    return {
+        "prompts_processed": prompts_processed,
+        "results": results,
+        "agents_used": len(agents),
+    }
 
 
 def latency_tuning_loop(
@@ -145,7 +173,8 @@ def latency_tuning_loop(
     Receipt: grok_tuning_receipt
     """
     if not grok_agents:
-        grok_agents = initialize_grok_agents()
+        agents_data = initialize_grok_agents()
+        grok_agents = agents_data["agents"]
 
     if not ensemble:
         ensemble = [{"model_id": i, "accuracy": 0.85} for i in range(5)]
@@ -156,7 +185,8 @@ def latency_tuning_loop(
 
     for i in range(iterations):
         # Each Grok agent suggests hyperparameter adjustments
-        suggestions = parallel_inference(grok_agents, [{"iteration": i}])
+        inference_result = parallel_inference(agents=grok_agents, inputs=[{"iteration": i}])
+        suggestions = inference_result["results"]
 
         # Apply adjustments (simulated)
         improvement = sum(s["prediction"] for s in suggestions) / len(suggestions) * 0.01
@@ -194,11 +224,12 @@ def latency_tuning_loop(
 
 
 def ensemble_integration(
-    ml_models: List[Dict[str, Any]], grok_output: Dict[str, Any]
+    model_count: int = None, ml_models: List[Dict[str, Any]] = None, grok_output: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """Integrate Grok outputs with ML ensemble.
 
     Args:
+        model_count: Number of models to create (if ml_models not provided)
         ml_models: Existing ML models
         grok_output: Grok tuning output
 
@@ -207,8 +238,14 @@ def ensemble_integration(
 
     Receipt: grok_ensemble_receipt
     """
-    if not ml_models:
-        ml_models = [{"model_id": i, "accuracy": 0.85} for i in range(5)]
+    # Create models if not provided
+    if ml_models is None:
+        if model_count is None:
+            model_count = 5
+        ml_models = [{"model_id": i, "accuracy": 0.85} for i in range(model_count)]
+
+    if grok_output is None:
+        grok_output = {"total_improvement": 0.05}
 
     # Apply Grok improvements
     improved_models = []
@@ -221,10 +258,12 @@ def ensemble_integration(
         improved_models.append(improved)
 
     result = {
+        "model_count": len(ml_models),
         "original_models": len(ml_models),
         "improved_models": len(improved_models),
         "avg_accuracy_before": sum(m["accuracy"] for m in ml_models) / len(ml_models),
         "avg_accuracy_after": sum(m["accuracy"] for m in improved_models) / len(improved_models),
+        "integration_complete": True,
         "integration_successful": True,
     }
 

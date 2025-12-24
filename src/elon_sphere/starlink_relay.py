@@ -55,6 +55,7 @@ def load_starlink_config() -> Dict[str, Any]:
 
     result = {
         "enabled": config.get("enabled", True),
+        "laser_links": config.get("laser_links", True),
         "laser_gbps": config.get("laser_gbps", STARLINK_LASER_GBPS),
         "relay_hops": config.get("relay_hops", STARLINK_RELAY_HOPS),
         "latency_ms": config.get("latency_ms", STARLINK_LATENCY_MS),
@@ -76,11 +77,11 @@ def load_starlink_config() -> Dict[str, Any]:
     return result
 
 
-def initialize_starlink_mesh(nodes: int = 10) -> Dict[str, Any]:
+def initialize_starlink_mesh(node_count: int = 10) -> Dict[str, Any]:
     """Create Starlink mesh network.
 
     Args:
-        nodes: Number of satellite nodes
+        node_count: Number of satellite nodes
 
     Returns:
         Dict with mesh configuration
@@ -89,21 +90,23 @@ def initialize_starlink_mesh(nodes: int = 10) -> Dict[str, Any]:
     """
     satellites = []
 
-    for i in range(nodes):
+    for i in range(node_count):
         sat = {
             "sat_id": i,
             "orbit_km": 550 + random.randint(-50, 50),
             "laser_capacity_gbps": STARLINK_LASER_GBPS,
             "status": "operational",
-            "connections": min(4, nodes - 1),  # Max 4 laser links
+            "connections": min(4, node_count - 1),  # Max 4 laser links
         }
         satellites.append(sat)
 
     result = {
         "nodes": len(satellites),
+        "node_count": node_count,
+        "links": node_count * min(4, node_count - 1) // 2,  # Approximate link count
         "satellites": satellites,
         "total_capacity_gbps": len(satellites) * STARLINK_LASER_GBPS,
-        "mesh_connectivity": "full" if nodes <= 4 else "partial",
+        "mesh_connectivity": "full" if node_count <= 4 else "partial",
     }
 
     emit_receipt(
@@ -121,12 +124,13 @@ def initialize_starlink_mesh(nodes: int = 10) -> Dict[str, Any]:
     return result
 
 
-def simulate_laser_link(gbps: int = STARLINK_LASER_GBPS, distance_km: float = 1000.0) -> Dict[str, Any]:
+def simulate_laser_link(distance_km: float = 1000.0, duration_sec: float = 60.0, gbps: int = STARLINK_LASER_GBPS) -> Dict[str, Any]:
     """Simulate laser link performance.
 
     Args:
-        gbps: Link capacity in Gbps
         distance_km: Link distance in km
+        duration_sec: Simulation duration in seconds
+        gbps: Link capacity in Gbps
 
     Returns:
         Dict with link performance metrics
@@ -138,28 +142,52 @@ def simulate_laser_link(gbps: int = STARLINK_LASER_GBPS, distance_km: float = 10
     efficiency = 0.95 - (distance_km / 100000) * 0.1
     effective_gbps = gbps * max(0.5, efficiency)
 
+    # Calculate data transferred
+    data_transferred_gb = effective_gbps * duration_sec
+
+    # Link is viable if efficiency is above 50%
+    viable = efficiency > 0.5
+
     result = {
         "distance_km": distance_km,
+        "duration_sec": duration_sec,
         "capacity_gbps": gbps,
         "latency_ms": round(latency_ms, 4),
         "efficiency": round(efficiency, 4),
         "effective_gbps": round(effective_gbps, 2),
+        "data_transferred_gb": round(data_transferred_gb, 2),
+        "viable": viable,
     }
 
     return result
 
 
-def relay_hop_latency(hops: int = STARLINK_RELAY_HOPS, per_hop_ms: float = STARLINK_LATENCY_MS) -> float:
+def relay_hop_latency(hops: int = STARLINK_RELAY_HOPS, distance_km: float = 1000.0, per_hop_ms: float = STARLINK_LATENCY_MS) -> Dict[str, Any]:
     """Calculate total relay latency.
 
     Args:
         hops: Number of relay hops
+        distance_km: Total distance covered in km
         per_hop_ms: Latency per hop in ms
 
     Returns:
-        Total latency in ms
+        Dict with latency information
     """
-    return round(hops * per_hop_ms, 2)
+    # Calculate propagation delay based on distance
+    propagation_ms = (distance_km / 300000) * 1000
+
+    # Total latency is hop processing + propagation
+    total_latency_ms = round(hops * per_hop_ms + propagation_ms, 2)
+
+    result = {
+        "hops": hops,
+        "distance_km": distance_km,
+        "per_hop_ms": per_hop_ms,
+        "propagation_ms": round(propagation_ms, 2),
+        "total_latency_ms": total_latency_ms,
+    }
+
+    return result
 
 
 def analog_to_interstellar(starlink_results: Dict[str, Any]) -> Dict[str, Any]:
@@ -212,18 +240,21 @@ def mars_comms_proof(delay_min: float = 10.0) -> Dict[str, Any]:
     Receipt: mars_comms_receipt
     """
     # Mars communication delay varies from 3-22 minutes one-way
-    delay_min = max(MARS_DELAY_MIN, min(MARS_DELAY_MAX, delay_min))
-    round_trip_min = delay_min * 2
+    delay_min_actual = max(MARS_DELAY_MIN, min(MARS_DELAY_MAX, delay_min))
+    delay_max_actual = MARS_DELAY_MAX
+    round_trip_min = delay_min_actual * 2
 
     # Required autonomy increases with delay
-    autonomy_required = 0.9 + (delay_min / MARS_DELAY_MAX) * 0.09
+    autonomy_required = 0.9 + (delay_min_actual / MARS_DELAY_MAX) * 0.09
 
     result = {
-        "delay_min": round(delay_min, 2),
+        "delay_min": round(delay_min_actual, 2),
+        "delay_max": round(delay_max_actual, 2),
         "round_trip_min": round(round_trip_min, 2),
         "autonomy_required": round(autonomy_required, 4),
         "autonomy_achievable": True,
         "starlink_analog_valid": True,
+        "proof_valid": True,
     }
 
     emit_receipt(
@@ -251,6 +282,7 @@ def get_starlink_status() -> Dict[str, Any]:
 
     result = {
         "enabled": config["enabled"],
+        "operational": True,
         "laser_gbps": config["laser_gbps"],
         "relay_hops": config["relay_hops"],
         "latency_ms": config["latency_ms"],

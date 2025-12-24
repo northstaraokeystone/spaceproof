@@ -15,8 +15,8 @@ from src.core import TENANT_ID, dual_hash, emit_receipt
 
 # === CONSTANTS ===
 
-XAI_COLOSSUS_SCALE = "II"
-"""xAI Colossus generation."""
+XAI_COLOSSUS_SCALE = 200000
+"""xAI Colossus scale (GPU count)."""
 
 XAI_QUANTUM_SIM_CAPACITY = 10**12
 """Quantum simulation capacity (pairs)."""
@@ -46,6 +46,7 @@ def load_xai_config() -> Dict[str, Any]:
 
     result = {
         "enabled": config.get("enabled", True),
+        "cluster_name": config.get("cluster_name", "colossus-ii"),
         "scale": config.get("scale", XAI_COLOSSUS_SCALE),
         "quantum_sim_capacity": config.get("quantum_sim_capacity", XAI_QUANTUM_SIM_CAPACITY),
         "entanglement_modeling": config.get("entanglement_modeling", True),
@@ -67,10 +68,11 @@ def load_xai_config() -> Dict[str, Any]:
     return result
 
 
-def initialize_colossus(scale: str = XAI_COLOSSUS_SCALE) -> Dict[str, Any]:
+def initialize_colossus(gpu_count: int = None, scale: str = "II") -> Dict[str, Any]:
     """Initialize Colossus compute cluster.
 
     Args:
+        gpu_count: Number of GPUs (overrides scale if provided)
         scale: Colossus generation (I, II, etc.)
 
     Returns:
@@ -84,11 +86,25 @@ def initialize_colossus(scale: str = XAI_COLOSSUS_SCALE) -> Dict[str, Any]:
 
     cluster_spec = specs.get(scale, specs["II"])
 
+    # Override with gpu_count if provided
+    if gpu_count is not None:
+        gpus = gpu_count
+        # Scale other resources proportionally
+        ratio = gpu_count / cluster_spec["gpus"]
+        flops = int(cluster_spec["flops"] * ratio)
+        memory_tb = int(cluster_spec["memory_tb"] * ratio)
+    else:
+        gpus = cluster_spec["gpus"]
+        flops = cluster_spec["flops"]
+        memory_tb = cluster_spec["memory_tb"]
+
     result = {
         "scale": scale,
-        "gpus": cluster_spec["gpus"],
-        "peak_flops": cluster_spec["flops"],
-        "memory_tb": cluster_spec["memory_tb"],
+        "gpu_count": gpus,
+        "gpus": gpus,
+        "peak_flops": flops,
+        "memory_tb": memory_tb,
+        "initialized": True,
         "status": "initialized",
         "utilization": 0.0,
     }
@@ -96,18 +112,26 @@ def initialize_colossus(scale: str = XAI_COLOSSUS_SCALE) -> Dict[str, Any]:
     return result
 
 
-def quantum_sim_batch(pairs: int = 1000, iterations: int = 100) -> Dict[str, Any]:
+def quantum_sim_batch(qubits: int = 50, shots: int = 100, pairs: int = None, iterations: int = None) -> Dict[str, Any]:
     """Run batch quantum simulation.
 
     Args:
-        pairs: Number of entanglement pairs
-        iterations: Simulation iterations
+        qubits: Number of qubits to simulate
+        shots: Number of shots/measurements
+        pairs: Number of entanglement pairs (legacy parameter)
+        iterations: Simulation iterations (legacy parameter)
 
     Returns:
         Dict with simulation results
 
     Receipt: xai_quantum_receipt
     """
+    # Use qubits/shots if provided, otherwise fall back to pairs/iterations
+    if pairs is None:
+        pairs = qubits * 20  # Approximate pairs from qubits
+    if iterations is None:
+        iterations = shots
+
     # Simulate quantum correlation computation
     correlations = []
     for _ in range(iterations):
@@ -117,7 +141,19 @@ def quantum_sim_batch(pairs: int = 1000, iterations: int = 100) -> Dict[str, Any
 
     mean_correlation = sum(correlations) / len(correlations)
 
+    # Generate simulated measurement results
+    sim_results = []
+    for _ in range(shots):
+        # Simulate measurement outcomes
+        outcome = {
+            "measurement": random.choice(["0" * qubits, "1" * qubits]),
+            "probability": random.uniform(0.4, 0.6),
+        }
+        sim_results.append(outcome)
+
     result = {
+        "qubits": qubits,
+        "shots": shots,
         "pairs_simulated": pairs,
         "iterations": iterations,
         "total_operations": pairs * iterations,
@@ -125,6 +161,7 @@ def quantum_sim_batch(pairs: int = 1000, iterations: int = 100) -> Dict[str, Any
         "bell_violations_detected": int(iterations * 0.95),
         "simulation_time_ms": random.uniform(100, 500),
         "target_met": mean_correlation >= 0.98,
+        "results": sim_results,
     }
 
     emit_receipt(
@@ -143,30 +180,43 @@ def quantum_sim_batch(pairs: int = 1000, iterations: int = 100) -> Dict[str, Any
     return result
 
 
-def entanglement_modeling(pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
+def entanglement_modeling(pairs: int = None, pair_list: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Model entanglement dynamics at scale.
 
     Args:
-        pairs: List of entanglement pairs
+        pairs: Number of entanglement pairs to model
+        pair_list: List of entanglement pairs (legacy parameter)
 
     Returns:
         Dict with modeling results
     """
-    if not pairs:
-        pairs = [{"pair_id": i, "correlation": 0.98} for i in range(1000)]
+    # Create pair list if integer count provided
+    if pairs is not None and isinstance(pairs, int):
+        pair_list = [{"pair_id": i, "correlation": 0.98} for i in range(pairs)]
+    elif pair_list is None:
+        pair_list = [{"pair_id": i, "correlation": 0.98} for i in range(1000)]
 
     # Simulate dynamics
     decoherence_times = []
-    for pair in pairs:
+    correlations = []
+    for pair in pair_list:
         # T2 decoherence time simulation
         t2 = random.uniform(0.1, 1.0)  # Arbitrary units
         decoherence_times.append(t2)
 
+        # Correlation values
+        corr = pair.get("correlation", random.uniform(0.95, 0.99))
+        correlations.append(corr)
+
     avg_t2 = sum(decoherence_times) / len(decoherence_times)
+    avg_correlation = sum(correlations) / len(correlations)
 
     result = {
-        "pairs_modeled": len(pairs),
+        "pairs": len(pair_list),
+        "pairs_modeled": len(pair_list),
         "avg_decoherence_time": round(avg_t2, 4),
+        "avg_correlation": round(avg_correlation, 4),
+        "correlations": correlations,
         "coherence_maintained_ratio": round(sum(1 for t in decoherence_times if t > 0.5) / len(decoherence_times), 4),
         "modeling_successful": True,
     }
@@ -229,6 +279,7 @@ def get_xai_status() -> Dict[str, Any]:
 
     result = {
         "enabled": config["enabled"],
+        "cluster": config.get("cluster_name", "colossus-ii"),
         "scale": config["scale"],
         "quantum_sim_capacity": config["quantum_sim_capacity"],
         "entanglement_modeling": config["entanglement_modeling"],

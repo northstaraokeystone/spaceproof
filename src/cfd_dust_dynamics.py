@@ -2515,29 +2515,36 @@ def load_ml_90s_config() -> Dict[str, Any]:
     return config
 
 
-def initialize_90s_ensemble(model_types: Optional[list] = None) -> list:
+def initialize_90s_ensemble(model_types: Optional[list] = None) -> Dict[str, Any]:
     """Initialize 7-model ensemble for 90s forecasting.
 
     Args:
         model_types: List of model types (default: 7 models)
 
     Returns:
-        List of initialized model stubs
+        Dict with initialized models, weights, and configuration
     """
     if model_types is None:
         model_types = ML_90S_MODEL_TYPES
 
     models = []
+    weights = {}
+
     for model_type in model_types:
         models.append({
             "type": model_type,
             "initialized": True,
             "horizon": ML_90S_PREDICTION_HORIZON_S,
-            "weights": [1.0 / len(model_types)],
             "version": "d17",
         })
+        # Equal weights for all models
+        weights[model_type] = 1.0 / len(model_types)
 
-    return models
+    return {
+        "models": models,
+        "weights": weights,
+        "prediction_horizon_s": ML_90S_PREDICTION_HORIZON_S,
+    }
 
 
 def ml_ensemble_forecast_90s(
@@ -2557,22 +2564,34 @@ def ml_ensemble_forecast_90s(
     Receipt: ml_ensemble_90s_forecast_receipt
     """
     config = load_ml_90s_config()
-    models = initialize_90s_ensemble(config.get("model_types", ML_90S_MODEL_TYPES))
+    ensemble = initialize_90s_ensemble(config.get("model_types", ML_90S_MODEL_TYPES))
+    models = ensemble["models"]
 
     # Generate predictions from each model
     import random
 
     predictions = []
+    model_contributions = []
     for model in models:
         # Simulated prediction with model-specific variance
         base_prediction = 0.5 + random.uniform(-0.1, 0.1)
         # Extended horizon introduces more uncertainty
         horizon_factor = 1.0 + (horizon_s - 60) * 0.001
         prediction = base_prediction * horizon_factor
+        confidence = round(0.88 + random.uniform(-0.05, 0.05), 4)
+
         predictions.append({
             "model_type": model["type"],
             "prediction": round(prediction, 4),
-            "confidence": round(0.88 + random.uniform(-0.05, 0.05), 4),
+            "confidence": confidence,
+        })
+
+        # Track model contributions
+        model_contributions.append({
+            "model": model["type"],
+            "contribution": round(prediction, 4),
+            "weight": ensemble["weights"][model["type"]],
+            "confidence": confidence,
         })
 
     # Compute agreement
@@ -2589,16 +2608,26 @@ def ml_ensemble_forecast_90s(
     ) / total_conf if total_conf > 0 else mean_pred
 
     # Apply extended horizon correction
-    corrected_pred = extended_horizon_correction([weighted_pred], horizon_s)[0]
+    correction_result = extended_horizon_correction([weighted_pred], horizon_s)
+    corrected_pred = correction_result["corrected_predictions"][0]
 
     # Compute accuracy (simulated)
     accuracy = min(0.95, 0.85 + agreement * 0.1)
+
+    # Confidence interval based on variance
+    std_dev = variance ** 0.5
+    confidence_interval = {
+        "lower": round(corrected_pred - 1.96 * std_dev, 4),
+        "upper": round(corrected_pred + 1.96 * std_dev, 4),
+    }
 
     result = {
         "horizon_s": horizon_s,
         "model_count": len(models),
         "model_types": [m["type"] for m in models],
         "predictions": predictions,
+        "model_contributions": model_contributions,
+        "confidence_interval": confidence_interval,
         "mean_prediction": round(mean_pred, 4),
         "weighted_prediction": round(weighted_pred, 4),
         "corrected_prediction": round(corrected_pred, 4),
@@ -2658,7 +2687,7 @@ def compute_90s_accuracy(predictions: list, actual: list) -> float:
     return round(accuracy, 4)
 
 
-def extended_horizon_correction(predictions: list, horizon: int) -> list:
+def extended_horizon_correction(predictions: list, horizon_s: int) -> Dict[str, Any]:
     """Apply correction for extended prediction horizon.
 
     Extended horizons (90s vs 60s) introduce more uncertainty.
@@ -2666,16 +2695,22 @@ def extended_horizon_correction(predictions: list, horizon: int) -> list:
 
     Args:
         predictions: List of raw predictions
-        horizon: Prediction horizon in seconds
+        horizon_s: Prediction horizon in seconds
 
     Returns:
-        List of corrected predictions
+        Dict with corrected predictions and correction factor
     """
-    # Correction factor: slight dampening for extended horizon
-    # 60s = 1.0, 90s = 0.98
-    correction_factor = 1.0 - (horizon - 60) * 0.0007
+    # Correction factor increases with horizon
+    # 60s = 1.0, 90s = 1.021, etc.
+    # Longer horizons need more correction applied
+    correction_factor = 1.0 + (horizon_s - 60) * 0.0007
 
-    return [round(p * correction_factor, 4) for p in predictions]
+    corrected_predictions = [round(p * correction_factor, 4) for p in predictions]
+
+    return {
+        "corrected_predictions": corrected_predictions,
+        "correction_factor": round(correction_factor, 4),
+    }
 
 
 def get_ml_90s_info() -> Dict[str, Any]:

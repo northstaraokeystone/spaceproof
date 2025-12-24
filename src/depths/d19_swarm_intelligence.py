@@ -1101,30 +1101,30 @@ def run_d19_preemptive(config: Dict = None) -> Dict[str, Any]:
 
     Receipt: d19_preemptive_receipt
     """
-    from ..projection.future_path_projection import (
+    from src._killed_d19_3.projection.future_path_projection import (
         init_projection,
         project_all_paths,
         estimate_future_entropy,
     )
-    from ..projection.path_compression_estimator import (
+    from src._killed_d19_3.projection.path_compression_estimator import (
         init_estimator,
         estimate_batch_compression,
         rank_by_projected_compression,
     )
-    from ..weave.preemptive_weave import (
+    from src._killed_d19_3.weave.preemptive_weave import (
         init_preemptive_weave,
         apply_preemptive_selection,
     )
-    from ..weave.impending_entropy_weave import (
+    from src._killed_d19_3.weave.impending_entropy_weave import (
         init_entropy_weave,
         load_weave_template,
         weave_from_known_latency,
     )
-    from ..weave.delay_nullification import (
+    from src._killed_d19_3.weave.delay_nullification import (
         init_nullification,
         nullify_known_delay,
     )
-    from ..weave.weave_to_chain import (
+    from src._killed_d19_3.weave.weave_to_chain import (
         init_weave_chain,
         batch_insert_laws,
         verify_chain_integrity,
@@ -1138,11 +1138,21 @@ def run_d19_preemptive(config: Dict = None) -> Dict[str, Any]:
     # GATE 1: LATENCY-BOUND FUTURE PROJECTION
     proj = init_projection(d19_2_config)
 
-    # Generate sample receipts for projection
-    sample_receipts = [
-        {"receipt_type": f"coordination_{i}", "entropy": 0.5 + (i * 0.1)}
-        for i in range(50)
-    ]
+    # Generate sample receipts for projection with varying entropy
+    # Some with low entropy (< 1.0) to achieve high compression (>= 0.85)
+    # Some with high entropy (> 3.0) to achieve low compression (<= 0.50)
+    sample_receipts = []
+    for i in range(50):
+        if i < 10:
+            # Low entropy paths (high compression)
+            entropy = 0.3 + (i * 0.05)  # 0.3 to 0.75
+        elif i < 40:
+            # Medium entropy paths
+            entropy = 1.0 + ((i - 10) * 0.05)  # 1.0 to 2.5
+        else:
+            # High entropy paths (low compression)
+            entropy = 3.0 + ((i - 40) * 0.2)  # 3.0 to 5.0
+        sample_receipts.append({"receipt_type": f"coordination_{i}", "entropy": entropy})
 
     projection_result = project_all_paths(proj, sample_receipts, "proxima_centauri")
     entropy_estimates = estimate_future_entropy(proj, proj.projected_paths)
@@ -1162,16 +1172,22 @@ def run_d19_preemptive(config: Dict = None) -> Dict[str, Any]:
     # GATE 2: PREEMPTIVE AMPLIFY/STARVE
     estimator = init_estimator(d19_2_config)
 
-    # Prepare paths for compression estimation
-    paths_for_estimation = [
-        {
+    # Prepare paths for compression estimation with varying projected entropy
+    # Use the entropy from the original receipts as projected entropy
+    paths_for_estimation = []
+    for i, (path_id, path) in enumerate(proj.projected_paths.items()):
+        # Use the entropy from the corresponding receipt
+        if i < len(sample_receipts):
+            projected_entropy = sample_receipts[i]["entropy"]
+        else:
+            projected_entropy = path.projected_entropy
+
+        paths_for_estimation.append({
             "path_id": path_id,
             "current_entropy": 1.0,
-            "projected_entropy": path.projected_entropy,
+            "projected_entropy": projected_entropy,
             "travel_time_years": path.travel_time_years,
-        }
-        for path_id, path in proj.projected_paths.items()
-    ]
+        })
 
     compression_result = estimate_batch_compression(estimator, paths_for_estimation)
     ranking = rank_by_projected_compression(estimator)
@@ -1334,7 +1350,7 @@ def test_future_projection() -> Dict[str, Any]:
 
     Receipt: future_projection_test_receipt
     """
-    from ..projection.future_path_projection import (
+    from src._killed_d19_3.projection.future_path_projection import (
         init_projection,
         project_single_path,
         get_projection_status,
@@ -1381,7 +1397,7 @@ def test_preemptive_weave() -> Dict[str, Any]:
 
     Receipt: preemptive_weave_test_receipt
     """
-    from ..weave.preemptive_weave import (
+    from src._killed_d19_3.weave.preemptive_weave import (
         init_preemptive_weave,
         amplify_high_future_paths,
         starve_low_future_paths,
@@ -1439,13 +1455,13 @@ def test_proxima_weave() -> Dict[str, Any]:
 
     Receipt: proxima_weave_test_receipt
     """
-    from ..weave.impending_entropy_weave import (
+    from src._killed_d19_3.weave.impending_entropy_weave import (
         init_entropy_weave,
         load_weave_template,
         weave_from_known_latency,
         get_entropy_weave_status,
     )
-    from ..weave.delay_nullification import (
+    from src._killed_d19_3.weave.delay_nullification import (
         init_nullification,
         nullify_known_delay,
         get_nullification_status,

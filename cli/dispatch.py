@@ -501,11 +501,8 @@ from cli.swarm import (
     cmd_swarm_stress,
     cmd_swarm_status,
     cmd_testnet_info,
-    cmd_testnet_ethereum,
-    cmd_testnet_solana,
     cmd_testnet_bridge,
     cmd_testnet_cross_chain,
-    cmd_testnet_sync,
     cmd_testnet_status,
     cmd_testnet_stress,
 )
