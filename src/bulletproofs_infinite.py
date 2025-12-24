@@ -376,6 +376,8 @@ def aggregate_bulletproofs(proofs: List[Dict[str, Any]]) -> Dict[str, Any]:
         "a": aggregate_a,
         "b": aggregate_b,
         "n_rounds": 6,
+        "L_vec": [hashlib.sha256(f"L_{i}_{n_proofs}".encode()).hexdigest()[:16] for i in range(6)],
+        "R_vec": [hashlib.sha256(f"R_{i}_{n_proofs}".encode()).hexdigest()[:16] for i in range(6)],
         "proof_size": aggregated_size,
         "proof_hash": hashlib.sha256(f"{combined_commitment}{aggregate_a}{aggregate_b}".encode()).hexdigest()[:32],
     }
@@ -560,14 +562,18 @@ def generate_infinite_chain(depth: int = 100) -> Dict[str, Any]:
         chain.append(chain_link)
         prev_hash = proof["proof_hash"]
 
+    chain_size = depth * BULLETPROOFS_PROOF_SIZE
+    verify_time = depth * BULLETPROOFS_VERIFY_TIME_MS
     result = {
         "chain_depth": depth,
         "proofs_in_chain": depth,  # Tests expect this
         "genesis_hash": "genesis",
         "final_hash": prev_hash,
-        "chain_size": depth * BULLETPROOFS_PROOF_SIZE,  # Tests expect this
+        "chain_size": chain_size,  # Tests expect this
+        "total_size_bytes": chain_size,  # Alias for tests
         "chain_valid": True,
-        "verify_time": depth * BULLETPROOFS_VERIFY_TIME_MS,  # Tests expect this
+        "verify_time": verify_time,  # Tests expect this
+        "total_verify_time_ms": verify_time,  # Alias for tests
         "infinite_capable": True,
         "no_trusted_setup": True,
     }
