@@ -46,6 +46,7 @@ def load_dojo_config() -> Dict[str, Any]:
 
     result = {
         "enabled": config.get("enabled", True),
+        "cluster_name": config.get("cluster_name", "dojo-v2"),
         "recursion_training": config.get("recursion_training", DOJO_RECURSION_TRAINING),
         "batch_size": config.get("batch_size", DOJO_BATCH_SIZE),
         "fractal_optimization": config.get("fractal_optimization", True),
@@ -67,28 +68,38 @@ def load_dojo_config() -> Dict[str, Any]:
     return result
 
 
-def initialize_dojo_cluster() -> Dict[str, Any]:
+def initialize_dojo_cluster(tile_count: int = 25) -> Dict[str, Any]:
     """Initialize Dojo compute cluster.
+
+    Args:
+        tile_count: Number of D1 chip tiles
 
     Returns:
         Dict with cluster configuration
     """
+    # Scale resources based on tile count
+    base_tiles = 25
+    ratio = tile_count / base_tiles
+
     result = {
-        "tiles": 25,  # D1 chip tiles
-        "cabinets": 10,
-        "total_compute_pflops": 1000,  # Exascale target
-        "memory_tb": 500,
-        "interconnect_tbps": 100,
+        "tile_count": tile_count,
+        "tiles": tile_count,  # D1 chip tiles
+        "cabinets": int(10 * ratio),
+        "total_compute_pflops": int(1000 * ratio),  # Exascale target
+        "memory_tb": int(500 * ratio),
+        "interconnect_tbps": int(100 * ratio),
+        "initialized": True,
         "status": "initialized",
     }
 
     return result
 
 
-def offload_recursion_training(depth: int = 18, batch_size: int = DOJO_BATCH_SIZE) -> Dict[str, Any]:
+def offload_recursion_training(tree_size: int = None, depth: int = 18, batch_size: int = None) -> Dict[str, Any]:
     """Offload fractal recursion training to Dojo.
 
     Args:
+        tree_size: Size of the fractal tree
         depth: Fractal recursion depth
         batch_size: Training batch size
 
@@ -97,6 +108,12 @@ def offload_recursion_training(depth: int = 18, batch_size: int = DOJO_BATCH_SIZ
 
     Receipt: dojo_training_receipt
     """
+    # Set defaults
+    if tree_size is None:
+        tree_size = 10**6
+    if batch_size is None:
+        batch_size = DOJO_BATCH_SIZE
+
     # Simulate training job
     epochs = 10
     training_results = []
@@ -116,6 +133,7 @@ def offload_recursion_training(depth: int = 18, batch_size: int = DOJO_BATCH_SIZ
     final_accuracy = 1.0 - current_loss
 
     result = {
+        "tree_size": tree_size,
         "depth": depth,
         "batch_size": batch_size,
         "epochs": epochs,
@@ -124,6 +142,7 @@ def offload_recursion_training(depth: int = 18, batch_size: int = DOJO_BATCH_SIZ
         "final_accuracy": round(final_accuracy, 4),
         "training_time_s": random.uniform(100, 500),
         "training_successful": final_accuracy >= 0.9,
+        "offload_complete": True,
         "job_id": f"dojo_job_{random.randint(1000, 9999)}",
     }
 
@@ -144,19 +163,30 @@ def offload_recursion_training(depth: int = 18, batch_size: int = DOJO_BATCH_SIZ
     return result
 
 
-def fractal_optimization_batch(trees: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def fractal_optimization_batch(batch_size: int = None, epochs: int = None, trees: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Optimize batch of fractal trees on Dojo.
 
     Args:
-        trees: List of fractal trees to optimize
+        batch_size: Number of trees in the batch
+        epochs: Number of optimization epochs
+        trees: List of fractal trees to optimize (legacy parameter)
 
     Returns:
-        List of optimized trees
+        Dict with optimization results
 
     Receipt: dojo_optimization_receipt
     """
-    if not trees:
-        trees = [{"tree_id": i, "nodes": 1000, "depth": 10} for i in range(100)]
+    # Create trees if not provided
+    if trees is None:
+        if batch_size is None:
+            batch_size = 100
+        trees = [{"tree_id": i, "nodes": 1000, "depth": 10} for i in range(batch_size)]
+    else:
+        if batch_size is None:
+            batch_size = len(trees)
+
+    if epochs is None:
+        epochs = 5
 
     optimized = []
     for tree in trees:
@@ -172,6 +202,16 @@ def fractal_optimization_batch(trees: List[Dict[str, Any]]) -> List[Dict[str, An
     avg_compression = sum(t["compression_ratio"] for t in optimized) / len(optimized)
     avg_speedup = sum(t["speedup"] for t in optimized) / len(optimized)
 
+    result = {
+        "batch_size": batch_size,
+        "epochs": epochs,
+        "trees_optimized": len(optimized),
+        "avg_compression": round(avg_compression, 4),
+        "avg_speedup": round(avg_speedup, 2),
+        "optimization_complete": True,
+        "optimized_trees": optimized,
+    }
+
     emit_receipt(
         "dojo_optimization",
         {
@@ -185,7 +225,7 @@ def fractal_optimization_batch(trees: List[Dict[str, Any]]) -> List[Dict[str, An
         },
     )
 
-    return optimized
+    return result
 
 
 def retrieve_trained_model(job_id: str) -> Dict[str, Any]:
@@ -219,6 +259,7 @@ def get_dojo_status() -> Dict[str, Any]:
 
     result = {
         "enabled": config["enabled"],
+        "cluster": config.get("cluster_name", "dojo-v2"),
         "recursion_training": config["recursion_training"],
         "batch_size": config["batch_size"],
         "fractal_optimization": config["fractal_optimization"],

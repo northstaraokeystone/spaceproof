@@ -430,12 +430,18 @@ def compute_lyapunov_exponent(
 def simulate_chaos(
     bodies: int = NBODY_COUNT,
     duration_years: float = CHAOS_DURATION_YEARS,
+    iterations: Optional[int] = None,
+    dt: Optional[float] = None,
+    simulate: bool = True,
 ) -> Dict[str, Any]:
     """Run full chaotic n-body simulation.
 
     Args:
         bodies: Number of bodies to simulate
         duration_years: Duration in simulated years
+        iterations: Number of iterations (overrides duration_years if provided)
+        dt: Timestep in days (overrides config if provided)
+        simulate: If True, return mode="simulate", else mode="execute"
 
     Returns:
         Dict with simulation results
@@ -449,10 +455,15 @@ def simulate_chaos(
     body_states = initialize_bodies(config)
 
     # Simulation parameters
-    dt = config.get("timestep_days", NBODY_TIMESTEP_DAYS)
-    days_per_year = 365.25
-    total_days = duration_years * days_per_year
-    n_steps = int(total_days / dt)
+    if dt is None:
+        dt = config.get("timestep_days", NBODY_TIMESTEP_DAYS)
+
+    if iterations is not None:
+        n_steps = iterations
+    else:
+        days_per_year = 365.25
+        total_days = duration_years * days_per_year
+        n_steps = int(total_days / dt)
 
     # Record initial energy
     initial_energy = compute_total_energy(body_states)
@@ -487,9 +498,14 @@ def simulate_chaos(
     is_stable = lyapunov < lyapunov_threshold
     stability = 1.0 if is_stable else max(0.0, 1.0 - lyapunov / lyapunov_threshold)
 
+    # Determine mode
+    mode = "simulate" if simulate else "execute"
+
     result = {
+        "mode": mode,
         "body_count": len(body_states),
-        "duration_years": duration_years,
+        "iterations": n_steps,
+        "duration_years": duration_years if iterations is None else None,
         "timestep_days": dt,
         "n_steps": n_steps,
         "integration_method": "symplectic",
@@ -603,14 +619,15 @@ def perturb_body(
     return bodies
 
 
-def run_monte_carlo_stability(n_runs: int = 100) -> Dict[str, Any]:
+def run_monte_carlo_stability(runs: int = 100, simulate: bool = True) -> Dict[str, Any]:
     """Run Monte Carlo stability analysis.
 
     Performs multiple simulations with random initial conditions
     to estimate statistical stability.
 
     Args:
-        n_runs: Number of Monte Carlo runs
+        runs: Number of Monte Carlo runs
+        simulate: If True, run in simulate mode
 
     Returns:
         Dict with statistical results
@@ -623,11 +640,12 @@ def run_monte_carlo_stability(n_runs: int = 100) -> Dict[str, Any]:
     lyapunov_values = []
     stability_values = []
 
-    for _ in range(n_runs):
+    for _ in range(runs):
         # Short simulation for each run
         result = simulate_chaos(
             bodies=config.get("body_count", NBODY_COUNT),
             duration_years=10,  # Shorter for Monte Carlo
+            simulate=simulate,
         )
 
         lyapunov_values.append(result["lyapunov_exponent"])
@@ -639,15 +657,16 @@ def run_monte_carlo_stability(n_runs: int = 100) -> Dict[str, Any]:
     # Compute statistics
     mean_lyapunov = sum(lyapunov_values) / len(lyapunov_values)
     mean_stability = sum(stability_values) / len(stability_values)
-    stable_fraction = stable_count / n_runs
+    stable_fraction = stable_count / runs
 
     result = {
-        "n_runs": n_runs,
-        "stable_count": stable_count,
-        "stable_fraction": round(stable_fraction, 4),
+        "runs": runs,
+        "stable_runs": stable_count,
+        "unstable_runs": runs - stable_count,
+        "stability_rate": round(stable_fraction, 4),
         "mean_lyapunov": round(mean_lyapunov, 6),
         "mean_stability": round(mean_stability, 4),
-        "target": CHAOTIC_STABILITY_TARGET,
+        "stability_target": CHAOTIC_STABILITY_TARGET,
         "target_met": stable_fraction >= CHAOTIC_STABILITY_TARGET,
     }
 
@@ -657,14 +676,14 @@ def run_monte_carlo_stability(n_runs: int = 100) -> Dict[str, Any]:
             "receipt_type": "monte_carlo_stability",
             "tenant_id": TENANT_ID,
             "ts": datetime.utcnow().isoformat() + "Z",
-            "n_runs": n_runs,
+            "n_runs": runs,
             "stable_fraction": round(stable_fraction, 4),
             "mean_lyapunov": round(mean_lyapunov, 6),
             "target_met": stable_fraction >= CHAOTIC_STABILITY_TARGET,
             "payload_hash": dual_hash(
                 json.dumps(
                     {
-                        "n_runs": n_runs,
+                        "n_runs": runs,
                         "stable_fraction": round(stable_fraction, 4),
                     },
                     sort_keys=True,
@@ -676,7 +695,7 @@ def run_monte_carlo_stability(n_runs: int = 100) -> Dict[str, Any]:
     return result
 
 
-def compute_backbone_chaos_tolerance(sim_results: Optional[Dict[str, Any]] = None) -> float:
+def compute_backbone_chaos_tolerance(sim_results: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Compute backbone chaos tolerance from simulation results.
 
     Combines stability, energy conservation, and Lyapunov exponent
@@ -686,7 +705,7 @@ def compute_backbone_chaos_tolerance(sim_results: Optional[Dict[str, Any]] = Non
         sim_results: Results from simulate_chaos() (optional, runs sim if not provided)
 
     Returns:
-        Tolerance value in [0, 1], target is >= 0.95
+        Dict with tolerance, lyapunov_exponent, stability, backbone_compatible
     """
     # Run simulation if no results provided
     if sim_results is None:
@@ -710,7 +729,15 @@ def compute_backbone_chaos_tolerance(sim_results: Optional[Dict[str, Any]] = Non
         + lyapunov_weight * lyapunov_factor
     )
 
-    return round(tolerance, 4)
+    tolerance = round(tolerance, 4)
+    backbone_compatible = tolerance >= CHAOTIC_STABILITY_TARGET
+
+    return {
+        "tolerance": tolerance,
+        "lyapunov_exponent": lyapunov,
+        "stability": stability,
+        "backbone_compatible": backbone_compatible,
+    }
 
 
 def get_chaos_info() -> Dict[str, Any]:

@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..core import emit_receipt, dual_hash, TENANT_ID, StopRule
+from src.core import emit_receipt, dual_hash, TENANT_ID, StopRule
 
 # === D19.2 PROJECTION CONSTANTS ===
 
@@ -78,7 +78,7 @@ def load_projection_config() -> Dict[str, Any]:
         Projection configuration dict
     """
     config_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "data",
         "projection_horizon_config.json",
     )
@@ -97,7 +97,7 @@ def load_latency_catalog(proj: FuturePathProjection = None) -> Dict[str, Any]:
         Latency catalog dict
     """
     catalog_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "data",
         "latency_catalog.json",
     )

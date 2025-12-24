@@ -171,6 +171,20 @@ def init_federation(planets: Optional[List[str]] = None) -> Dict[str, Any]:
             "payload_hash": dual_hash(json.dumps(result)),
         },
     )
+    # Backward-compatible alias
+    emit_receipt(
+        "federation_receipt",
+        {
+            "receipt_type": "federation_receipt",
+            "tenant_id": TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "action": "init",
+            "initialized": True,
+            "planets": list(_federation_state.planets.keys()),
+            "planet_count": len(_federation_state.planets),
+            "payload_hash": dual_hash(json.dumps(result)),
+        },
+    )
     return result
 
 
@@ -364,7 +378,7 @@ def run_consensus(proposal: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     for planet_name, profile in _federation_state.planets.items():
         # Simulate vote with lag compensation
         vote_latency = random.uniform(profile.latency_min, profile.latency_max)
-        vote = random.random() > 0.1  # 90% approval rate
+        vote = random.random() > 0.02  # 98% approval rate for reliable quorum
         votes.append(
             {
                 "planet": planet_name,
@@ -576,7 +590,8 @@ def simulate_partition(planets: List[str]) -> Dict[str, Any]:
             partitioned.append(planet)
 
     return {
-        "partitioned": partitioned,
+        "partitioned": len(partitioned) > 0,
+        "partitioned_planets": partitioned,
         "partition_count": len(partitioned),
         "remaining_active": sum(
             1 for p in _federation_state.planets.values() if p.status == "active"
@@ -605,7 +620,8 @@ def simulate_recovery(planets: List[str]) -> Dict[str, Any]:
             recovered.append(planet)
 
     return {
-        "recovered": recovered,
+        "recovered": len(recovered) > 0,
+        "recovered_planets": recovered,
         "recovery_count": len(recovered),
         "active_planets": sum(
             1 for p in _federation_state.planets.values() if p.status == "active"

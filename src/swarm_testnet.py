@@ -30,9 +30,9 @@ SWARM_LATENCY_SIMULATION = True
 SWARM_PACKET_LOSS_RATE = 0.001
 
 # Node type distribution
-SWARM_ORBITAL_NODES = 60
+SWARM_ORBITAL_NODES = 40
 SWARM_SURFACE_NODES = 30
-SWARM_DEEP_SPACE_NODES = 10
+SWARM_DEEP_SPACE_NODES = 30
 
 
 def calculate_mesh_connections(node_count: int = SWARM_NODE_COUNT) -> int:
@@ -226,6 +226,17 @@ def init_swarm(node_count: Optional[int] = None) -> Dict[str, Any]:
             "payload_hash": dual_hash(json.dumps(result)),
         },
     )
+    emit_receipt(
+        "swarm_testnet_receipt",
+        {
+            "receipt_type": "swarm_testnet_receipt",
+            "tenant_id": TENANT_ID,
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "action": "init",
+            "node_count": len(_swarm_state.nodes),
+            "payload_hash": dual_hash(json.dumps(result)),
+        },
+    )
     return result
 
 
@@ -404,6 +415,7 @@ def run_swarm_consensus() -> Dict[str, Any]:
         "consensus_reached": consensus_reached,
         "consensus_round": _swarm_state.consensus_round,
         "active_nodes": len(active_nodes),
+        "participating_nodes": len(active_nodes),  # Alias for active_nodes
         "total_nodes": len(_swarm_state.nodes),
         "approval_rate": approval_rate,
         "algorithm": SWARM_CONSENSUS_ALGORITHM,
@@ -613,6 +625,7 @@ def stress_test_swarm(cycles: int = 100) -> Dict[str, Any]:
     result = {
         "stress_passed": success_rate >= 0.95,
         "cycles": cycles,
+        "iterations": cycles,  # Alias for cycles
         "total_time_s": total_time,
         "consensus_success_rate": success_rate,
         "failures_injected": failures_injected,
@@ -650,9 +663,11 @@ def get_swarm_status() -> Dict[str, Any]:
     return {
         "initialized": _swarm_state.initialized,
         "mesh_created": _swarm_state.mesh_created,
+        "node_count": len(_swarm_state.nodes),  # Alias for total_nodes
         "total_nodes": len(_swarm_state.nodes),
         "active_nodes": active_nodes,
         "failed_nodes": failed_nodes,
+        "mesh_connections": calculate_mesh_connections(len(_swarm_state.nodes)) if _swarm_state.mesh_created else 0,
         "consensus_rounds": _swarm_state.consensus_round,
         "total_failures": _swarm_state.total_failures,
         "total_recoveries": _swarm_state.total_recoveries,

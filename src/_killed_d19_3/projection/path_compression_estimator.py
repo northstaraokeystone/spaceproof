@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from ..core import emit_receipt, dual_hash, TENANT_ID
+from src.core import emit_receipt, dual_hash, TENANT_ID
 
 # === COMPRESSION ESTIMATION CONSTANTS ===
 

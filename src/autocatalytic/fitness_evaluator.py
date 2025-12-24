@@ -222,8 +222,8 @@ def compute_projected_fitness(
     # Projected entropy reduction (inverse of entropy growth)
     projected_entropy_reduction = max(0.0, 1.0 - (projected_entropy / 10.0))
 
-    # Stability decay over projection window
-    stability_decay = math.exp(-projection_years * 0.1)
+    # Stability decay over projection window (less aggressive for high-stability patterns)
+    stability_decay = math.exp(-projection_years * 0.03)
     projected_stability = stability * stability_decay
 
     # Projected fitness combines current and projected

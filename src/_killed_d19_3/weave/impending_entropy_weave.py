@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
 
-from ..core import emit_receipt, dual_hash, TENANT_ID
+from src.core import emit_receipt, dual_hash, TENANT_ID
 
 # === D19.2 IMPENDING ENTROPY CONSTANTS ===
 
@@ -70,7 +70,7 @@ def load_latency_catalog() -> Dict[str, Any]:
         Latency catalog dict
     """
     catalog_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "data",
         "latency_catalog.json",
     )

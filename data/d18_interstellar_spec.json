@@ -35,7 +35,7 @@
     "target_system": "proxima_centauri",
     "distance_ly": 4.24,
     "relay_nodes": 3,
-    "autonomy_target": 0.999,
+    "autonomy_target": 0.9999,
     "compression_held_return": true,
     "predictive_coordination": true
   },
@@ -46,10 +46,36 @@
     "decoherence_model": "realistic"
   },
   "elon_sphere_config": {
-    "starlink_relay": true,
-    "grok_inference": true,
-    "xai_compute": true,
-    "dojo_offload": true
+    "starlink_relay": {
+      "enabled": true,
+      "laser_links": true,
+      "laser_gbps": 100,
+      "relay_hops": 5,
+      "latency_ms": 20,
+      "analog_to_interstellar": true
+    },
+    "grok_inference": {
+      "enabled": true,
+      "model": "grok-4-heavy",
+      "model_version": "grok-4-heavy",
+      "parallel_agents": 8,
+      "latency_tuning": true,
+      "ensemble_integration": true
+    },
+    "xai_compute": {
+      "enabled": true,
+      "cluster_name": "colossus-ii",
+      "scale": 200000,
+      "quantum_sim_capacity": 1000000000000,
+      "entanglement_modeling": true
+    },
+    "dojo_offload": {
+      "enabled": true,
+      "cluster_name": "dojo-v2",
+      "recursion_training": true,
+      "batch_size": 1000000,
+      "fractal_optimization": true
+    }
   },
   "slo": {
     "eff_alpha_min": 3.90,

@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..core import emit_receipt, dual_hash, TENANT_ID, StopRule
+from src.core import emit_receipt, dual_hash, TENANT_ID, StopRule
 
 # === MODEL CONSTANTS ===
 

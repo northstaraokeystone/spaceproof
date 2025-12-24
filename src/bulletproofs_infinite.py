@@ -21,6 +21,16 @@ BULLETPROOFS CONFIG:
     - stress_depth: 1000 proofs
     - resilience_target: 1.0
 
+PRODUCTION NOTE:
+    This module provides SIMULATED Bulletproof operations for testing and
+    architecture validation. For production deployment, integrate with:
+    - bulletproofs (Rust crate via PyO3)
+    - dalek-cryptography/bulletproofs
+    - bellman (for general ZK circuits)
+
+    Current implementation uses cryptographically secure RNG (secrets module)
+    for witness generation to ensure proper security patterns.
+
 Source: Grok - "Bulletproofs: Infinite chain high-load resilient"
 """
 
@@ -28,6 +38,7 @@ import hashlib
 import json
 import math
 import random
+import secrets  # Cryptographically secure RNG for ZK witness generation
 import time
 from datetime import datetime
 from typing import Any, Dict, List
@@ -196,10 +207,10 @@ def generate_bulletproof(
     if circuit is None:
         circuit = generate_bulletproof_circuit(range_bits or BULLETPROOFS_RANGE_BITS)
     if witness is None:
-        witness = {"value": value if value is not None else random.randint(0, 2**62)}
+        witness = {"value": value if value is not None else secrets.randbits(62)}
     if range_bits is None:
         range_bits = circuit.get("range_bits", BULLETPROOFS_RANGE_BITS)
-    _value = witness.get("value", value if value is not None else random.randint(0, 2**range_bits - 1))
+    _value = witness.get("value", value if value is not None else secrets.randbits(range_bits))
 
     # Simulate proof generation
     start_time = time.time()
@@ -376,6 +387,8 @@ def aggregate_bulletproofs(proofs: List[Dict[str, Any]]) -> Dict[str, Any]:
         "a": aggregate_a,
         "b": aggregate_b,
         "n_rounds": 6,
+        "L_vec": [hashlib.sha256(f"L_{i}_{n_proofs}".encode()).hexdigest()[:16] for i in range(6)],
+        "R_vec": [hashlib.sha256(f"R_{i}_{n_proofs}".encode()).hexdigest()[:16] for i in range(6)],
         "proof_size": aggregated_size,
         "proof_hash": hashlib.sha256(f"{combined_commitment}{aggregate_a}{aggregate_b}".encode()).hexdigest()[:32],
     }
@@ -470,7 +483,7 @@ def stress_test(depth: int = BULLETPROOFS_STRESS_DEPTH) -> Dict[str, Any]:
 
     for i in range(depth):
         # Generate proof
-        witness = {"value": random.randint(0, 2**62)}
+        witness = {"value": secrets.randbits(62)}
         proof = generate_bulletproof(circuit, witness)
         proofs.append(proof)
 
@@ -548,7 +561,7 @@ def generate_infinite_chain(depth: int = 100) -> Dict[str, Any]:
     prev_hash = "genesis"
 
     for i in range(depth):
-        witness = {"value": random.randint(0, 2**62), "prev_hash": prev_hash}
+        witness = {"value": secrets.randbits(62), "prev_hash": prev_hash}
         proof = generate_bulletproof(circuit, witness)
 
         chain_link = {
@@ -560,14 +573,18 @@ def generate_infinite_chain(depth: int = 100) -> Dict[str, Any]:
         chain.append(chain_link)
         prev_hash = proof["proof_hash"]
 
+    chain_size = depth * BULLETPROOFS_PROOF_SIZE
+    verify_time = depth * BULLETPROOFS_VERIFY_TIME_MS
     result = {
         "chain_depth": depth,
         "proofs_in_chain": depth,  # Tests expect this
         "genesis_hash": "genesis",
         "final_hash": prev_hash,
-        "chain_size": depth * BULLETPROOFS_PROOF_SIZE,  # Tests expect this
+        "chain_size": chain_size,  # Tests expect this
+        "total_size_bytes": chain_size,  # Alias for tests
         "chain_valid": True,
-        "verify_time": depth * BULLETPROOFS_VERIFY_TIME_MS,  # Tests expect this
+        "verify_time": verify_time,  # Tests expect this
+        "total_verify_time_ms": verify_time,  # Alias for tests
         "infinite_capable": True,
         "no_trusted_setup": True,
     }
@@ -703,7 +720,7 @@ def benchmark_bulletproofs() -> Dict[str, Any]:
     prove_times = []
     for _ in range(iterations):
         circuit = generate_bulletproof_circuit()
-        witness = {"value": random.randint(0, 2**62)}
+        witness = {"value": secrets.randbits(62)}
         start = time.time()
         generate_bulletproof(circuit, witness)
         prove_times.append((time.time() - start) * 1000)
@@ -719,7 +736,7 @@ def benchmark_bulletproofs() -> Dict[str, Any]:
 
     # Aggregation benchmark
     proofs = [
-        generate_bulletproof(circuit, {"value": random.randint(0, 2**62)})
+        generate_bulletproof(circuit, {"value": secrets.randbits(62)})
         for _ in range(10)
     ]
     start = time.time()
@@ -799,6 +816,19 @@ def run_bulletproofs_audit(
 
     Receipt: bulletproofs_audit_receipt
     """
+    # Test proof generation
+    proof_gen_result = generate_bulletproof(value=42)
+    proof_generation_passed = proof_gen_result is not None and "proof" in proof_gen_result
+
+    # Test proof verification
+    proof_verify_result = verify_bulletproof(proof_gen_result)
+    proof_verification_passed = proof_verify_result.get("valid", False)
+
+    # Test aggregation
+    test_proofs = [generate_bulletproof(value=i) for i in range(5)]
+    aggregation_result = aggregate_bulletproofs(test_proofs)
+    aggregation_passed = aggregation_result is not None and "aggregated_proof" in aggregation_result
+
     # Generate attestations
     attestations = []
     for i in range(attestation_count):
@@ -825,10 +855,37 @@ def run_bulletproofs_audit(
     all_attestations_valid = all(a["valid"] for a in attestations)
     stress_passed = stress["target_met"]
 
-    audit_passed = all_attestations_valid and stress_passed
+    audit_passed = (
+        proof_generation_passed
+        and proof_verification_passed
+        and aggregation_passed
+        and all_attestations_valid
+        and stress_passed
+    )
+
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    payload_hash = dual_hash(json.dumps({"audit_passed": audit_passed}, sort_keys=True))
 
     result = {
+        "audit_complete": True,
         "audit_type": "bulletproofs_full",
+        "proof_generation": {
+            "passed": proof_generation_passed,
+            "proof_generated": proof_gen_result is not None,
+        },
+        "proof_verification": {
+            "passed": proof_verification_passed,
+            "valid": proof_verify_result.get("valid", False),
+        },
+        "aggregation": {
+            "passed": aggregation_passed,
+            "aggregated": aggregation_result is not None,
+        },
+        "stress_test": {
+            "passed": stress_passed,
+            "depth": stress_depth,
+            "resilience": stress["resilience"],
+        },
         "attestations_count": attestation_count,
         "attestations_valid": all_attestations_valid,
         "stress_depth": stress_depth,
@@ -836,7 +893,11 @@ def run_bulletproofs_audit(
         "resilience": stress["resilience"],
         "benchmark": benchmark,
         "audit_passed": audit_passed,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": timestamp,
+        "receipt": {
+            "timestamp": timestamp,
+            "payload_hash": payload_hash,
+        },
     }
 
     emit_receipt(
@@ -844,14 +905,12 @@ def run_bulletproofs_audit(
         {
             "receipt_type": "bulletproofs_audit",
             "tenant_id": BULLETPROOFS_TENANT_ID,
-            "ts": result["timestamp"],
+            "ts": timestamp,
             "attestations_count": attestation_count,
             "attestations_valid": all_attestations_valid,
             "stress_passed": stress_passed,
             "audit_passed": audit_passed,
-            "payload_hash": dual_hash(
-                json.dumps({"audit_passed": audit_passed}, sort_keys=True)
-            ),
+            "payload_hash": payload_hash,
         },
     )
 
@@ -943,11 +1002,15 @@ def generate_infinite_chain_10k(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dic
     _circuit = generate_bulletproof_circuit()  # Circuit initialized for future use
     config = load_infinite_config()
 
+    # Generate chain ID
+    chain_id = hashlib.sha256(f"chain_{depth}_{time.time()}".encode()).hexdigest()[:16]
+
     # Batch generation for efficiency
     batch_size = 100
     batches = depth // batch_size
 
     chain_hashes = []
+    proofs = []
     prev_hash = "genesis_infinite"
 
     for batch in range(batches):
@@ -957,9 +1020,20 @@ def generate_infinite_chain_10k(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dic
                 f"{prev_hash}:{batch}:{i}".encode()
             ).hexdigest()[:16]
             chain_hashes.append(current_hash)
+
+            # Create proof stub (lightweight for 10k chain)
+            proofs.append({
+                "index": batch * batch_size + i,
+                "hash": current_hash,
+                "prev_hash": prev_hash,
+            })
+
             prev_hash = current_hash
 
     result = {
+        "chain_id": chain_id,
+        "depth": depth,
+        "proofs": proofs,
         "chain_depth": depth,
         "batches": batches,
         "batch_size": batch_size,
@@ -978,6 +1052,7 @@ def generate_infinite_chain_10k(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dic
             "receipt_type": "bulletproofs_infinite_chain",
             "tenant_id": BULLETPROOFS_TENANT_ID,
             "ts": datetime.utcnow().isoformat() + "Z",
+            "chain_id": chain_id,
             "chain_depth": depth,
             "batches": batches,
             "final_hash": prev_hash,
@@ -993,26 +1068,32 @@ def generate_infinite_chain_10k(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dic
     return result
 
 
-def verify_infinite_chain(chain: Dict[str, Any]) -> bool:
+def verify_infinite_chain(chain: Dict[str, Any]) -> Dict[str, Any]:
     """Verify infinite proof chain integrity.
 
     Args:
         chain: Chain data from generate_infinite_chain_10k
 
     Returns:
-        True if chain is valid
+        Dict with verification results
     """
-    if not chain.get("chain_valid", False):
-        return False
+    is_valid = True
+    verification_depth = chain.get("depth", chain.get("chain_depth", 0))
 
-    if chain.get("chain_depth", 0) < 1:
-        return False
+    if not chain.get("chain_valid", False):
+        is_valid = False
+
+    if verification_depth < 1:
+        is_valid = False
 
     # Verify genesis and final hash exist
     if not chain.get("genesis_hash") or not chain.get("final_hash"):
-        return False
+        is_valid = False
 
-    return True
+    return {
+        "valid": is_valid,
+        "verification_depth": verification_depth,
+    }
 
 
 def aggregate_infinite(
@@ -1043,7 +1124,20 @@ def aggregate_infinite(
         f"agg_{proof_count}_{factor}".encode()
     ).hexdigest()[:16]
 
+    # Create aggregated proof structure
+    aggregated_proof = {
+        "type": "bulletproof_aggregate_infinite",
+        "proof_hash": agg_hash,
+        "proof_count": proof_count,
+        "aggregated_size_bytes": aggregated_size,
+    }
+
+    # Compression ratio (original / aggregated)
+    compression_ratio = original_size / aggregated_size if aggregated_size > 0 else 1.0
+
     result = {
+        "aggregated_proof": aggregated_proof,
+        "input_count": proof_count,
         "proofs_aggregated": proof_count,
         "aggregation_factor": factor,
         "batches": batches,
@@ -1052,6 +1146,7 @@ def aggregate_infinite(
         "size_reduction": round(1 - (aggregated_size / original_size), 4)
         if original_size > 0
         else 0,
+        "compression_ratio": round(compression_ratio, 4),
         "aggregation_hash": agg_hash,
         "aggregation_valid": True,
     }
@@ -1096,13 +1191,14 @@ def infinite_chain_test(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dict[str, A
     chain = generate_infinite_chain_10k(depth)
 
     # Verify chain
-    chain_valid = verify_infinite_chain(chain)
+    verification_result = verify_infinite_chain(chain)
+    chain_valid = verification_result["valid"]
 
     # Generate sample proofs for aggregation test
     circuit = generate_bulletproof_circuit()
     sample_proofs = []
     for i in range(min(100, depth)):
-        witness = {"value": random.randint(0, 2**62)}
+        witness = {"value": secrets.randbits(62)}
         proof = generate_bulletproof(circuit, witness)
         sample_proofs.append(proof)
 
@@ -1115,8 +1211,12 @@ def infinite_chain_test(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dict[str, A
 
     # Compute resilience
     resilience = 1.0 if chain_valid and aggregation["aggregation_valid"] else 0.95
+    test_passed = resilience >= resilience_target
 
     result = {
+        "test_passed": test_passed,
+        "depth_tested": depth,
+        "verification_time_ms": round(elapsed_ms, 2),
         "depth": depth,
         "target_depth": target_depth,
         "chain_valid": chain_valid,
@@ -1127,7 +1227,7 @@ def infinite_chain_test(depth: int = BULLETPROOFS_INFINITE_DEPTH) -> Dict[str, A
         "elapsed_ms": round(elapsed_ms, 2),
         "resilience": resilience,
         "resilience_target": resilience_target,
-        "target_met": resilience >= resilience_target,
+        "target_met": test_passed,
     }
 
     emit_receipt(
@@ -1163,6 +1263,7 @@ def stress_test_10k(iterations: int = 10) -> Dict[str, Any]:
 
     results = []
     all_passed = True
+    times = []
 
     start_time = time.time()
 
@@ -1170,6 +1271,7 @@ def stress_test_10k(iterations: int = 10) -> Dict[str, Any]:
         # Run infinite chain test
         test_result = infinite_chain_test(depth)
         results.append(test_result)
+        times.append(test_result["verification_time_ms"])
 
         if not test_result["target_met"]:
             all_passed = False
@@ -1179,8 +1281,14 @@ def stress_test_10k(iterations: int = 10) -> Dict[str, Any]:
     # Aggregate results
     avg_resilience = sum(r["resilience"] for r in results) / len(results)
     min_resilience = min(r["resilience"] for r in results)
+    avg_time_ms = sum(times) / len(times) if times else 0
+    success_count = sum(1 for r in results if r["target_met"])
+    success_rate = success_count / iterations if iterations > 0 else 0
 
     result = {
+        "iterations_completed": iterations,
+        "success_rate": round(success_rate, 4),
+        "avg_time_ms": round(avg_time_ms, 2),
         "iterations": iterations,
         "depth_per_iteration": depth,
         "total_proofs": iterations * depth,
@@ -1222,20 +1330,51 @@ def benchmark_infinite_chain(depths: List[int] = None) -> Dict[str, Any]:
         depths = [100, 1000, 5000, 10000]
 
     benchmarks = []
+    total_generation_time = 0
+    total_verification_time = 0
+    total_aggregation_time = 0
 
     for depth in depths:
-        start = time.time()
-        result = infinite_chain_test(depth)
-        elapsed = time.time() - start
+        # Time generation
+        gen_start = time.time()
+        chain = generate_infinite_chain_10k(depth)
+        gen_time = (time.time() - gen_start) * 1000
+
+        # Time verification
+        verify_start = time.time()
+        verification_result = verify_infinite_chain(chain)
+        verify_time = (time.time() - verify_start) * 1000
+
+        # Time aggregation
+        circuit = generate_bulletproof_circuit()
+        sample_proofs = []
+        for i in range(min(100, depth)):
+            witness = {"value": secrets.randbits(62)}
+            proof = generate_bulletproof(circuit, witness)
+            sample_proofs.append(proof)
+
+        agg_start = time.time()
+        aggregation = aggregate_infinite(sample_proofs)
+        agg_time = (time.time() - agg_start) * 1000
+
+        total_generation_time += gen_time
+        total_verification_time += verify_time
+        total_aggregation_time += agg_time
+
+        elapsed = gen_time + verify_time + agg_time
 
         benchmarks.append({
             "depth": depth,
-            "elapsed_s": round(elapsed, 3),
-            "proofs_per_second": round(depth / elapsed, 2) if elapsed > 0 else 0,
-            "target_met": result["target_met"],
+            "elapsed_s": round(elapsed / 1000, 3),
+            "proofs_per_second": round(depth / (elapsed / 1000), 2) if elapsed > 0 else 0,
+            "target_met": verification_result["valid"] and aggregation["aggregation_valid"],
         })
 
     return {
+        "generation_time_ms": round(total_generation_time, 2),
+        "verification_time_ms": round(total_verification_time, 2),
+        "aggregation_time_ms": round(total_aggregation_time, 2),
+        "total_time_ms": round(total_generation_time + total_verification_time + total_aggregation_time, 2),
         "benchmarks": benchmarks,
         "depths_tested": depths,
         "all_targets_met": all(b["target_met"] for b in benchmarks),
@@ -1252,6 +1391,9 @@ def get_infinite_chain_info() -> Dict[str, Any]:
 
     return {
         "infinite_depth": config.get("infinite_depth", BULLETPROOFS_INFINITE_DEPTH),
+        "resilience_target": config.get(
+            "chain_resilience_target", BULLETPROOFS_CHAIN_RESILIENCE_TARGET
+        ),
         "chain_resilience_target": config.get(
             "chain_resilience_target", BULLETPROOFS_CHAIN_RESILIENCE_TARGET
         ),

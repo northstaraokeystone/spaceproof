@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
 
-from ..core import emit_receipt, dual_hash, TENANT_ID
+from src.core import emit_receipt, dual_hash, TENANT_ID
 
 # === D19.2 DELAY NULLIFICATION CONSTANTS ===
 

@@ -52,7 +52,7 @@ class TestD19_2SpecLoading:
         )
         with open(spec_path) as f:
             spec = json.load(f)
-        assert spec.get("version") == "19.2.0", "D19 spec must be version 19.2.0"
+        assert spec.get("version") == "19.3.0", "D19 spec must be version 19.3.0"
 
     def test_d19_2_config_present(self):
         """Verify d19_2_config is present in spec."""
