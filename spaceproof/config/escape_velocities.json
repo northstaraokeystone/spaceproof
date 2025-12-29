@@ -1,0 +1,76 @@
+{
+  "version": "2.0.0",
+  "description": "Escape velocity thresholds for Meta-Loop graduation (Meta-Loop v2.1)",
+  "domains": {
+    "orbital_compute": {
+      "escape_velocity": 0.90,
+      "description": "Starcloud GPU satellite compute provenance",
+      "autonomy_threshold": 0.75,
+      "transfer_threshold": 0.70
+    },
+    "constellation_ops": {
+      "escape_velocity": 0.85,
+      "description": "Starlink maneuver audit and deorbit compliance",
+      "autonomy_threshold": 0.75,
+      "transfer_threshold": 0.70
+    },
+    "autonomous_decision": {
+      "escape_velocity": 0.88,
+      "description": "Defense DOD 3000.09 compliance",
+      "autonomy_threshold": 0.80,
+      "transfer_threshold": 0.65
+    },
+    "firmware_integrity": {
+      "escape_velocity": 0.80,
+      "description": "Supply chain verification",
+      "autonomy_threshold": 0.75,
+      "transfer_threshold": 0.75
+    },
+    "privacy_enforcement": {
+      "escape_velocity": 0.85,
+      "description": "PII redaction and differential privacy",
+      "autonomy_threshold": 0.70,
+      "transfer_threshold": 0.60
+    },
+    "offline_sync": {
+      "escape_velocity": 0.75,
+      "description": "Light-delay tolerant synchronization",
+      "autonomy_threshold": 0.80,
+      "transfer_threshold": 0.70
+    },
+    "training_production": {
+      "escape_velocity": 0.82,
+      "description": "Training data factory",
+      "autonomy_threshold": 0.70,
+      "transfer_threshold": 0.65
+    },
+    "raci_assignment": {
+      "escape_velocity": 0.80,
+      "description": "RACI accountability assignment",
+      "autonomy_threshold": 0.75,
+      "transfer_threshold": 0.70
+    },
+    "governance": {
+      "escape_velocity": 0.85,
+      "description": "Enterprise governance patterns",
+      "autonomy_threshold": 0.70,
+      "transfer_threshold": 0.65
+    }
+  },
+  "topology_rules": {
+    "open": {
+      "condition": "E >= V_esc AND A > autonomy_threshold",
+      "action": "CASCADE (spawn 5 variants)"
+    },
+    "hybrid": {
+      "condition": "T > transfer_threshold",
+      "action": "TRANSFER to other domain"
+    },
+    "closed": {
+      "condition": "default",
+      "action": "continue optimizing"
+    }
+  },
+  "cascade_multiplier": 5,
+  "default_confidence_threshold": 0.85
+}

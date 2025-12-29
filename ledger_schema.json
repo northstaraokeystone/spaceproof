@@ -59,7 +59,44 @@
     "entropy_violation",
     "context_routing",
     "web_fallback",
-    "chain_verification"
+    "chain_verification",
+    "raci_assignment",
+    "provenance",
+    "intervention",
+    "escalation",
+    "ownership",
+    "training_extraction",
+    "training_labeling",
+    "training_quality",
+    "training_dedup",
+    "training_export",
+    "training_feedback",
+    "audit_trail",
+    "raci_report",
+    "intervention_report",
+    "provenance_report",
+    "redaction",
+    "differential_privacy",
+    "privacy_operation",
+    "offline_sync",
+    "conflict_resolution",
+    "offline_ledger",
+    "access_authorization",
+    "cost_accounting",
+    "quota_enforcement",
+    "rnes_validation",
+    "rnes_interpretation",
+    "sandbox_execution",
+    "governance_decision",
+    "governance_intervention",
+    "governance_checkpoint",
+    "training_example",
+    "training_checkpoint",
+    "privacy_checkpoint",
+    "offline_checkpoint",
+    "partition_end",
+    "sync_complete",
+    "merkle_verification"
   ],
   "v2_receipt_schemas": {
     "build_rate": {
@@ -161,6 +198,116 @@
       "optional": ["fallback_source", "merged_result"]
     }
   },
+  "v6_receipt_schemas": {
+    "raci_assignment": {
+      "required": ["decision_id", "responsible", "accountable", "consulted", "informed"],
+      "optional": ["event_type", "timestamp"]
+    },
+    "provenance": {
+      "required": ["decision_id", "model_id", "model_version", "policy_id", "policy_version"],
+      "optional": ["timestamp", "execution_context"]
+    },
+    "intervention": {
+      "required": ["intervention_id", "target_decision_id", "reason_code", "intervener_id"],
+      "optional": ["justification", "severity", "original_action", "corrected_action"]
+    },
+    "escalation": {
+      "required": ["decision_id", "escalation_level", "escalated_to"],
+      "optional": ["reason", "timestamp"]
+    },
+    "ownership": {
+      "required": ["decision_id", "owner_id", "owner_type"],
+      "optional": ["ownership_chain", "timestamp"]
+    },
+    "training_extraction": {
+      "required": ["example_id", "intervention_id"],
+      "optional": ["timestamp", "source_type"]
+    },
+    "training_labeling": {
+      "required": ["example_id", "labels"],
+      "optional": ["labeler_id", "confidence"]
+    },
+    "training_quality": {
+      "required": ["example_id", "quality_score"],
+      "optional": ["component_scores", "threshold"]
+    },
+    "training_dedup": {
+      "required": ["original_count", "deduplicated_count", "removed_count"],
+      "optional": ["method", "similarity_threshold"]
+    },
+    "training_export": {
+      "required": ["format", "count", "destination"],
+      "optional": ["success", "error"]
+    },
+    "training_feedback": {
+      "required": ["queue_size", "immediate_count"],
+      "optional": ["high_count", "medium_count", "low_count"]
+    },
+    "audit_trail": {
+      "required": ["trail_id", "entry_count", "generation_time_ms"],
+      "optional": ["start_time", "end_time"]
+    },
+    "raci_report": {
+      "required": ["report_id", "coverage_pct"],
+      "optional": ["unassigned_count", "period"]
+    },
+    "intervention_report": {
+      "required": ["report_id", "intervention_count"],
+      "optional": ["by_reason_code", "by_severity", "period"]
+    },
+    "provenance_report": {
+      "required": ["report_id", "model_versions", "policy_versions"],
+      "optional": ["period", "change_count"]
+    },
+    "redaction": {
+      "required": ["original_hash", "redacted_hash", "pii_types"],
+      "optional": ["pii_count", "method"]
+    },
+    "differential_privacy": {
+      "required": ["epsilon", "sensitivity", "noise_type", "budget_remaining"],
+      "optional": ["noisy_value", "original_value"]
+    },
+    "privacy_operation": {
+      "required": ["operation_type", "target_id", "success"],
+      "optional": ["error", "timestamp"]
+    },
+    "offline_sync": {
+      "required": ["sync_id", "node_count", "merged_count", "sync_time_ms"],
+      "optional": ["conflicts_detected", "conflicts_resolved"]
+    },
+    "conflict_resolution": {
+      "required": ["receipt_id", "version_count", "resolution_strategy", "winner_node"],
+      "optional": ["losing_nodes", "merge_details"]
+    },
+    "offline_ledger": {
+      "required": ["node_id", "entry_count", "merkle_root"],
+      "optional": ["last_sync", "offline_duration_sec"]
+    },
+    "access_authorization": {
+      "required": ["tenant_id", "resource", "action", "authorized"],
+      "optional": ["reason", "receipt_id"]
+    },
+    "cost_accounting": {
+      "required": ["tenant_id", "operation", "cost_units"],
+      "optional": ["timestamp", "running_total"]
+    },
+    "quota_enforcement": {
+      "required": ["tenant_id", "resource", "consumed", "remaining"],
+      "optional": ["limit", "reset_at"]
+    },
+    "rnes_validation": {
+      "required": ["operation_id", "compliant", "receipts_emitted"],
+      "optional": ["warnings", "errors"]
+    },
+    "rnes_interpretation": {
+      "required": ["receipt_id", "interpretation", "success"],
+      "optional": ["action", "parameters"]
+    },
+    "sandbox_execution": {
+      "required": ["sandbox_id", "execution_time_ms", "success", "output_hash"],
+      "optional": ["constraints", "error"]
+    }
+  },
   "constants": {
     "THRESHOLD_PERSON_EQUIVALENT": 1000000,
     "STAGE_GATE_INITIAL": 0.30,
@@ -197,5 +344,5 @@
     "CASCADE_MULTIPLIER": 5,
     "CONFIDENCE_FALLBACK": 0.85
   },
-  "version": "3.0"
+  "version": "6.0"
 }

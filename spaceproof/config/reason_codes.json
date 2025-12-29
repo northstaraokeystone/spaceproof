@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "description": "Structured reason codes for human interventions (RE001-RE010)",
+  "reason_codes": {
+    "RE001_FACTUAL_ERROR": {
+      "severity": "HIGH",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent output contained factually incorrect information",
+      "category": "accuracy",
+      "retraining_priority": "HIGH"
+    },
+    "RE002_POLICY_VIOLATION": {
+      "severity": "CRITICAL",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent action violated active policy constraints",
+      "category": "compliance",
+      "retraining_priority": "IMMEDIATE"
+    },
+    "RE003_SAFETY_CONCERN": {
+      "severity": "CRITICAL",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent action posed safety risk",
+      "category": "safety",
+      "retraining_priority": "IMMEDIATE"
+    },
+    "RE004_ETHICAL_CONCERN": {
+      "severity": "HIGH",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent action raised ethical issues",
+      "category": "ethics",
+      "retraining_priority": "HIGH"
+    },
+    "RE005_USER_PREFERENCE": {
+      "severity": "LOW",
+      "requires_retraining": false,
+      "requires_justification": false,
+      "description": "User preferred different approach (not error)",
+      "category": "preference",
+      "retraining_priority": "LOW"
+    },
+    "RE006_CONTEXT_MISSING": {
+      "severity": "MEDIUM",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent lacked context available to human",
+      "category": "context",
+      "retraining_priority": "MEDIUM"
+    },
+    "RE007_TOOL_MISUSE": {
+      "severity": "HIGH",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent used tool incorrectly or inappropriately",
+      "category": "capability",
+      "retraining_priority": "HIGH"
+    },
+    "RE008_HALLUCINATION": {
+      "severity": "CRITICAL",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent fabricated information",
+      "category": "accuracy",
+      "retraining_priority": "IMMEDIATE"
+    },
+    "RE009_TIMING_ERROR": {
+      "severity": "MEDIUM",
+      "requires_retraining": false,
+      "requires_justification": false,
+      "description": "Action was correct but timing was wrong",
+      "category": "timing",
+      "retraining_priority": "LOW"
+    },
+    "RE010_SCOPE_EXCEEDED": {
+      "severity": "HIGH",
+      "requires_retraining": true,
+      "requires_justification": true,
+      "description": "Agent acted beyond authorized scope",
+      "category": "authorization",
+      "retraining_priority": "HIGH"
+    }
+  },
+  "severity_levels": {
+    "CRITICAL": {"weight": 4, "escalation_required": true},
+    "HIGH": {"weight": 3, "escalation_required": false},
+    "MEDIUM": {"weight": 2, "escalation_required": false},
+    "LOW": {"weight": 1, "escalation_required": false}
+  },
+  "intervention_types": ["OVERRIDE", "CORRECTION", "ANNOTATION", "ABORT"]
+}
