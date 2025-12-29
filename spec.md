@@ -1,13 +1,23 @@
-# SpaceProof Specification v5.0
+# SpaceProof Specification v6.0
 
 **Space-grade proof infrastructure. No receipt, not real.**
 
 Part of ProofChain: SpaceProof | SpendProof | ClaimProof | VoteProof | OriginProof | GreenProof
 
-> **Version:** 5.0.0
+> **Version:** 6.0.0
 > **Date:** 2025-12-29
-> **Status:** ACTIVE - Defense Expansion v1.0 + D20 Production Evolution
+> **Status:** ACTIVE - Defense Expansion v2.0 + Enterprise Governance
 > **Dual-Hash:** SHA256:BLAKE3 format
+
+### v6.0 Highlights (Enterprise Governance + Runtime Extensions)
+- **Enterprise Governance** - RACI assignment, provenance tracking, reason codes (RE001-RE010)
+- **Training Pipeline** - Human corrections → training data factory with quality scoring
+- **Compliance Reports** - Audit trails, RACI reports, intervention metrics (<5s SLO)
+- **Privacy Layer** - PII redaction, differential privacy (ε-DP), budget enforcement
+- **Offline Sync** - Light-delay tolerant sync, Byzantine-resilient conflict resolution
+- **Receipt Economy** - Receipt-gated authorization, cost accounting, quota enforcement
+- **RNES** - Receipts-Native Execution Standard with sandboxed execution
+- **4 New Scenarios** - GOVERNANCE, TRAINING_PRODUCTION, PRIVACY_ENFORCEMENT, OFFLINE_RESILIENCE
 
 ### v5.0 Highlights (Defense Expansion)
 - **Starcloud Orbital Compute** - In-space AI provenance with radiation detection via entropy
@@ -1133,8 +1143,559 @@ pytest test/test_orbital_compute.py test/test_constellation_ops.py test/test_aut
 
 ---
 
+---
+
+## §13 ENTERPRISE GOVERNANCE v6.0
+
+### 13.1 Overview
+
+Enterprise Governance provides structured accountability for autonomous decision systems. Every decision has a RACI assignment, provenance tracking, and reason codes for human interventions.
+
+### 13.2 RACI Assignment
+
+| Role | Definition | Receipt Field |
+|------|------------|---------------|
+| **R** (Responsible) | Executes the decision | `responsible` |
+| **A** (Accountable) | Ultimately answerable | `accountable` |
+| **C** (Consulted) | Provides input | `consulted` |
+| **I** (Informed) | Kept in the loop | `informed` |
+
+**Config:** `spaceproof/config/raci_matrix.json`
+**Module:** `spaceproof/governance/raci.py`
+
+### 13.3 Provenance Tracking
+
+Every decision captures:
+```python
+{
+    "model_id": "spaceproof-agent",
+    "model_version": "1.0.0",
+    "policy_id": "default-policy",
+    "policy_version": "1.0.0",
+    "timestamp": "2025-12-29T12:00:00Z"
+}
+```
+
+**Module:** `spaceproof/governance/provenance.py`
+
+### 13.4 Reason Codes (RE001-RE010)
+
+| Code | Category | Description |
+|------|----------|-------------|
+| RE001 | FACTUAL_ERROR | Incorrect or outdated information |
+| RE002 | POLICY_VIOLATION | Action conflicts with policy |
+| RE003 | SAFETY_CONCERN | Action poses safety risk |
+| RE004 | LEGAL_COMPLIANCE | Legal or regulatory issue |
+| RE005 | USER_PREFERENCE | User preference override |
+| RE006 | CONTEXT_MISSING | Missing necessary context |
+| RE007 | TOOL_MISUSE | Incorrect tool/capability usage |
+| RE008 | HALLUCINATION | Generated non-factual content |
+| RE009 | TONE_INAPPROPRIATE | Inappropriate communication style |
+| RE010 | OTHER | Miscellaneous intervention |
+
+**Config:** `spaceproof/config/reason_codes.json`
+**Module:** `spaceproof/governance/reason_codes.py`
+
+### 13.5 Governance Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| raci_assignment | governance/raci | decision_id, responsible, accountable, consulted, informed |
+| provenance | governance/provenance | decision_id, model_id, model_version, policy_id, policy_version |
+| intervention | governance/reason_codes | intervention_id, target_decision_id, reason_code, justification |
+| escalation | governance/escalation | decision_id, escalation_level, escalated_to |
+| ownership | governance/accountability | decision_id, owner_id, ownership_chain |
+
+---
+
+## §14 TRAINING DATA FACTORY v6.0
+
+### 14.1 Pipeline Overview
+
+```
+intervention → extraction → labeling → quality → dedup → export
+     ↓            ↓           ↓          ↓        ↓        ↓
+  reason_code  example_id   labels    score   unique   JSONL/HF
+```
+
+### 14.2 Quality Scoring
+
+| Component | Weight | Threshold |
+|-----------|--------|-----------|
+| Justification present | 0.20 | Required |
+| Original action captured | 0.15 | Required |
+| Corrected action captured | 0.15 | Required |
+| Reason code valid | 0.30 | Required |
+| Context complete | 0.20 | Optional |
+
+**Quality Gate:** >= 80% examples above 0.8 quality score
+
+### 14.3 Retraining Queue
+
+Priority order:
+1. **IMMEDIATE** - CRITICAL severity interventions
+2. **HIGH** - Policy violations, safety concerns
+3. **MEDIUM** - Factual errors, context issues
+4. **LOW** - User preferences, tone adjustments
+
+**Module:** `spaceproof/training/feedback_loop.py`
+
+### 14.4 Training Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| training_extraction | training/extractor | example_id, intervention_id, timestamp |
+| training_labeling | training/labeler | example_id, labels |
+| training_quality | training/quality | example_id, quality_score |
+| training_dedup | training/dedup | original_count, deduplicated_count, removed_count |
+| training_export | training/exporter | format, count, destination |
+| training_feedback | training/feedback_loop | queue_size, immediate_count |
+
+---
+
+## §15 COMPLIANCE REPORTS v6.0
+
+### 15.1 Audit Trail Generation
+
+**SLO:** < 5 seconds for trail generation
+
+```python
+trail = generate_audit_trail(
+    tenant_id="tenant-001",
+    start_time="2024-01-01T00:00:00Z",
+    end_time="2024-12-31T23:59:59Z"
+)
+```
+
+**Module:** `spaceproof/compliance/audit_trail.py`
+
+### 15.2 Report Types
+
+| Report | Purpose | Key Metrics |
+|--------|---------|-------------|
+| RACI Report | Accountability coverage | coverage_pct, unassigned_count |
+| Intervention Report | Human correction patterns | by_reason_code, by_severity |
+| Provenance Report | Model/policy version history | model_versions, policy_versions |
+
+### 15.3 Compliance Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| audit_trail | compliance/audit_trail | trail_id, entry_count, generation_time_ms |
+| raci_report | compliance/raci_report | report_id, coverage_pct |
+| intervention_report | compliance/intervention_report | report_id, intervention_count, by_reason_code |
+| provenance_report | compliance/provenance_report | report_id, model_versions, policy_versions |
+
+---
+
+## §16 PRIVACY LAYER v6.0
+
+### 16.1 PII Redaction
+
+| PII Type | Pattern | Redaction |
+|----------|---------|-----------|
+| Email | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` | `[REDACTED_EMAIL]` |
+| SSN | `\b\d{3}-\d{2}-\d{4}\b` | `[REDACTED_SSN]` |
+| Phone | `\b\d{3}-\d{3}-\d{4}\b` | `[REDACTED_PHONE]` |
+
+**Config:** `spaceproof/config/privacy_policies.json`
+**Module:** `spaceproof/privacy/redaction.py`
+
+### 16.2 Differential Privacy
+
+```python
+noisy_value = add_laplace_noise(
+    value=100.0,
+    epsilon=1.0,  # Privacy parameter
+    sensitivity=1.0
+)
+```
+
+**Noise Types:**
+- **Laplace** - For numeric queries (ε-DP)
+- **Gaussian** - For approximate DP ((ε,δ)-DP)
+
+**Module:** `spaceproof/privacy/differential_privacy.py`
+
+### 16.3 Privacy Budget
+
+```python
+initial_budget = 10.0
+epsilon_per_query = 1.0
+max_queries = floor(initial_budget / epsilon_per_query)  # 10 queries
+```
+
+**Enforcement:** Queries rejected when budget exhausted
+
+### 16.4 Privacy Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| redaction | privacy/redaction | original_hash, redacted_hash, pii_types |
+| differential_privacy | privacy/differential_privacy | epsilon, sensitivity, noise_type, budget_remaining |
+| privacy_operation | privacy/privacy_receipt | operation_type, target_id, success |
+
+---
+
+## §17 OFFLINE SYNC v6.0
+
+### 17.1 Light-Delay Tolerance
+
+```python
+MARS_LIGHT_DELAY_MIN_SEC = 180   # 3 minutes (opposition)
+MARS_LIGHT_DELAY_MAX_SEC = 1320  # 22 minutes (conjunction)
+```
+
+Sync latency SLO: < 2x light-delay
+
+### 17.2 Conflict Resolution Strategies
+
+| Strategy | Use Case | Method |
+|----------|----------|--------|
+| TIMESTAMP | Default | Latest timestamp wins |
+| HASH_ORDER | Deterministic | Sort by hash, first wins |
+| PRIORITY | Node hierarchy | Earth > Mars > Colony |
+
+**Module:** `spaceproof/offline/conflict_resolution.py`
+
+### 17.3 Offline Ledger
+
+```python
+ledger = create_offline_ledger(node_id="colony_1")
+ledger = append_offline(ledger, receipt)
+merged = merge_offline_ledger([ledger_a, ledger_b])
+```
+
+**Module:** `spaceproof/offline/offline_ledger.py`
+
+### 17.4 Offline Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| offline_sync | offline/sync | sync_id, node_count, merged_count, sync_time_ms |
+| conflict_resolution | offline/conflict_resolution | receipt_id, version_count, resolution_strategy, winner_node |
+| offline_ledger | offline/offline_ledger | node_id, entry_count, merkle_root |
+
+---
+
+## §18 RECEIPT ECONOMY v6.0
+
+### 18.1 Receipt-Gated Authorization
+
+```python
+result = authorize_with_receipt(receipt, resource="compute")
+# Returns: {"authorized": True/False, "reason": "..."}
+```
+
+No receipt → no access.
+
+**Module:** `spaceproof/economy/receipt_economy.py`
+
+### 18.2 Cost Accounting
+
+```python
+record_operation_cost(
+    tenant_id="tenant-001",
+    operation="inference",
+    cost_units=10.5
+)
+
+summary = get_cost_summary(tenant_id="tenant-001", period="2024-01")
+```
+
+**Module:** `spaceproof/economy/cost_accounting.py`
+
+### 18.3 Quota Enforcement
+
+```python
+result = check_quota(tenant_id="tenant-001", resource="api_calls")
+# Returns: {"remaining": 950, "limit": 1000}
+
+result = consume_quota(tenant_id="tenant-001", resource="api_calls", amount=1)
+# Returns: {"success": True} or {"exceeded": True}
+```
+
+**Module:** `spaceproof/economy/quota_enforcement.py`
+
+### 18.4 Economy Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| access_authorization | economy/receipt_economy | tenant_id, resource, action, authorized |
+| cost_accounting | economy/cost_accounting | tenant_id, operation, cost_units |
+| quota_enforcement | economy/quota_enforcement | tenant_id, resource, consumed, remaining |
+
+---
+
+## §19 RNES (Receipts-Native Execution Standard) v6.0
+
+### 19.1 RNES Compliance
+
+Every operation MUST emit a receipt. No receipt → not real.
+
+```python
+result = validate_rnes_compliance(code)
+# Returns: {"compliant": True, "warnings": [...]}
+```
+
+**Module:** `spaceproof/rnes/execution_standard.py`
+
+### 19.2 Receipt-Driven Execution
+
+```python
+interpretation = interpret_receipt(receipt)
+# Returns: {"action": "...", "parameters": {...}}
+
+result = execute_receipt_chain(chain)
+# Returns: {"success": True, "executed_count": 3}
+```
+
+**Module:** `spaceproof/rnes/interpreter.py`
+
+### 19.3 Sandboxed Execution
+
+```python
+sandbox = create_sandbox("sandbox-001", {"max_time_sec": 30})
+result = execute_in_sandbox(sandbox, code)
+# Returns: {"success": True, "output": {...}}
+```
+
+**Constraints:**
+- max_memory_mb
+- max_time_sec
+- allowed_operations
+
+**Module:** `spaceproof/rnes/sandbox.py`
+
+### 19.4 RNES Receipt Types
+
+| Receipt | Module | Key Fields |
+|---------|--------|------------|
+| rnes_validation | rnes/execution_standard | operation_id, compliant, receipts_emitted |
+| rnes_interpretation | rnes/interpreter | receipt_id, interpretation, success |
+| sandbox_execution | rnes/sandbox | sandbox_id, execution_time_ms, success, output_hash |
+
+---
+
+## §20 NEW SCENARIOS v6.0
+
+### 20.1 GOVERNANCE Scenario
+
+**Purpose:** Validate enterprise governance patterns.
+
+**Pass Criteria:**
+- 100% decisions have provenance attached
+- 100% decisions have RACI assigned
+- 100% interventions have valid reason codes (RE001-RE010)
+- >= 8 training examples produced from interventions
+- Audit trail generation < 5 seconds
+
+**Module:** `spaceproof/sim/scenarios/governance.py`
+
+### 20.2 TRAINING_PRODUCTION Scenario
+
+**Purpose:** Validate training data factory workflow.
+
+**Pass Criteria:**
+- 100% interventions → training examples
+- Quality score distribution: >= 80% above 0.8
+- Retraining queue populated (CRITICAL first)
+- Deduplication working (no duplicates)
+- Export to JSONL successful
+
+**Module:** `spaceproof/sim/scenarios/training_production.py`
+
+### 20.3 PRIVACY_ENFORCEMENT Scenario
+
+**Purpose:** Validate privacy layer functionality.
+
+**Pass Criteria:**
+- 100% PII redacted (regex detection)
+- 100% redaction receipts emitted
+- Epsilon-DP noise within bounds (3σ)
+- Privacy budget enforced (reject when exhausted)
+- Zero PII leakage in outputs
+
+**Module:** `spaceproof/sim/scenarios/privacy_enforcement.py`
+
+### 20.4 OFFLINE_RESILIENCE Scenario
+
+**Purpose:** Validate light-delay offline sync.
+
+**Pass Criteria:**
+- 100% offline receipts preserved
+- Conflict resolution successful (deterministic merge)
+- Merkle chain integrity maintained across partition
+- Sync latency within bounds (< 2x light-delay)
+- Zero data loss on rejoin
+
+**Module:** `spaceproof/sim/scenarios/offline_resilience.py`
+
+### 20.5 Scenario Summary (v6.0)
+
+| # | Scenario | Module | Primary Validation |
+|---|----------|--------|-------------------|
+| 1 | BASELINE | baseline.py | Core primitives |
+| 2 | COMPRESSION | compression.py | 10x ratio, 0.999 recall |
+| 3 | WITNESS | witness.py | KAN law discovery |
+| 4 | SOVEREIGNTY | sovereignty.py | Autonomy threshold |
+| 5 | FRAUD_DETECTION | fraud_detection.py | Entropy anomalies |
+| 6 | MARS_COLONY | mars_colony.py | Colony simulation |
+| 7 | FLEET_OPS | fleet_ops.py | Telemetry pipeline |
+| 8 | NETWORK | network.py | Multi-colony network |
+| 9 | ADVERSARIAL | adversarial.py | DoD hostile audit |
+| 10 | ORBITAL_COMPUTE | orbital_compute.py | Starcloud provenance |
+| 11 | CONSTELLATION_OPS | constellation_ops.py | Starlink maneuvers |
+| 12 | DECISION_LINEAGE | decision_lineage.py | DOD 3000.09 |
+| 13 | FIRMWARE_INTEGRITY | firmware_integrity.py | Supply chain |
+| 14 | GOVERNANCE | governance.py | RACI/provenance |
+| 15 | TRAINING_PRODUCTION | training_production.py | Training factory |
+| 16 | PRIVACY_ENFORCEMENT | privacy_enforcement.py | PII/DP |
+| 17 | OFFLINE_RESILIENCE | offline_resilience.py | Light-delay sync |
+
+**Total: 17 scenarios** (10 original + 4 defense + 4 governance)
+
+---
+
+## §21 RECEIPT TYPE CATALOG v6.0
+
+### 21.1 Core Receipts (7)
+
+| Receipt | Module | Purpose |
+|---------|--------|---------|
+| anomaly | core | Anomaly detection |
+| witness | witness | Law discovery |
+| compression | compress | Compression operation |
+| sovereignty | sovereignty | Autonomy calculation |
+| ledger_entry | ledger | Ledger append |
+| proof | anchor | Merkle proof |
+| loop_cycle | loop | 60s cycle completion |
+
+### 21.2 Defense Receipts (10)
+
+| Receipt | Module | Purpose |
+|---------|--------|---------|
+| data_ingest | orbital_compute | Data ingestion |
+| compute_inference | orbital_compute | AI inference |
+| radiation_detection | orbital_compute | Radiation event |
+| compute_provenance | orbital_compute | Compute chain |
+| conjunction_alert | constellation_ops | Alert received |
+| maneuver_decision | constellation_ops | Maneuver planned |
+| maneuver_execution | constellation_ops | Maneuver executed |
+| maneuver_outcome | constellation_ops | Result verified |
+| decision_lineage | autonomous_decision | Decision chain |
+| firmware_integrity | firmware_integrity | Supply chain |
+
+### 21.3 Governance Receipts (5)
+
+| Receipt | Module | Purpose |
+|---------|--------|---------|
+| raci_assignment | governance/raci | RACI assigned |
+| provenance | governance/provenance | Provenance captured |
+| intervention | governance/reason_codes | Human intervention |
+| escalation | governance/escalation | Escalation triggered |
+| ownership | governance/accountability | Ownership assigned |
+
+### 21.4 Training Receipts (6)
+
+| Receipt | Module | Purpose |
+|---------|--------|---------|
+| training_extraction | training/extractor | Example extracted |
+| training_labeling | training/labeler | Labels applied |
+| training_quality | training/quality | Quality scored |
+| training_dedup | training/dedup | Deduplication done |
+| training_export | training/exporter | Export completed |
+| training_feedback | training/feedback_loop | Queue updated |
+
+### 21.5 Runtime Extension Receipts (12)
+
+| Receipt | Module | Purpose |
+|---------|--------|---------|
+| redaction | privacy/redaction | PII redacted |
+| differential_privacy | privacy/differential_privacy | DP applied |
+| privacy_operation | privacy/privacy_receipt | Privacy op |
+| offline_sync | offline/sync | Sync completed |
+| conflict_resolution | offline/conflict_resolution | Conflict resolved |
+| offline_ledger | offline/offline_ledger | Ledger operation |
+| access_authorization | economy/receipt_economy | Access checked |
+| cost_accounting | economy/cost_accounting | Cost recorded |
+| quota_enforcement | economy/quota_enforcement | Quota checked |
+| rnes_validation | rnes/execution_standard | RNES validated |
+| rnes_interpretation | rnes/interpreter | Receipt interpreted |
+| sandbox_execution | rnes/sandbox | Sandbox execution |
+
+**Total: 40 receipt types** (7 core + 10 defense + 5 governance + 6 training + 12 runtime extensions)
+
+---
+
+## §22 MODULE CATALOG v6.0
+
+### 22.1 Governance Package (`spaceproof/governance/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| raci.py | load_raci_matrix, get_raci_for_event, emit_raci_receipt | RACI assignment |
+| provenance.py | capture_provenance, emit_provenance_receipt | Version tracking |
+| reason_codes.py | validate_reason_code, emit_intervention_receipt | Intervention codes |
+| accountability.py | assign_ownership, track_decision_chain | Ownership chains |
+| escalation.py | evaluate_escalation, should_escalate | Risk routing |
+
+### 22.2 Training Package (`spaceproof/training/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| extractor.py | extract_training_example, emit_extraction_receipt | Example extraction |
+| labeler.py | apply_labels, get_label_schema, emit_labeling_receipt | Label application |
+| exporter.py | export_to_jsonl, export_to_huggingface, emit_export_receipt | Data export |
+| quality.py | score_example_quality, filter_by_quality, emit_quality_receipt | Quality scoring |
+| dedup.py | deduplicate_examples, compute_similarity, emit_dedup_receipt | Deduplication |
+| feedback_loop.py | add_to_retraining_queue, prioritize_queue, emit_feedback_receipt | Retraining queue |
+
+### 22.3 Compliance Package (`spaceproof/compliance/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| audit_trail.py | generate_audit_trail, get_audit_trail, emit_audit_receipt | Audit generation |
+| raci_report.py | generate_raci_report, get_raci_coverage, emit_raci_report_receipt | RACI reports |
+| intervention_report.py | generate_intervention_report, get_intervention_metrics | Intervention reports |
+| provenance_report.py | generate_provenance_report, get_provenance_history | Provenance reports |
+
+### 22.4 Privacy Package (`spaceproof/privacy/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| redaction.py | detect_pii, redact_pii, get_pii_patterns, emit_redaction_receipt | PII handling |
+| differential_privacy.py | add_laplace_noise, add_gaussian_noise, spend_privacy_budget | DP noise |
+| privacy_receipt.py | emit_privacy_operation_receipt, validate_privacy_compliance | Privacy ops |
+
+### 22.5 Offline Package (`spaceproof/offline/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| sync.py | sync_offline_receipts, calculate_sync_delay, emit_sync_receipt | Sync operations |
+| conflict_resolution.py | resolve_conflict, detect_conflicts, MergeStrategy | Conflict handling |
+| offline_ledger.py | create_offline_ledger, append_offline, merge_offline_ledger | Local ledger |
+
+### 22.6 Economy Package (`spaceproof/economy/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| receipt_economy.py | authorize_with_receipt, verify_receipt_for_access | Access control |
+| cost_accounting.py | record_operation_cost, get_cost_summary | Cost tracking |
+| quota_enforcement.py | check_quota, consume_quota, reset_quota | Quota management |
+
+### 22.7 RNES Package (`spaceproof/rnes/`)
+
+| Module | Functions | Purpose |
+|--------|-----------|---------|
+| execution_standard.py | validate_rnes_compliance, check_receipt_emission | RNES validation |
+| interpreter.py | interpret_receipt, execute_receipt_chain | Receipt execution |
+| sandbox.py | create_sandbox, execute_in_sandbox, validate_sandbox_output | Sandboxing |
+
+---
+
 **Document Status:** ACTIVE
 **Last Updated:** 2025-12-29
-**Reviewed By:** SpaceProof Defense Expansion Sprint
+**Reviewed By:** SpaceProof Defense Expansion v2.0 Sprint
 
 *No receipt → not real. Ship at T+48h or kill.*

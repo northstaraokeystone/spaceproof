@@ -1,0 +1,91 @@
+{
+  "version": "2.0.0",
+  "description": "RACI matrix for event type accountability",
+  "event_types": {
+    "navigation_decision": {
+      "responsible": "DRONE_AGENT",
+      "accountable": "FLIGHT_OPERATOR",
+      "consulted": ["MISSION_CONTROL"],
+      "informed": ["SAFETY_OFFICER"]
+    },
+    "orbital_compute": {
+      "responsible": "COMPUTE_AGENT",
+      "accountable": "SATELLITE_OPERATOR",
+      "consulted": ["DATA_SCIENTIST"],
+      "informed": ["STARCLOUD_ADMIN"]
+    },
+    "maneuver_decision": {
+      "responsible": "AUTONOMOUS_SYSTEM",
+      "accountable": "SAFETY_OFFICER",
+      "consulted": ["MISSION_CONTROL"],
+      "informed": ["STARLINK_OPERATOR", "SPACE_FORCE"]
+    },
+    "deorbit_verification": {
+      "responsible": "DEORBIT_CONTROLLER",
+      "accountable": "FCC_COMPLIANCE_OFFICER",
+      "consulted": ["MISSION_CONTROL", "LEGAL"],
+      "informed": ["STARLINK_OPERATOR", "REGULATORY"]
+    },
+    "autonomous_decision": {
+      "responsible": "AUTONOMOUS_AGENT",
+      "accountable": "COMMANDING_OFFICER",
+      "consulted": ["SAFETY_OFFICER", "LEGAL"],
+      "informed": ["DOD_COMPLIANCE", "AUDIT_TEAM"]
+    },
+    "human_override": {
+      "responsible": "HUMAN_OPERATOR",
+      "accountable": "HUMAN_OPERATOR",
+      "consulted": ["SAFETY_OFFICER"],
+      "informed": ["COMPLIANCE", "TRAINING_TEAM"]
+    },
+    "firmware_update": {
+      "responsible": "FIRMWARE_AGENT",
+      "accountable": "SECURITY_OFFICER",
+      "consulted": ["QA_TEAM", "SUPPLY_CHAIN"],
+      "informed": ["OPERATIONS", "COMPLIANCE"]
+    },
+    "radiation_detection": {
+      "responsible": "RADIATION_SENSOR",
+      "accountable": "SATELLITE_OPERATOR",
+      "consulted": ["MISSION_CONTROL"],
+      "informed": ["DATA_SCIENTIST", "SAFETY_OFFICER"]
+    },
+    "privacy_redaction": {
+      "responsible": "PRIVACY_AGENT",
+      "accountable": "DATA_PROTECTION_OFFICER",
+      "consulted": ["LEGAL", "COMPLIANCE"],
+      "informed": ["SECURITY", "AUDIT_TEAM"]
+    },
+    "training_example": {
+      "responsible": "TRAINING_PIPELINE",
+      "accountable": "ML_LEAD",
+      "consulted": ["DATA_SCIENTIST"],
+      "informed": ["MODEL_GOVERNANCE", "COMPLIANCE"]
+    },
+    "policy_change": {
+      "responsible": "POLICY_ADMIN",
+      "accountable": "GOVERNANCE_COMMITTEE",
+      "consulted": ["LEGAL", "COMPLIANCE", "SAFETY_OFFICER"],
+      "informed": ["ALL_OPERATORS", "AUDIT_TEAM"]
+    },
+    "model_deployment": {
+      "responsible": "ML_OPS",
+      "accountable": "ML_LEAD",
+      "consulted": ["QA_TEAM", "SAFETY_OFFICER"],
+      "informed": ["OPERATIONS", "COMPLIANCE"]
+    }
+  },
+  "escalation_chains": {
+    "critical": ["SAFETY_OFFICER", "COMMANDING_OFFICER", "EXECUTIVE"],
+    "high": ["TEAM_LEAD", "SAFETY_OFFICER"],
+    "medium": ["TEAM_LEAD"],
+    "low": []
+  },
+  "roles": {
+    "AUTONOMOUS_AGENT": {"type": "agent", "requires_human_approval": false},
+    "HUMAN_OPERATOR": {"type": "human", "requires_human_approval": false},
+    "SAFETY_OFFICER": {"type": "human", "requires_human_approval": true},
+    "COMMANDING_OFFICER": {"type": "human", "requires_human_approval": true},
+    "COMPLIANCE": {"type": "team", "requires_human_approval": false}
+  }
+}

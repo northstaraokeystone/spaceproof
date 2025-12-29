@@ -1,4 +1,4 @@
-"""SpaceProof v5.0.0 - Space-grade proof infrastructure.
+"""SpaceProof v6.0.0 - Space-grade proof infrastructure.
 
 No receipt, not real.
 
@@ -19,25 +19,28 @@ DOMAIN GENERATORS:
 - domain/colony.py: Mars colony simulation
 - domain/telemetry.py: Fleet telemetry (Tesla/Starlink/SpaceX)
 
-DEFENSE EXPANSION DOMAINS (v5.0):
+DEFENSE EXPANSION DOMAINS:
 - domain/orbital_compute.py: Starcloud orbital compute provenance
 - domain/constellation_ops.py: Starlink maneuver audit chains
 - domain/autonomous_decision.py: Defense DOD 3000.09 compliance
 - domain/firmware_integrity.py: Supply chain verification
 
+ENTERPRISE GOVERNANCE (v6.0):
+- governance/: RACI assignment, provenance tracking, reason codes
+- training/: Human corrections -> training data pipeline
+- compliance/: Audit trails, accountability reports
+
+RUNTIME EXTENSIONS (v6.0):
+- privacy/: PII redaction, differential privacy
+- offline/: Light-delay tolerant sync, conflict resolution
+- economy/: Receipt-gated resource allocation
+- rnes/: Receipts-Native Execution Standard
+
 INTEGRATION LAYERS:
-- meta_integration.py: Meta-Loop v2.1 topology classification
+- meta_integration.py: Meta-Loop topology classification
 - context_router.py: Confidence-gated fallback
 - mcp_server.py: MCP protocol for Claude Desktop
-
-STAKEHOLDER CONFIGS:
-- config/xai.yaml: Elon/xAI
-- config/doge.yaml: DOGE
-- config/dot.yaml: DOT
-- config/defense.yaml: Defense
-- config/nro.yaml: NRO
-
-Source: D20 Production Evolution + Defense Expansion v1.0 (Dec 2025)
+- preflight.py: Pre-push validation gate
 """
 
 # Core primitives
@@ -123,7 +126,18 @@ from . import meta_integration
 from . import context_router
 from . import mcp_server
 
-__version__ = "5.0.0"
+# Enterprise governance (v6.0)
+from . import governance
+from . import training
+from . import compliance
+
+# Runtime extensions (v6.0)
+from . import privacy
+from . import offline
+from . import economy
+from . import rnes
+
+__version__ = "6.0.0"
 __series__ = "ProofChain"
 
 __all__ = [
@@ -198,4 +212,13 @@ __all__ = [
     "meta_integration",
     "context_router",
     "mcp_server",
+    # Enterprise governance (v6.0)
+    "governance",
+    "training",
+    "compliance",
+    # Runtime extensions (v6.0)
+    "privacy",
+    "offline",
+    "economy",
+    "rnes",
 ]

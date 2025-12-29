@@ -1,0 +1,90 @@
+{
+  "version": "2.0.0",
+  "description": "Privacy policies for PII redaction and differential privacy",
+  "pii_patterns": {
+    "email": {
+      "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+      "replacement": "[REDACTED_EMAIL]",
+      "severity": "HIGH"
+    },
+    "ssn": {
+      "pattern": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+      "replacement": "[REDACTED_SSN]",
+      "severity": "CRITICAL"
+    },
+    "phone": {
+      "pattern": "\\b(?:\\+1)?[-.]?\\(?\\d{3}\\)?[-.]?\\d{3}[-.]?\\d{4}\\b",
+      "replacement": "[REDACTED_PHONE]",
+      "severity": "MEDIUM"
+    },
+    "credit_card": {
+      "pattern": "\\b(?:\\d{4}[-\\s]?){3}\\d{4}\\b",
+      "replacement": "[REDACTED_CC]",
+      "severity": "CRITICAL"
+    },
+    "ip_address": {
+      "pattern": "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b",
+      "replacement": "[REDACTED_IP]",
+      "severity": "LOW"
+    },
+    "name": {
+      "pattern": null,
+      "replacement": "[REDACTED_NAME]",
+      "severity": "MEDIUM",
+      "requires_ml": true
+    }
+  },
+  "differential_privacy": {
+    "default_epsilon": 1.0,
+    "max_epsilon": 10.0,
+    "min_epsilon": 0.01,
+    "delta": 1e-5,
+    "sensitivity": 1.0,
+    "mechanisms": {
+      "laplace": {
+        "description": "Laplace mechanism for numeric queries",
+        "scale_formula": "sensitivity / epsilon"
+      },
+      "gaussian": {
+        "description": "Gaussian mechanism for numeric queries",
+        "scale_formula": "sensitivity * sqrt(2 * ln(1.25 / delta)) / epsilon"
+      },
+      "exponential": {
+        "description": "Exponential mechanism for categorical queries",
+        "score_function": "quality score"
+      }
+    }
+  },
+  "privacy_budget": {
+    "default_budget": 10.0,
+    "budget_per_query_type": {
+      "count": 0.1,
+      "sum": 0.5,
+      "average": 0.3,
+      "histogram": 1.0,
+      "percentile": 0.5
+    },
+    "reset_interval_hours": 24,
+    "overflow_action": "REJECT"
+  },
+  "retention_policies": {
+    "pii_data": {
+      "max_retention_days": 30,
+      "requires_encryption": true
+    },
+    "redaction_receipts": {
+      "max_retention_days": 365,
+      "requires_encryption": false
+    },
+    "privacy_budget_logs": {
+      "max_retention_days": 90,
+      "requires_encryption": false
+    }
+  },
+  "audit_requirements": {
+    "log_all_redactions": true,
+    "log_all_dp_queries": true,
+    "emit_receipts": true,
+    "alert_on_budget_exhaustion": true
+  }
+}

@@ -1,8 +1,8 @@
-"""SpaceProof Scenarios - Twelve-Scenario Validation Framework.
+"""SpaceProof Scenarios - Fourteen-Scenario Validation Framework.
 
 The scenarios probe different aspects of system behavior:
 
-CORE SCENARIOS (xAI collaboration):
+CORE SCENARIOS:
 1. BASELINE: Normal operation with standard probability distributions
 2. STRESS: Edge cases at 3-5x normal intensity with heavy-tail distributions
 3. GENESIS: System initialization with bootstrap validation
@@ -10,11 +10,19 @@ CORE SCENARIOS (xAI collaboration):
 5. THERMODYNAMIC: Entropy conservation verification per second law
 6. GODEL: Completeness bounds and decidability limits
 
-DEFENSE EXPANSION SCENARIOS (Grok research):
+DEFENSE EXPANSION SCENARIOS:
 7. ORBITAL_COMPUTE: Starcloud orbital compute provenance
 8. CONSTELLATION_SCALE: Starlink maneuver audit at scale
 9. AUTONOMOUS_ACCOUNTABILITY: Defense DOD 3000.09 compliance
 10. FIRMWARE_SUPPLY_CHAIN: Firmware integrity chain verification
+
+GOVERNANCE & TRAINING SCENARIOS (v2.0):
+11. GOVERNANCE: Enterprise governance patterns (RACI, provenance, reason codes)
+12. TRAINING_PRODUCTION: Training data factory validation
+
+PRIVACY & OFFLINE SCENARIOS (v2.0):
+13. PRIVACY_ENFORCEMENT: PII redaction and differential privacy
+14. OFFLINE_RESILIENCE: Light-delay tolerant sync and conflict resolution
 
 Each scenario implements:
 - Specific input distribution generators
@@ -36,6 +44,12 @@ from spaceproof.sim.scenarios.constellation_scale import ConstellationScaleScena
 from spaceproof.sim.scenarios.autonomous_accountability import AutonomousAccountabilityScenario
 from spaceproof.sim.scenarios.firmware_supply_chain import FirmwareSupplyChainScenario
 
+# v2.0 scenarios
+from spaceproof.sim.scenarios.governance import GovernanceScenario
+from spaceproof.sim.scenarios.training_production import TrainingProductionScenario
+from spaceproof.sim.scenarios.privacy_enforcement import PrivacyEnforcementScenario
+from spaceproof.sim.scenarios.offline_resilience import OfflineResilienceScenario
+
 __all__ = [
     # Core scenarios
     "BaselineScenario",
@@ -49,4 +63,9 @@ __all__ = [
     "ConstellationScaleScenario",
     "AutonomousAccountabilityScenario",
     "FirmwareSupplyChainScenario",
+    # v2.0 scenarios
+    "GovernanceScenario",
+    "TrainingProductionScenario",
+    "PrivacyEnforcementScenario",
+    "OfflineResilienceScenario",
 ]
