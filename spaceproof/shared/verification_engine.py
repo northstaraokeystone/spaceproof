@@ -134,8 +134,12 @@ class VerificationEngine:
         with open(baseline_file) as f:
             baselines = json.load(f)
 
-        # Navigate to baseline using dot notation
-        parts = baseline_key.split(".")
+        # Navigate to baseline using dot notation (max 2 levels deep)
+        # Split only on first dot to handle keys like "glp1_pen.ozempic_0.5mg"
+        if "." in baseline_key:
+            parts = baseline_key.split(".", 1)  # Only split on first dot
+        else:
+            parts = [baseline_key]
         current = baselines
 
         for part in parts:
